@@ -10,7 +10,13 @@ with open("README.md") as readme_file:
 with open("HISTORY.md") as history_file:
     history = history_file.read()
 
-requirements = []
+requirements = ["numpy", "python-opencv"]
+
+extras_require = {}
+
+extras_require.update(
+    {"all": [val for values in extras_require.values() for val in values]}
+)
 
 setup(
     author="Henrik Finsberg",
@@ -42,6 +48,7 @@ setup(
     test_suite="tests",
     url="https://github.com/finsberg/mps_motion_tracking",
     version="0.1.0",
+    extras_require=extras_require,
     project_urls={
         "Documentation": "https://mps-motion-tracking.readthedocs.io.",
         "Source": "https://github.com/finsberg/mps_motion_tracking",

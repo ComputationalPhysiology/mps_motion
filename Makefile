@@ -54,7 +54,7 @@ type: ## Run mypy
 	python3 -m mypy mps_motion_tracking tests
 
 test: ## run tests on every Python version with tox
-	python3 -m pytest -cov=mps_motion_tracking tests
+	python3 -m pytest -v -cov=mps_motion_tracking tests
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/mps_motion_tracking.rst
