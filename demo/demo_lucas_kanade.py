@@ -34,10 +34,10 @@ def postprocess_displacement():
 
     for i in tqdm.tqdm(range(data.num_frames)):
         im = utils.to_uint8(data.frames[:, :, i])
-        flow = disp[:, :, :, i]
+        flow = disp[:, :, i]
         # out.write(im)
         out_flow.write(utils.draw_lk_flow(im, flow, ref_points))
-        out_hsv.write(utils.draw_hsv(flow))
+        # out_hsv.write(utils.draw_hsv(flow))
         # cv2.imshow("flow", utils.draw_flow(im, flow))
 
         key = cv2.waitKey(1)
@@ -50,5 +50,5 @@ def postprocess_displacement():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
     postprocess_displacement()

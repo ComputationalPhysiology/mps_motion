@@ -69,14 +69,13 @@ def get_displacements(
         for im in np.rollaxis(frames, 2)
     )
     num_frames = frames.shape[-1]
-    flows = np.zeros(
-        (reference_points.shape[0], reference_points.shape[2], 2, num_frames)
-    )
+    flows = np.zeros((reference_points.shape[0], 2, num_frames))
+
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for i, uv in tqdm.tqdm(
             enumerate(executor.map(flow_map, args)), total=num_frames
         ):
-            flows[:, :, :, i] = uv
+            flows[:, :, i] = uv
 
     if return_refpoints:
         return LKFlow(flows, reference_points)
