@@ -30,17 +30,27 @@ STEP = 48
 QUIVER = (0, 0, 255)
 
 
-def draw_flow(img, flow, step=16):
-    h, w = img.shape[:2]
-    y, x = np.mgrid[step / 2 : h : step, step / 2 : w : step].reshape(2, -1).astype(int)
-    fx, fy = flow[y, x].T
+def _draw_flow(image, x, y, fx, fy):
     lines = np.vstack([x, y, x + fx, y + fy]).T.reshape(-1, 2, 2)
     lines = np.int32(lines + 0.5)
-    vis = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    vis = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     cv2.polylines(vis, lines, 0, QUIVER, 5)
     for (x1, y1), (_x2, _y2) in lines:
         cv2.circle(vis, (x1, y1), 1, (0, 255, 0), -1)
     return vis
+
+
+def draw_lk_flow(image, flow, reference_points):
+    x, y = reference_points.reshape(-1, 2).astype(int).T
+    fx, fy = flow.T
+    return _draw_flow(image, x, y, fx, fy)
+
+
+def draw_flow(image, flow, step=16):
+    h, w = image.shape[:2]
+    y, x = np.mgrid[step / 2 : h : step, step / 2 : w : step].reshape(2, -1).astype(int)
+    fx, fy = flow[y, x].T
+    return _draw_flow(image, x, y, fx, fy)
 
 
 def draw_hsv(flow):
