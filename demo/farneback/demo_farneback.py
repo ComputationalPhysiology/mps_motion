@@ -17,7 +17,7 @@ def main():
 
 
 def postprocess_displacement():
-    data = mps.MPS("PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
     disp = np.load("farneback_disp.npy")
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -51,7 +51,7 @@ def postprocess_displacement():
 
 
 def postprocess_velocities():
-    data = mps.MPS("PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
     disp = np.load("farneback_vel.npy")
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -86,7 +86,7 @@ def postprocess_velocities():
 
 def plot_displacements():
 
-    data = mps.MPS("PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
     disp = np.load("farneback_disp.npy") * data.info["um_per_pixel"]
 
     import dask.array as da
@@ -96,11 +96,13 @@ def plot_displacements():
     u_mean_pixel = disp_norm.mean((0, 1))
 
     u_mean_um = u_mean_pixel
+
     fig, ax = plt.subplots()
     ax.plot(data.time_stamps, u_mean_um)
     ax.set_title("Mean displacement")
     ax.set_xlabel("Time [ms]")
     ax.set_ylabel("Magnitude of displacement [um]")
+    fig.savefig("farneback_mean_displacement.png")
 
     ux_mean_pixel = disp[:, :, 0, :].mean((0, 1))
     ux_mean_um = ux_mean_pixel * data.info["um_per_pixel"]
@@ -115,6 +117,7 @@ def plot_displacements():
     ax[1].plot(data.time_stamps, uy_mean_um)
     ax[1].set_title("Mean y-displacement")
     ax[1].set_xlabel("Time [ms]")
+    fig.savefig("farneback_mean_displacement_comp.png")
 
     max_disp_x = np.abs(disp[:, :, 0, :]).max(-1)
     max_disp_y = np.abs(disp[:, :, 1, :]).max(-1)
@@ -138,8 +141,9 @@ def plot_displacements():
     cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
     cbar = fig.colorbar(im, cax=cbar_ax)
     cbar.set_label("um")
+    fig.savefig("farneback_max_displacement.png")
 
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ def main():
 
 
 def postprocess_displacement():
-    data = mps.MPS("PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
     disp = np.load("lk_disp.npy")
     ref_points = np.load("lk_ref_points.npy")
 
@@ -52,7 +52,7 @@ def postprocess_displacement():
 
 def plot_displacements():
 
-    data = mps.MPS("PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
     disp = np.load("lk_disp.npy") * data.info["um_per_pixel"]
     reference_points = np.load("lk_ref_points.npy")
 
