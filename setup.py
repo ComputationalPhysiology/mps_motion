@@ -46,12 +46,11 @@ setup(
     name="mps_motion_tracking",
     packages=find_packages(include=["mps_motion_tracking", "mps_motion_tracking.*"]),
     test_suite="tests",
-    url="https://github.com/finsberg/mps_motion_tracking",
+    url="https://github.com/ComputationalPhysiology/mps_motion_tracking",
     version="0.1.0",
     extras_require=extras_require,
     project_urls={
-        "Documentation": "https://mps-motion-tracking.readthedocs.io.",
-        "Source": "https://github.com/finsberg/mps_motion_tracking",
+        "Source": "https://github.com/ComputationalPhysiology/mps_motion_tracking",
     },
     zip_safe=False,
 )

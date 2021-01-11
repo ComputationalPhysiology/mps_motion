@@ -1,8 +1,6 @@
 # MPS Motion Tracking
 
-
-
-![CI](https://github.com/finsberg/mps_motion_tracking/workflows/CI/badge.svg)
+![CI](https://github.com/ComputationalPhysiology/mps_motion_tracking/workflows/CI/badge.svg)
 
 
 
