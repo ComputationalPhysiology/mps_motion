@@ -2,6 +2,7 @@ import logging
 
 import cv2
 import numpy as np
+import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,56 @@ STEP = 48
 QUIVER = (0, 0, 255)
 
 
+def interpolate_lk_flow(
+    disp: np.ndarray,
+    reference_points: np.ndarray,
+    size_x: int,
+    size_y: int,
+    interpolation_method: str = "linear",
+) -> np.ndarray:
+    """Given an array of displacements (of flow) coming from
+    the Lucas Kanade method return a new array which
+    interpolates the data onto a given size, i.e
+    the original size of the image.
+
+    Parameters
+    ----------
+    disp : np.ndarray
+        The flow or displacement from LK algorithm
+    reference_points : np.ndarray
+        Reference points
+    size_x : int
+        Size of the output in x-direction
+    size_y : int
+        Size of the output in y-direction
+    interpolation_method : str
+        Method for interpolation, by default 'linear'
+
+    Returns
+    -------
+    np.ndarray
+        Interpolated values
+    """
+    num_frames = disp.shape[-1]
+    from scipy.interpolate import griddata
+
+    disp_full = np.zeros((size_y, size_x, 2, num_frames))
+    ref_points = np.squeeze(reference_points)
+    grid_x, grid_y = np.meshgrid(np.arange(size_x), np.arange(size_y))
+    # This could be parallelized
+    for i in tqdm.tqdm(range(num_frames)):
+        values_x = disp[:, 0, i]
+        values_y = disp[:, 1, i]
+
+        disp_full[:, :, 0, i] = griddata(
+            ref_points, values_x, (grid_y, grid_x), method=interpolation_method
+        )
+        disp_full[:, :, 1, i] = griddata(
+            ref_points, values_y, (grid_y, grid_x), method=interpolation_method
+        )
+    return disp_full
+
+
 def _draw_flow(image, x, y, fx, fy):
     lines = np.vstack([x, y, x + fx, y + fy]).T.reshape(-1, 2, 2)
     lines = np.int32(lines + 0.5)
@@ -47,6 +98,22 @@ def draw_lk_flow(image, flow, reference_points):
 
 
 def draw_flow(image, flow, step=16):
+    """[summary]
+
+    Parameters
+    ----------
+    image : [type]
+        [description]
+    flow : [type]
+        [description]
+    step : int, optional
+        [description], by default 16
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     h, w = image.shape[:2]
     y, x = np.mgrid[step / 2 : h : step, step / 2 : w : step].reshape(2, -1).astype(int)
     fx, fy = flow[y, x].T

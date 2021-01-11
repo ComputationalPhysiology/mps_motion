@@ -8,7 +8,7 @@ from mps_motion_tracking import dualtvl10, utils
 
 def main():
 
-    data = mps.MPS("PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
     disp = dualtvl10.get_displacements(data.frames, data.frames[:, :, 0])
     np.save("dualtvl10_disp.npy", disp)
     vel = dualtvl10.get_velocities(data.frames, data.frames[:, :, 0])
