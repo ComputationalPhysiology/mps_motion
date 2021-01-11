@@ -10,7 +10,9 @@ from mps_motion_tracking import lucas_kanade, utils
 def main():
 
     data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
-    disp, ref_points = lucas_kanade.get_displacements(data.frames, data.frames[:, :, 0])
+    disp, ref_points = lucas_kanade.get_displacements(
+        data.frames, data.frames[:, :, 0], step=32
+    )
     np.save("lk_disp.npy", disp)
     np.save("lk_ref_points.npy", ref_points)
 
@@ -141,7 +143,6 @@ def plot_displacements():
 
 
 if __name__ == "__main__":
-    # main()
-    # postprocess_displacement()
+    main()
+    postprocess_displacement()
     plot_displacements()
-    # demo_griddata()

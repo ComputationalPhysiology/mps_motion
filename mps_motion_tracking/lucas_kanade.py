@@ -50,6 +50,12 @@ def flow(
     return flow
 
 
+def get_uniform_reference_points(image, step=48):
+    h, w = image.shape[:2]
+    grid = np.mgrid[step / 2 : w : step, step / 2 : h : step].astype(int)
+    return np.expand_dims(grid.astype(np.float32).reshape(2, -1).T, 1)
+
+
 def get_displacements(
     frames,
     reference_image: np.ndarray,
@@ -60,9 +66,7 @@ def get_displacements(
     return_refpoints=True,
 ):
 
-    h, w = reference_image.shape[:2]
-    grid = np.mgrid[step / 2 : w : step, step / 2 : h : step].astype(int)
-    reference_points = np.expand_dims(grid.astype(np.float32).reshape(2, -1).T, 1)
+    reference_points = get_uniform_reference_points(reference_image, step=step)
 
     args = (
         (im, reference_image, reference_points, winSize, maxLevel, criteria, False)

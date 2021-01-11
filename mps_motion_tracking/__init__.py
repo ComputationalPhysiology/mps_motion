@@ -4,13 +4,6 @@ __author__ = """Henrik Finsberg"""
 __email__ = "henriknf@simula.no"
 __version__ = "0.1.0"
 
-from . import block_matching, farneback, motion_tracking, test_data
-from .motion_tracking import MotionTracking
+from . import dualtvl10, farneback, lucas_kanade, utils
 
-__all__ = [
-    "motion_tracking",
-    "MotionTracking",
-    "test_data",
-    "block_matching",
-    "farneback",
-]
+__all__ = ["farneback", "dualtvl10", "lucas_kanade", "utils"]

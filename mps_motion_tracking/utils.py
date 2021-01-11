@@ -27,8 +27,8 @@ except ImportError:
         return decorator
 
 
-STEP = 48
-QUIVER = (0, 0, 255)
+def resize_frames(frames: np.ndarray, scale: float = 1.0) -> np.ndarray:
+    pass
 
 
 def interpolate_lk_flow(
@@ -82,6 +82,7 @@ def interpolate_lk_flow(
 
 
 def _draw_flow(image, x, y, fx, fy):
+    QUIVER = (0, 0, 255)
     lines = np.vstack([x, y, x + fx, y + fy]).T.reshape(-1, 2, 2)
     lines = np.int32(lines + 0.5)
     vis = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
