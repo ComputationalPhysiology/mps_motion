@@ -18,7 +18,7 @@ def main():
         ).item()
     )
     disp, ref_points = lucas_kanade.get_displacements(
-        data.frames, data.frames[:, :, 0], step=32
+        data.frames, data.frames[:, :, 0], step=8
     )
     np.save("lk_disp.npy", disp)
     np.save("lk_ref_points.npy", ref_points)
@@ -143,11 +143,11 @@ def plot_displacements():
     grid_max_norm = griddata((x, y), max_norm, (grid_y, grid_x), method="linear")
 
     fig, ax = plt.subplots(1, 3, sharex=True, sharey=True)
-    ax[0].contourf(grid_y, grid_x, grid_max_norm, vmim=vmin, vmax=vmax)
+    ax[0].contourf(grid_y, grid_x, grid_max_norm, vmin=vmin, vmax=vmax)
     ax[0].set_title("Max displacement norm")
-    ax[1].contourf(grid_y, grid_x, grid_max_x, vmim=vmin, vmax=vmax)
+    ax[1].contourf(grid_y, grid_x, grid_max_x, vmin=vmin, vmax=vmax)
     ax[1].set_title("Max displacement X")
-    im = ax[2].contourf(grid_y, grid_x, grid_max_y, vmim=vmin, vmax=vmax)
+    im = ax[2].contourf(grid_y, grid_x, grid_max_y, vmin=vmin, vmax=vmax)
     ax[2].set_title("Max displacement Y")
     fig.subplots_adjust(right=0.8)
     cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
