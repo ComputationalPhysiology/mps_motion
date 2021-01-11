@@ -12,7 +12,11 @@ with open("HISTORY.md") as history_file:
 
 requirements = ["numpy", "opencv-python"]
 
-extras_require = {"benchmark": ["flowiz"], "dualtvl10": ["opencv-contrib-python"]}
+extras_require = {
+    "task-queue": ["redis", "rq"],
+    "benchmark": ["flowiz"],
+    "dualtvl10": ["opencv-contrib-python"],
+}
 
 extras_require.update(
     {"all": [val for values in extras_require.values() for val in values]}

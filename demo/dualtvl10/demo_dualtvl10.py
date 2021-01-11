@@ -9,7 +9,9 @@ from mps_motion_tracking import dualtvl10, utils
 
 def main():
 
-    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = mps.MPS.from_dict(
+        **np.load("../../datasets/mps_data.npy", allow_pickle=True).item()
+    )
     disp = dualtvl10.get_displacements(data.frames, data.frames[:, :, 0])
     np.save("dualtvl10_disp.npy", disp)
     vel = dualtvl10.get_velocities(data.frames, data.frames[:, :, 0])
@@ -17,7 +19,9 @@ def main():
 
 
 def postprocess_displacement():
-    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = mps.MPS.from_dict(
+        **np.load("../../datasets/mps_data.npy", allow_pickle=True).item()
+    )
     disp = np.load("dualtvl10_disp.npy")
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -51,7 +55,9 @@ def postprocess_displacement():
 
 
 def postprocess_velocities():
-    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = mps.MPS.from_dict(
+        **np.load("../../datasets/mps_data.npy", allow_pickle=True).item()
+    )
     disp = np.load("dualtvl10_vel.npy")
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -86,7 +92,9 @@ def postprocess_velocities():
 
 def plot_displacements():
 
-    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = mps.MPS.from_dict(
+        **np.load("../../datasets/mps_data.npy", allow_pickle=True).item()
+    )
     disp = np.load("dualtvl10_disp.npy") * data.info["um_per_pixel"]
 
     import dask.array as da
@@ -147,7 +155,7 @@ def plot_displacements():
 
 
 if __name__ == "__main__":
-    # main()
-    # postprocess_displacement()
-    # postprocess_velocities()
+    main()
+    postprocess_displacement()
+    postprocess_velocities()
     plot_displacements()

@@ -28,7 +28,21 @@ except ImportError:
 
 
 def resize_frames(frames: np.ndarray, scale: float = 1.0) -> np.ndarray:
-    pass
+
+    if scale < 1.0:
+
+        w, h, num_frames = frames.shape
+
+        width = int(w * scale)
+        height = int(h * scale)
+
+        resized_frames = np.zeros((width, height, num_frames))
+        for i in tqdm.tqdm(range(num_frames)):
+            resized_frames[:, :, i] = cv2.resize(frames[:, :, i], (height, width))
+    else:
+        resized_frames = frames.copy()
+
+    return resized_frames
 
 
 def interpolate_lk_flow(
