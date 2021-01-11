@@ -1,4 +1,5 @@
 import logging
+from collections import namedtuple
 
 import cv2
 import numpy as np
@@ -25,6 +26,27 @@ except ImportError:
             return wrap
 
         return decorator
+
+
+_MPSData = namedtuple("MPSData", ["frames", "time_stamps", "info"])
+
+
+class MPSData(_MPSData):
+    @property
+    def size_x(self):
+        return self.frames.shape[0]
+
+    @property
+    def size_y(self):
+        return self.frames.shape[1]
+
+    @property
+    def num_frames(self):
+        return self.frames.shape[2]
+
+    @property
+    def framerate(self):
+        return int(1000 / np.mean(np.diff(self.time_stamps)))
 
 
 def resize_frames(frames: np.ndarray, scale: float = 1.0) -> np.ndarray:

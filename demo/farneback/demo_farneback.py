@@ -1,17 +1,23 @@
+from pathlib import Path
+
 import cv2
 import matplotlib.pyplot as plt
-import mps
 import numpy as np
 import tqdm
 
 from mps_motion_tracking import farneback, utils
 
+here = Path(__file__).absolute().parent
+
 
 def main():
 
-    data = mps.MPS.from_dict(
-        **np.load("../../datasets/mps_data.npy", allow_pickle=True).item()
+    data = utils.MPSData(
+        **np.load(
+            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+        ).item()
     )
+
     disp = farneback.get_displacements(data.frames, data.frames[:, :, 0])
     np.save("farneback_disp.npy", disp)
     vel = farneback.get_velocities(data.frames, data.frames[:, :, 0])
@@ -19,8 +25,10 @@ def main():
 
 
 def postprocess_displacement():
-    data = mps.MPS.from_dict(
-        **np.load("../../datasets/mps_data.npy", allow_pickle=True).item()
+    data = utils.MPSData(
+        **np.load(
+            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+        ).item()
     )
     disp = np.load("farneback_disp.npy")
 
@@ -55,8 +63,10 @@ def postprocess_displacement():
 
 
 def postprocess_velocities():
-    data = mps.MPS.from_dict(
-        **np.load("../../datasets/mps_data.npy", allow_pickle=True).item()
+    data = utils.MPSData(
+        **np.load(
+            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+        ).item()
     )
     disp = np.load("farneback_vel.npy")
 
@@ -92,8 +102,10 @@ def postprocess_velocities():
 
 def plot_displacements():
 
-    data = mps.MPS.from_dict(
-        **np.load("../../datasets/mps_data.npy", allow_pickle=True).item()
+    data = utils.MPSData(
+        **np.load(
+            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+        ).item()
     )
     disp = np.load("farneback_disp.npy") * data.info["um_per_pixel"]
 

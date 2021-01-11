@@ -1,15 +1,22 @@
+from pathlib import Path
+
 import cv2
 import matplotlib.pyplot as plt
-import mps
 import numpy as np
 import tqdm
 
 from mps_motion_tracking import lucas_kanade, utils
 
+here = Path(__file__).absolute().parent
+
 
 def main():
 
-    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = utils.MPSData(
+        **np.load(
+            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+        ).item()
+    )
     disp, ref_points = lucas_kanade.get_displacements(
         data.frames, data.frames[:, :, 0], step=32
     )
@@ -18,7 +25,11 @@ def main():
 
 
 def postprocess_displacement():
-    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = utils.MPSData(
+        **np.load(
+            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+        ).item()
+    )
     disp = np.load("lk_disp.npy")
     ref_points = np.load("lk_ref_points.npy")
 
@@ -54,7 +65,11 @@ def postprocess_displacement():
 
 def plot_displacements():
 
-    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = utils.MPSData(
+        **np.load(
+            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+        ).item()
+    )
     disp = np.load("lk_disp.npy") * data.info["um_per_pixel"]
     reference_points = np.load("lk_ref_points.npy")
 
