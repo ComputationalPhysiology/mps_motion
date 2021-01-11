@@ -12,7 +12,7 @@ with open("HISTORY.md") as history_file:
 
 requirements = ["numpy", "opencv-python"]
 
-extras_require = {}
+extras_require = {"dualtvl10": ["opencv-contrib-python"]}
 
 extras_require.update(
     {"all": [val for values in extras_require.values() for val in values]}

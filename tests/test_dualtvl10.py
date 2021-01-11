@@ -1,6 +1,9 @@
 import numpy as np
+import pytest
 
 from mps_motion_tracking import dualtvl10
+
+docutils = pytest.importorskip("cv2.optflow")
 
 
 def test_flow():
