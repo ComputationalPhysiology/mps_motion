@@ -17,7 +17,11 @@ LKFlow = namedtuple("LKFlow", ["flow", "points"])
 
 
 def default_options():
-    pass
+    return dict(
+        winSize=(15, 15),
+        maxLevel=2,
+        criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
+    )
 
 
 def flow_map(args):
