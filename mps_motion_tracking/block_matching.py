@@ -30,7 +30,6 @@ import concurrent.futures
 
 import numpy as np
 import tqdm
-from scipy import ndimage
 
 from .utils import jit
 
@@ -60,6 +59,8 @@ def flow_map(args):
     filter_kernel_size = args[-1]
 
     if filter_kernel_size > 0:
+        from scipy import ndimage
+
         vectors[:, :, 0] = ndimage.median_filter(vectors[:, :, 0], filter_kernel_size)
         vectors[:, :, 1] = ndimage.median_filter(vectors[:, :, 1], filter_kernel_size)
 
