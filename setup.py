@@ -10,12 +10,13 @@ with open("README.md") as readme_file:
 with open("HISTORY.md") as history_file:
     history = history_file.read()
 
-requirements = ["numpy", "opencv-python"]
+requirements = ["numpy", "opencv-python", "tqdm"]
 
 extras_require = {
     "task-queue": ["redis", "rq"],
     "benchmark": ["flowiz"],
     "dualtvl10": ["opencv-contrib-python"],
+    "block_matching": ["numba", "scipy"],
 }
 
 extras_require.update(
