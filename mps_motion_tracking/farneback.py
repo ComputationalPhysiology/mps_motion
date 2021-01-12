@@ -5,6 +5,7 @@ Farnebäck, G. (2003, June). Two-frame motion estimation based on polynomial exp
 """
 
 import concurrent.futures
+import logging
 from typing import Optional
 
 import cv2
@@ -12,6 +13,8 @@ import numpy as np
 import tqdm
 
 from .utils import to_uint8
+
+logger = logging.getLogger(__name__)
 
 
 def default_options():
@@ -111,6 +114,8 @@ def get_displacements(
     poly_sigma: float = 1.2,
     flags: int = 0,
 ):
+
+    logger.info("Get displacements using Farneback's algorithm")
 
     args = (
         (
