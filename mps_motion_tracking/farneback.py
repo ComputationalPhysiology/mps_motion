@@ -138,7 +138,9 @@ def get_displacements(
     )
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for i, uv in tqdm.tqdm(
-            enumerate(executor.map(flow_map, args)), total=num_frames
+            enumerate(executor.map(flow_map, args)),
+            desc="Compute optical flow",
+            total=num_frames,
         ):
             flows[:, :, :, i] = uv
 

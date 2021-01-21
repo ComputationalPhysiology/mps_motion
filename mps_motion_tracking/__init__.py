@@ -4,6 +4,11 @@ __author__ = """Henrik Finsberg"""
 __email__ = "henriknf@simula.no"
 __version__ = "0.1.0"
 
-from . import dualtvl10, farneback, lucas_kanade, utils
+import logging as _logging
 
-__all__ = ["farneback", "dualtvl10", "lucas_kanade", "utils"]
+from . import dualtvl10, farneback, lucas_kanade, mechanics, utils
+from .mechanics import Mechancis
+
+_logging.basicConfig(level=_logging.INFO)
+
+__all__ = ["farneback", "dualtvl10", "lucas_kanade", "utils", "mechanics", "Mechancis"]

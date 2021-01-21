@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Tuple, Union
 
 import numpy as np
 
@@ -18,15 +18,23 @@ def _check_algorithm(alg, algs):
         raise ValueError(msg)
 
 
-def get_mps_displacements(path, flow_algorithm, **options):
-    import mps
+def get_referenece_image(reference_frame, frames) -> Tuple[str, np.ndarray]:
+    try:
+        reference_frame = int(reference_frame)
+        reference_str = str(reference_frame)
+        reference_image = frames[:, :, int(reference_frame)]
 
-    data = mps.MPS(path)
-    if flow_algorithm in DENSE_FLOW_ALGORITHMS:
-        motion = DenseOpticalFlow(data, flow_algorithm=flow_algorithm, **options)
-    elif flow_algorithm in SPARSE_FLOW_ALGORITHMS:
-        motion = DenseOpticalFlow(data, flow_algorithm=flow_algorithm, **options)
-    return motion.get_displacements()
+    except ValueError:
+        refs = ["min", "max", "median", "mean"]
+        msg = (
+            "Expected reference frame to be an integer or one of "
+            f"{refs}, got {reference_frame}"
+        )
+        if reference_frame not in refs:
+            raise ValueError(msg)
+        reference_str = reference_frame
+        reference_image = getattr(np, reference_frame)(frames, axis=2)
+    return reference_str, reference_image
 
 
 class OpticalFlow(ABC):
@@ -41,7 +49,9 @@ class OpticalFlow(ABC):
 
         self.flow_algorithm = flow_algorithm
         self.options = options
-        self.set_reference_frame(reference_frame)
+        self._reference_frame, self._reference_image = get_referenece_image(
+            reference_frame, data.frames
+        )
         self._handle_algorithm()
 
     @abstractmethod
@@ -67,26 +77,6 @@ class OpticalFlow(ABC):
     @property
     def reference_image(self) -> np.ndarray:
         return self._reference_image
-
-    def set_reference_frame(self, reference_frame):
-
-        try:
-            reference_frame = int(reference_frame)
-            self._reference_frame = str(reference_frame)
-            self._reference_image = self.data.frames[:, :, int(reference_frame)]
-
-        except ValueError:
-            refs = ["min", "max", "median", "mean"]
-            msg = (
-                "Expected reference frame to be an integer or one of "
-                f"{refs}, got {reference_frame}"
-            )
-            if reference_frame not in refs:
-                raise ValueError(msg)
-            self._reference_frame = reference_frame
-            self._reference_image = getattr(np, reference_frame)(
-                self.data.frames, axis=2
-            )
 
     def __repr__(self):
         return (
@@ -124,10 +114,16 @@ class DenseOpticalFlow(OpticalFlow):
 
         self.options.update(options)
 
-    def get_displacements(self, recompute=False):
+    def get_displacements(self, recompute=False, scale=1.0):
+        data = self.data
+        reference_image = self.reference_image
+        if scale < 1.0:
+            data = utils.resize_data(data, scale)
+            _, reference_image = get_referenece_image(self.reference_frame, data.frames)
+
         if not hasattr(self, "_displacement") or recompute:
             self._disp = self._get_displacements(
-                self.data.frames, self.reference_image, **self.options
+                data.frames, reference_image, **self.options
             )
         return self._disp
 
@@ -166,10 +162,16 @@ class SparseOpticalFlow(OpticalFlow):
 
         self.options.update(options)
 
-    def get_displacements(self, recompute=False):
+    def get_displacements(self, recompute=False, scale=1.0):
+        data = self.data
+        reference_image = self.reference_image
+        if scale < 1.0:
+            data = utils.resize_data(data, scale)
+            reference_image = get_referenece_image(self.reference_frame, data.frames)
+
         if not hasattr(self, "_displacement") or recompute:
             self._disp = self._get_displacements(
-                self.data.frames, self.reference_image, **self.options
+                data.frames, reference_image, **self.options
             )
         return self._disp
 

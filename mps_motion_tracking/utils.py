@@ -59,12 +59,22 @@ def resize_frames(frames: np.ndarray, scale: float = 1.0) -> np.ndarray:
         height = int(h * scale)
 
         resized_frames = np.zeros((width, height, num_frames))
-        for i in tqdm.tqdm(range(num_frames)):
+        for i in tqdm.tqdm(
+            range(num_frames), desc=f"Resize frames from {(w, h)} to {(width, height)}"
+        ):
             resized_frames[:, :, i] = cv2.resize(frames[:, :, i], (height, width))
     else:
         resized_frames = frames.copy()
 
     return resized_frames
+
+
+def resize_data(data: MPSData, scale: float) -> MPSData:
+    new_frames = resize_frames(data.frames, scale)
+    info = data.info.copy()
+    info["um_per_pixel"] /= scale
+    info["size_x"], info["size_y"], info["num_frames"] = new_frames.shape
+    return MPSData(new_frames, data.time_stamps, info)
 
 
 def interpolate_lk_flow(
