@@ -113,11 +113,11 @@ class Mechancis:
 
     def u_mean(self, axis=None):
         """Mean of displacement at all pixels and all time points at axis"""
-        return self.u[..., axis].mean((1, 2))
+        return self.u[..., axis].mean((1, 2)).squeeze()
 
     def u_max(self, axis=None):
         """Max displacement over all time points at all pixels and all time points at axis"""
-        return self.u[..., axis].max(0)
+        return self.u[..., axis].max(0).squeeze()
 
     @property
     def width(self) -> int:
