@@ -28,7 +28,7 @@ except ImportError:
         return decorator
 
 
-_MPSData = namedtuple("MPSData", ["frames", "time_stamps", "info"])
+_MPSData = namedtuple("_MPSData", ["frames", "time_stamps", "info"])
 
 
 class MPSData(_MPSData):
