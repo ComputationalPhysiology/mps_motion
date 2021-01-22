@@ -13,7 +13,7 @@ with open("HISTORY.md") as history_file:
 requirements = ["numpy", "opencv-python", "tqdm", "dask[array]"]
 
 extras_require = {
-    "task-queue": ["redis", "rq", "SQLAlchemy"],
+    "task-queue": ["redis", "rq", "SQLAlchemy", "Flask", "Flask-SQLAlchemy"],
     "benchmark": ["flowiz"],
     "dualtvl10": ["opencv-contrib-python"],
     "block_matching": ["numba", "scipy"],
