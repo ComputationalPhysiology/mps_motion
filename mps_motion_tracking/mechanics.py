@@ -79,7 +79,7 @@ def princial_values(A: Array) -> np.ndarray:
     # E is symmetric so we can use this function which returns eigenvalues sored in acsending order
     t = time.perf_counter()
     eigenvalues = np.linalg.eigvalsh(A)
-    logger.info(f"Princical values computed in {time.perf_counter() - t:.3f} seconds")
+    logger.info(f"Principal values computed in {time.perf_counter() - t:.3f} seconds")
 
     return eigenvalues
 
