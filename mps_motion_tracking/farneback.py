@@ -31,8 +31,7 @@ def default_options():
 
 def flow_map(args):
     reference_image, image, *remaining_args = args
-
-    return flow(to_uint8(reference_image), to_uint8(image), *remaining_args)
+    return flow(reference_image, image, *remaining_args)
 
 
 def flow(
@@ -48,8 +47,8 @@ def flow(
     flags: int = 0,
 ):
     return cv2.calcOpticalFlowFarneback(
-        reference_image,
-        image,
+        to_uint8(reference_image),
+        to_uint8(image),
         None,
         pyr_scale,
         levels,
@@ -139,7 +138,7 @@ def get_displacements(
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for i, uv in tqdm.tqdm(
             enumerate(executor.map(flow_map, args)),
-            desc="Compute optical flow",
+            desc="Compute displacement",
             total=num_frames,
         ):
             flows[:, :, :, i] = uv
