@@ -90,3 +90,8 @@ dev: clean ## Just need to make sure that libfiles remains
 
 bump:
 	bump2version patch
+
+notebook:
+	python -m pip install jupyter, rise
+	jupyter-nbextension install rise --py --sys-prefix
+	jupyter nbextension enable rise --py --sys-prefix
