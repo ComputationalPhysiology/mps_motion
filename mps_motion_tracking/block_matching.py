@@ -27,11 +27,12 @@
 # NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS
 
 import concurrent.futures
+import logging
 
 import numpy as np
 import tqdm
 
-from .utils import jit
+from .utils import jit, resize_frames
 
 __author__ = "Henrik Finsberg (henriknf@simula.no), 2017--2020"
 __maintainer__ = "Henrik Finsberg"
@@ -43,10 +44,19 @@ This module is based on the Matlab code in the script scripttotry1105_nd2.m
 provided by Berenice
 
 """
+logger = logging.getLogger(__name__)
 
 
 def default_options():
     return dict(block_size=9, max_block_movement=18, filter_kernel_size=8)
+
+
+def filter_vectors(vectors, filter_kernel_size):
+    from scipy import ndimage
+
+    vectors[:, :, 0] = ndimage.median_filter(vectors[:, :, 0], filter_kernel_size)
+    vectors[:, :, 1] = ndimage.median_filter(vectors[:, :, 1], filter_kernel_size)
+    return vectors
 
 
 def flow_map(args):
@@ -55,20 +65,51 @@ def flow_map(args):
     Helper function for running block maching algorithm in paralell
 
     """
-    vectors = flow(*args[:-1])
-    filter_kernel_size = args[-1]
+    return flow(*args)
+
+
+def flow(
+    reference_image: np.ndarray,
+    image: np.ndarray,
+    block_size: int = 9,
+    max_block_movement: int = 18,
+    filter_kernel_size: int = 5,
+):
+    """
+    Computes the displacements from `reference_image` to `image`
+    using a block matching algorithm. Briefly, we subdivde the images
+    into blocks of size `block_size x block_size` and compare the two images
+    within a range of +/- max_block_movement for each block.
+
+    Arguments
+    ---------
+    reference_image : np.ndarray
+        The frame used as reference
+    image : np.ndarray
+        The frame that you want to compute displacement for relative to
+        the referernce frame
+    block_size : int
+        Size of the blocks
+    max_block_movement : int
+        Maximum allowed movement of blocks when searching for best match.
+
+    Note
+    ----
+    Make sure to have max_block_movement big enough. If this is too small
+    then the results will be wrong. It is better to choose a too large value
+    of this. However, choosing a too large value will mean that you need to
+    compare more blocks which will increase the running time.
+    """
+    vectors = _flow(reference_image, image, block_size, max_block_movement)
 
     if filter_kernel_size > 0:
-        from scipy import ndimage
-
-        vectors[:, :, 0] = ndimage.median_filter(vectors[:, :, 0], filter_kernel_size)
-        vectors[:, :, 1] = ndimage.median_filter(vectors[:, :, 1], filter_kernel_size)
+        vectors = filter_vectors(vectors, filter_kernel_size)
 
     return vectors
 
 
 @jit(nopython=True)
-def flow(
+def _flow(
     reference_image: np.ndarray,
     image: np.ndarray,
     block_size: int = 9,
@@ -180,8 +221,11 @@ def get_displacements(
     reference_image: np.ndarray,
     block_size: int = 9,
     max_block_movement: int = 18,
+    filter_kernel_size: int = 9,
+    resize=True,
 ):
 
+    logger.info("Get displacements using block mathching")
     args = (
         (im, reference_image, block_size, max_block_movement)
         for im in np.rollaxis(frames, 2)
@@ -194,8 +238,18 @@ def get_displacements(
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for i, uv in tqdm.tqdm(
-            enumerate(executor.map(flow_map, args)), total=num_frames
+            enumerate(executor.map(flow_map, args)),
+            desc="Compute displacement",
+            total=num_frames,
         ):
             flows[:, :, :, i] = uv
+
+    if resize:
+
+        new_shape = reference_image.shape[:2]
+        int_flows = np.zeros((new_shape[0], new_shape[1], 2, num_frames))
+        int_flows[:, :, 0, :] = resize_frames(flows[:, :, 0, :], new_shape=new_shape)
+        int_flows[:, :, 1, :] = resize_frames(flows[:, :, 1, :], new_shape=new_shape)
+        flows = int_flows
 
     return flows
