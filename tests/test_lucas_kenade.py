@@ -12,7 +12,7 @@ def test_flow():
     h, w = reference_image.shape[:2]
     grid = np.mgrid[step / 2 : w : step, step / 2 : h : step].astype(int)
     reference_points = np.expand_dims(grid.astype(np.float32).reshape(2, -1).T, 1)
-    flow = lk.flow(image, reference_image, reference_points)
+    flow = lk.flow(image, reference_image, reference_points, interpolate=False)
     assert flow.shape == (reference_points.shape[0], reference_points.shape[2])
     assert flow.dtype == np.float32
 

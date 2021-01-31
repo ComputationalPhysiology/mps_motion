@@ -16,12 +16,7 @@ from . import (
     utils,
 )
 from .mechanics import Mechancis
-from .motion_tracking import (
-    DENSE_FLOW_ALGORITHMS,
-    SPARSE_FLOW_ALGORITHMS,
-    DenseOpticalFlow,
-    SparseOpticalFlow,
-)
+from .motion_tracking import FLOW_ALGORITHMS, OpticalFlow
 
 _logging.basicConfig(level=_logging.INFO)
 
@@ -34,8 +29,6 @@ __all__ = [
     "mechanics",
     "Mechancis",
     "motion_tracking",
-    "DenseOpticalFlow",
-    "SparseOpticalFlow",
-    "DENSE_FLOW_ALGORITHMS",
-    "SPARSE_FLOW_ALGORITHMS",
+    "FLOW_ALGORITHMS",
+    "OpticalFlow",
 ]

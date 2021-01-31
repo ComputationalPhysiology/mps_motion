@@ -1,5 +1,4 @@
 import logging
-from abc import ABC, abstractmethod
 from typing import Tuple, Union
 
 import numpy as np
@@ -10,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 DENSE_FLOW_ALGORITHMS = ["farneback", "dualtvl10"]
 SPARSE_FLOW_ALGORITHMS = ["lucas_kanade", "block_matching"]
+FLOW_ALGORITHMS = DENSE_FLOW_ALGORITHMS + SPARSE_FLOW_ALGORITHMS
 
 
 def _check_algorithm(alg, algs):
@@ -37,11 +37,11 @@ def get_referenece_image(reference_frame, frames) -> Tuple[str, np.ndarray]:
     return reference_str, reference_image
 
 
-class OpticalFlow(ABC):
+class OpticalFlow:
     def __init__(
         self,
         data: utils.MPSData,
-        flow_algorithm: str = "",
+        flow_algorithm: str = "farneback",
         reference_frame: Union[int, str] = 0,
         **options,
     ):
@@ -54,51 +54,24 @@ class OpticalFlow(ABC):
         )
         self._handle_algorithm()
 
-    @abstractmethod
     def _handle_algorithm(self):
-        pass
+        _check_algorithm(self.flow_algorithm, FLOW_ALGORITHMS)
 
-    @abstractmethod
-    def get_displacements(self):
-        pass
+        if self.flow_algorithm == "lucas_kanade":
+            self._flow = lucas_kanade.flow
+            self._flow_map = lucas_kanade.flow_map
+            self._get_displacements = lucas_kanade.get_displacements
+            self._get_velocities = None  # lucas_kanade.get_velocities
+            options = lucas_kanade.default_options()
 
-    @abstractmethod
-    def get_velocities(self):
-        pass
+        elif self.flow_algorithm == "block_matching":
+            self._flow = block_matching.flow
+            self._flow_map = block_matching.flow_map
+            self._get_displacements = block_matching.get_displacements
+            self._get_velocities = None  # block_matching.get_velocities
+            options = block_matching.default_options()
 
-    @abstractmethod
-    def dump(self, filname):
-        pass
-
-    @property
-    def reference_frame(self) -> str:
-        return self._reference_frame
-
-    @property
-    def reference_image(self) -> np.ndarray:
-        return self._reference_image
-
-    def __repr__(self):
-        return (
-            f"{self.__class__.__name__}("
-            f"data={self.data}, flow_algorithm={self.flow_algorithm})"
-        )
-
-
-class DenseOpticalFlow(OpticalFlow):
-    def __init__(
-        self,
-        data: utils.MPSData,
-        flow_algorithm: str = "farneback",
-        reference_frame: Union[int, str] = 0,
-        **options,
-    ):
-        super().__init__(data, flow_algorithm, reference_frame, **options)
-
-    def _handle_algorithm(self):
-        _check_algorithm(self.flow_algorithm, DENSE_FLOW_ALGORITHMS)
-
-        if self.flow_algorithm == "farneback":
+        elif self.flow_algorithm == "farneback":
             self._flow = farneback.flow
             self._flow_map = farneback.flow_map
             self._get_displacements = farneback.get_displacements
@@ -114,7 +87,28 @@ class DenseOpticalFlow(OpticalFlow):
 
         self.options.update(options)
 
-    def get_displacements(self, recompute=False, scale=1.0):
+    def get_displacements(
+        self, recompute: bool = False, unit: str = "pixels", scale: float = 1.0
+    ) -> np.ndarray:
+        """Compute motion of all images relative to reference frame
+
+        Parameters
+        ----------
+        recompute : bool, optional
+            If allready computed set this to true if you want to
+            recomputed, by default False
+        unit : str, optional
+            Either 'pixels' or 'um', by default "pixels".
+            If using 'um' them the MPSData.info has to contain the
+            key 'um_per_pixel'.
+        scale : float, optional
+            If less than 1.0, downsample images before estimating motion, by default 1.0
+
+        Returns
+        -------
+        np.ndarray
+            The displacements
+        """
         data = self.data
         reference_image = self.reference_image
         if scale < 1.0:
@@ -133,50 +127,16 @@ class DenseOpticalFlow(OpticalFlow):
     def dump(self):
         raise NotImplementedError
 
+    @property
+    def reference_frame(self) -> str:
+        return self._reference_frame
 
-class SparseOpticalFlow(OpticalFlow):
-    def __init__(
-        self,
-        data: utils.MPSData,
-        flow_algorithm: str = "lucas_kanade",
-        reference_frame: Union[int, str] = 0,
-        **options,
-    ):
-        super().__init__(data, flow_algorithm, reference_frame, **options)
+    @property
+    def reference_image(self) -> np.ndarray:
+        return self._reference_image
 
-    def _handle_algorithm(self):
-        _check_algorithm(self.flow_algorithm, SPARSE_FLOW_ALGORITHMS)
-
-        if self.flow_algorithm == "lucas_kanade":
-            self._flow = lucas_kanade.flow
-            self._flow_map = lucas_kanade.flow_map
-            self._get_displacements = lucas_kanade.get_displacements
-            self._get_velocities = None  # lucas_kanade.get_velocities
-            options = lucas_kanade.default_options()
-        elif self.flow_algorithm == "block_matching":
-            self._flow = block_matching.flow
-            self._flow_map = block_matching.flow_map
-            self._get_displacements = block_matching.get_displacements
-            self._get_velocities = None  # block_matching.get_velocities
-            options = block_matching.default_options()
-
-        self.options.update(options)
-
-    def get_displacements(self, recompute=False, scale=1.0):
-        data = self.data
-        reference_image = self.reference_image
-        if scale < 1.0:
-            data = utils.resize_data(data, scale)
-            reference_image = get_referenece_image(self.reference_frame, data.frames)
-
-        if not hasattr(self, "_displacement") or recompute:
-            self._disp = self._get_displacements(
-                data.frames, reference_image, **self.options
-            )
-        return self._disp
-
-    def get_velocities(self):
-        raise NotImplementedError
-
-    def dump(self):
-        raise NotImplementedError
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"data={self.data}, flow_algorithm={self.flow_algorithm})"
+        )
