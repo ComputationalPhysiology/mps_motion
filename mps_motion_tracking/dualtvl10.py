@@ -7,12 +7,15 @@ http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.709.4597&rep=rep1&type=
 """
 
 import concurrent.futures
+import logging
 
 import cv2
 import numpy as np
 import tqdm
 
 from .utils import to_uint8
+
+logger = logging.getLogger(__name__)
 
 
 def default_options():
@@ -22,7 +25,7 @@ def default_options():
 def flow_map(args):
     reference_image, image, *remaining_args = args
 
-    return flow(to_uint8(reference_image), to_uint8(image), *remaining_args)
+    return flow(reference_image, image, *remaining_args)
 
 
 def flow(
@@ -46,8 +49,8 @@ def flow(
         shape=(reference_image.shape[0], reference_image.shape[1], 2), dtype=np.float32
     )
     dual_proc.calc(
-        reference_image,
-        image,
+        to_uint8(reference_image),
+        to_uint8(image),
         est_flow,
     )
     return est_flow
@@ -63,6 +66,7 @@ def get_displacements(
     warps: int = 5,
 ):
 
+    logger.info("Get displacements using Dualt TV-L 1")
     args = (
         (im, reference_image, tau, lmbda, theta, nscales, warps)
         for im in np.rollaxis(frames, 2)
@@ -73,7 +77,9 @@ def get_displacements(
     )
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for i, uv in tqdm.tqdm(
-            enumerate(executor.map(flow_map, args)), total=num_frames
+            enumerate(executor.map(flow_map, args)),
+            desc="Compute displacement",
+            total=num_frames,
         ):
             flows[:, :, :, i] = uv
 
