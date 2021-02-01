@@ -28,6 +28,7 @@
 
 import concurrent.futures
 import logging
+from typing import Tuple
 
 import numpy as np
 import tqdm
@@ -246,7 +247,7 @@ def get_displacements(
 
     if resize:
 
-        new_shape = reference_image.shape[:2]
+        new_shape: Tuple[int, int] = reference_image.shape[:2]
         int_flows = np.zeros((new_shape[0], new_shape[1], 2, num_frames))
         int_flows[:, :, 0, :] = resize_frames(flows[:, :, 0, :], new_shape=new_shape)
         int_flows[:, :, 1, :] = resize_frames(flows[:, :, 1, :], new_shape=new_shape)

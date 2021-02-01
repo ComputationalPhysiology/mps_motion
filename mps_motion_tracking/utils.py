@@ -87,8 +87,8 @@ def resize_frames(
             assert len(new_shape) == 2
             width, height = new_shape
         else:
-            width = w * scale
-            height = h * scale
+            width = int(w * scale)
+            height = int(h * scale)
 
         width = int(width)
         height = int(height)

@@ -3,6 +3,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+# from mps_motion_tracking import motion_tracking as mt
 from mps_motion_tracking import block_matching, utils
 
 here = Path(__file__).absolute().parent
@@ -20,6 +21,20 @@ def main():
     )
 
     np.save("bm_disp.npy", disp)
+
+
+# def main2():
+#     data = utils.MPSData(
+#         **np.load(
+#             here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+#         ).item()
+#     )
+#     motion = mt.SparseOpticalFlow(data, flow_algorithm="block_matching")
+#     disp = motion.get_displacements(scale=0.5)
+#     from IPython import embed
+
+#     embed()
+#     exit()
 
 
 def plot_displacements():
@@ -89,3 +104,4 @@ def plot_displacements():
 if __name__ == "__main__":
     main()
     plot_displacements()
+    # main2()
