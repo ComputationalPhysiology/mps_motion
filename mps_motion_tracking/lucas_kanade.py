@@ -150,7 +150,10 @@ def get_displacements(
             out = utils.reshape_lk(reference_points, flows)
             flows = out
         if resize:
-            new_shape: Tuple[int, int] = reference_image.shape[:2]
+            new_shape: Tuple[int, int] = (
+                reference_image.shape[0],
+                reference_image.shape[1],
+            )
             int_flows = np.zeros((new_shape[0], new_shape[1], 2, num_frames))
             int_flows[:, :, 0, :] = utils.resize_frames(
                 flows[:, :, 0, :], new_shape=new_shape
