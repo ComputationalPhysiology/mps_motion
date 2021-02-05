@@ -1,13 +1,13 @@
 # import itertools as it
 
+from unittest import mock
+
 import numpy as np
 import pytest
 
-from mps_motion_tracking import OpticalFlow, utils
+from mps_motion_tracking import FLOW_ALGORITHMS, OpticalFlow, utils
 
 # from typing import Type
-
-# from unittest import mock
 
 
 @pytest.mark.parametrize("reference_frame", ["min", "max", "median", "mean"])
@@ -61,33 +61,21 @@ def test_invalid_algoritm(
         OpticalFlow(test_data, flow_algorithm=flow_algorithm)
 
 
-# @pytest.mark.parametrize(
-#     "flow_algorithm",
-#     it.chain(
-#         zip(
-#             motion_tracking.DENSE_FLOW_ALGORITHMS,
-#             it.repeat(motion_tracking.DenseOpticalFlow),
-#         ),
-#         zip(
-#             motion_tracking.SPARSE_FLOW_ALGORITHMS,
-#             it.repeat(motion_tracking.SparseOpticalFlow),
-#         ),
-#     ),
-# )
-# def test_get_displacement_lazy(
-#     test_data: utils.MPSData,
-#     flow_algorithm: str,
-# ):
+@pytest.mark.parametrize("flow_algorithm", FLOW_ALGORITHMS)
+def test_get_displacement_lazy(
+    test_data: utils.MPSData,
+    flow_algorithm: str,
+):
 
-#     with mock.patch(f"mps_motion_tracking.{flow_algorithm}.get_displacements") as _mock:
-#         m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
-#         m.get_displacements()
-#     _mock.assert_called_once()
+    with mock.patch(f"mps_motion_tracking.{flow_algorithm}.get_displacements") as _mock:
+        m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
+        m.get_displacements()
+    _mock.assert_called_once()
 
 
-# @pytest.mark.parametrize("flow_algorithm", motion_tracking.DENSE_FLOW_ALGORITHMS)
-# def test_get_displacement_dense(test_data: utils.MPSData, flow_algorithm: str):
-#     m = motion_tracking.DenseOpticalFlow(test_data, flow_algorithm=flow_algorithm)
+@pytest.mark.parametrize("flow_algorithm", FLOW_ALGORITHMS)
+def test_get_displacement_dense(test_data: utils.MPSData, flow_algorithm: str):
+    m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
 
-#     disp = m.get_displacements()
-#     assert disp.shape == (test_data.size_x, test_data.size_y, 2, test_data.num_frames)
+    disp = m.get_displacements()
+    assert disp.shape == (test_data.size_x, test_data.size_y, 2, test_data.num_frames)
