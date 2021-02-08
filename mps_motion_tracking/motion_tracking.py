@@ -1,4 +1,5 @@
 import logging
+from enum import Enum
 from typing import Tuple, Union
 
 import numpy as np
@@ -7,14 +8,17 @@ from . import block_matching, dualtvl10, farneback, lucas_kanade, utils
 
 logger = logging.getLogger(__name__)
 
-DENSE_FLOW_ALGORITHMS = ["farneback", "dualtvl10"]
-SPARSE_FLOW_ALGORITHMS = ["lucas_kanade", "block_matching"]
-FLOW_ALGORITHMS = DENSE_FLOW_ALGORITHMS + SPARSE_FLOW_ALGORITHMS
+
+class FLOW_ALGORITHMS(str, Enum):
+    farneback = "farneback"
+    dualtvl10 = "dualtvl10"
+    lucas_kanade = "lucas_kanade"
+    block_matching = "block_matching"
 
 
-def _check_algorithm(alg, algs):
-    msg = f"Expected flow algorithm to be one of {algs}, got {alg}"
-    if alg not in algs:
+def _check_algorithm(alg):
+    msg = f"Expected flow algorithm to be one of {FLOW_ALGORITHMS}, got {alg}"
+    if alg not in FLOW_ALGORITHMS._member_names_:
         raise ValueError(msg)
 
 
@@ -55,7 +59,7 @@ class OpticalFlow:
         self._handle_algorithm()
 
     def _handle_algorithm(self):
-        _check_algorithm(self.flow_algorithm, FLOW_ALGORITHMS)
+        _check_algorithm(self.flow_algorithm)
 
         if self.flow_algorithm == "lucas_kanade":
             self._flow = lucas_kanade.flow
