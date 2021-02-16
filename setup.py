@@ -38,11 +38,6 @@ setup(
         "Programming Language :: Python :: 3.9",
     ],
     description="Library for tracking motion in cardiac mps data",
-    entry_points={
-        "console_scripts": [
-            "mps_motion_tracking=mps_motion_tracking.cli:main",
-        ],
-    },
     install_requires=requirements,
     long_description=readme + "\n\n" + history,
     long_description_content_type="text/markdown",
