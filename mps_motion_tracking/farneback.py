@@ -46,9 +46,14 @@ def flow(
     poly_sigma: float = 1.2,
     flags: int = 0,
 ):
+    if image.dtype != "uint8":
+        image = to_uint8(image)
+    if reference_image.dtype != "uint8":
+        reference_image = to_uint8(reference_image)
+
     return cv2.calcOpticalFlowFarneback(
-        to_uint8(reference_image),
-        to_uint8(image),
+        reference_image,
+        image,
         None,
         pyr_scale,
         levels,

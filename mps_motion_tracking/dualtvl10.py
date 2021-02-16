@@ -48,9 +48,15 @@ def flow(
     est_flow = np.zeros(
         shape=(reference_image.shape[0], reference_image.shape[1], 2), dtype=np.float32
     )
+
+    if image.dtype != "uint8":
+        image = to_uint8(image)
+    if reference_image.dtype != "uint8":
+        reference_image = to_uint8(reference_image)
+
     dual_proc.calc(
-        to_uint8(reference_image),
-        to_uint8(image),
+        reference_image,
+        image,
         est_flow,
     )
     return est_flow
