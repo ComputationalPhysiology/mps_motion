@@ -8,10 +8,11 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 
-from . import OpticalFlow
+from . import Mechancis, OpticalFlow
 from . import motion_tracking as mt
 from . import utils
 
@@ -23,6 +24,44 @@ def print_dict(d: Dict[str, Any], fmt="{:<10}: {}"):
     for k, v in d.items():
         s += fmt.format(k, str(v)) + "\n"
     return s
+
+
+def plot_displacement(mechanics, time_stamps, path):
+
+    fig, ax = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
+    ax[0].plot(time_stamps, mechanics.u_mean_norm.compute())
+    ax[1].plot(time_stamps, mechanics.u_mean(axis=0).compute())
+    ax[2].plot(time_stamps, mechanics.u_mean(axis=1).compute())
+
+    for axi in ax:
+        axi.grid()
+        axi.set_ylabel("Displacement (\u00B5m)")
+    ax[0].set_title("Norm")
+    ax[1].set_title("X")
+    ax[2].set_title("Y")
+    ax[2].set_xlabel("Time (ms)")
+    fig.savefig(path)
+
+
+def plot_strain(mechanics, time_stamps, path, scale=1.0):
+    fig, ax = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
+
+    E = mechanics.E() * scale
+    Exx = E.mean((1, 2))[:, 0, 0]
+    Exy = E.mean((1, 2))[:, 1, 0]
+    Eyy = E.mean((1, 2))[:, 1, 1]
+    ax[0].plot(time_stamps, Exx)
+    ax[1].plot(time_stamps, Exy)
+    ax[2].plot(time_stamps, Eyy)
+
+    for axi in ax.flatten():
+        axi.grid()
+
+    ax[0].set_ylabel("$E_{xx}$")
+    ax[1].set_ylabel("$E_{xy}$")
+    ax[2].set_ylabel("$E_{yy}$")
+    ax[2].set_xlabel("Time (ms)")
+    fig.savefig(path)
 
 
 def main(
@@ -119,7 +158,11 @@ def main(
         opt_flow = OpticalFlow(data, algoritm)
         disp = opt_flow.get_displacements()
 
-    # mech = Mechancis(disp)
+    mech = Mechancis(disp)
+
+    # Plot
+    plot_displacement(mech, data.time_stamps, outdir_.joinpath("displacement.png"))
+    plot_strain(mech, data.time_stamps, outdir_.joinpath("strain.png"), scale=scale)
 
     with open(settings_file, "w") as f:
         yaml.dump(settings, f)
