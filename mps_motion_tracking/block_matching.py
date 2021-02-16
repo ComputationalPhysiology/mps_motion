@@ -70,11 +70,12 @@ def flow_map(args):
 
 
 def flow(
-    reference_image: np.ndarray,
     image: np.ndarray,
+    reference_image: np.ndarray,
     block_size: int = 9,
     max_block_movement: int = 18,
     filter_kernel_size: int = 5,
+    resize: bool = False,
 ):
     """
     Computes the displacements from `reference_image` to `image`
@@ -84,11 +85,11 @@ def flow(
 
     Arguments
     ---------
-    reference_image : np.ndarray
-        The frame used as reference
     image : np.ndarray
         The frame that you want to compute displacement for relative to
         the referernce frame
+    reference_image : np.ndarray
+        The frame used as reference
     block_size : int
         Size of the blocks
     max_block_movement : int
@@ -106,13 +107,23 @@ def flow(
     if filter_kernel_size > 0:
         vectors = filter_vectors(vectors, filter_kernel_size)
 
+    if resize:
+
+        new_shape: Tuple[int, int] = (
+            reference_image.shape[0],
+            reference_image.shape[1],
+        )
+        int_vectors = np.zeros((new_shape[0], new_shape[1], 2))
+        int_vectors[:, :, 0] = resize_frames(vectors[:, :, 0], new_shape=new_shape)
+        int_vectors[:, :, 1] = resize_frames(vectors[:, :, 1], new_shape=new_shape)
+        vectors = int_vectors
     return vectors
 
 
 @jit(nopython=True)
 def _flow(
-    reference_image: np.ndarray,
     image: np.ndarray,
+    reference_image: np.ndarray,
     block_size: int = 9,
     max_block_movement: int = 18,
 ):
@@ -208,8 +219,8 @@ def _flow(
                     vectors[y_block, x_block, 0] = 0
                     vectors[y_block, x_block, 1] = 0
                 else:
-                    vectors[y_block, x_block, 0] = max_block_movement - dy[0]
-                    vectors[y_block, x_block, 1] = max_block_movement - dx[0]
+                    vectors[y_block, x_block, 0] = dx[0] - max_block_movement
+                    vectors[y_block, x_block, 1] = dy[0] - max_block_movement
             else:
                 # If no values in box set to no movement
                 vectors[y_block, x_block, :] = 0

@@ -81,7 +81,10 @@ def resize_frames(
 
     if scale < 1.0 or new_shape is not None:
 
-        w, h, num_frames = frames.shape
+        if len(frames.shape) == 2:
+            w, h = frames.shape
+        else:
+            w, h, num_frames = frames.shape
 
         if new_shape is not None:
             assert len(new_shape) == 2
@@ -92,6 +95,9 @@ def resize_frames(
 
         width = int(width)
         height = int(height)
+
+        if len(frames.shape) == 2:
+            return cv2.resize(frames, (height, width))
 
         resized_frames = np.zeros((width, height, num_frames))
         for i in tqdm.tqdm(
