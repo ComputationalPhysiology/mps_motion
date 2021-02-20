@@ -20,25 +20,28 @@ def test_reference_frame_np(
     assert np.all(ref == m.reference_image)
 
 
-@pytest.mark.parametrize("reference_frame", [0, 1, -1])
+@pytest.mark.parametrize("reference_index", [0, 1, -1])
 def test_reference_frame_digit(
     test_data: utils.MPSData,
-    reference_frame: int,
+    reference_index: int,
 ):
+    reference_frame = test_data.time_stamps[int(reference_index)]
     m = OpticalFlow(test_data, reference_frame=reference_frame)
-    assert m.reference_frame == str(reference_frame)
-    ref = test_data.frames[:, :, reference_frame]
+
+    assert abs(float(m.reference_frame) - reference_frame) < 1e-8
+    ref = test_data.frames[:, :, int(reference_index)]
     assert np.all(ref == m.reference_image)
 
 
-@pytest.mark.parametrize("reference_frame", ["0", "1", "-1"])
+@pytest.mark.parametrize("reference_index", ["0", "1", "-1"])
 def test_reference_frame_digit_str(
     test_data: utils.MPSData,
-    reference_frame: str,
+    reference_index: str,
 ):
+    reference_frame = test_data.time_stamps[int(reference_index)]
     m = OpticalFlow(test_data, reference_frame=reference_frame)
-    assert m.reference_frame == reference_frame
-    ref = test_data.frames[:, :, int(reference_frame)]
+    assert abs(float(m.reference_frame) - reference_frame) < 1e-8
+    ref = test_data.frames[:, :, int(reference_index)]
     assert np.all(ref == m.reference_image)
 
 

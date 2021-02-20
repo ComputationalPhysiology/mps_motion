@@ -1,6 +1,6 @@
 import logging
 from enum import Enum
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -22,11 +22,12 @@ def _check_algorithm(alg):
         raise ValueError(msg)
 
 
-def get_referenece_image(reference_frame, frames) -> Tuple[str, np.ndarray]:
+def get_referenece_image(
+    reference_frame, frames, time_stamps: Optional[np.ndarray] = None
+) -> Tuple[str, np.ndarray]:
     try:
-        reference_frame = int(reference_frame)
+        reference_time = float(reference_frame)
         reference_str = str(reference_frame)
-        reference_image = frames[:, :, int(reference_frame)]
 
     except ValueError:
         refs = ["min", "max", "median", "mean"]
@@ -38,6 +39,18 @@ def get_referenece_image(reference_frame, frames) -> Tuple[str, np.ndarray]:
             raise ValueError(msg)
         reference_str = reference_frame
         reference_image = getattr(np, reference_frame)(frames, axis=2)
+    else:
+        if time_stamps is None:
+            raise ValueError("Please provide time stamps")
+        try:
+            reference_frame = next(
+                i for i, t in enumerate(time_stamps) if t >= reference_time
+            )
+        except StopIteration:
+            reference_frame = len(time_stamps) - 1
+
+        reference_frame = min(reference_frame, len(time_stamps) - 1)
+        reference_image = frames[:, :, int(reference_frame)]
     return reference_str, reference_image
 
 
@@ -54,7 +67,7 @@ class OpticalFlow:
         self.flow_algorithm = flow_algorithm
         self.options = options
         self._reference_frame, self._reference_image = get_referenece_image(
-            reference_frame, data.frames
+            reference_frame, data.frames, data.time_stamps
         )
         self._handle_algorithm()
 
@@ -120,7 +133,9 @@ class OpticalFlow:
             raise ValueError("Cannot have scale larger than 1.0")
         if scale < 1.0:
             data = utils.resize_data(data, scale)
-            _, reference_image = get_referenece_image(self.reference_frame, data.frames)
+            _, reference_image = get_referenece_image(
+                self.reference_frame, data.frames, data.time_stamps
+            )
 
         if not hasattr(self, "_displacement") or recompute:
             self._disp = self._get_displacements(
