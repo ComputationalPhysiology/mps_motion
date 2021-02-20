@@ -113,8 +113,11 @@ class OpticalFlow:
         np.ndarray
             The displacements
         """
+        assert unit in ["pixels", "um"]
         data = self.data
         reference_image = self.reference_image
+        if scale > 1.0:
+            raise ValueError("Cannot have scale larger than 1.0")
         if scale < 1.0:
             data = utils.resize_data(data, scale)
             _, reference_image = get_referenece_image(self.reference_frame, data.frames)
@@ -123,6 +126,12 @@ class OpticalFlow:
             self._disp = self._get_displacements(
                 data.frames, reference_image, **self.options
             )
+            if unit == "um":
+                self._disp *= data.info.get("um_per_pixel", 1.0)
+            else:
+                if scale < 1.0:
+                    self._disp /= np.sqrt(scale)
+
         return self._disp
 
     def get_velocities(self):
