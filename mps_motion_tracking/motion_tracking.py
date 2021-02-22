@@ -105,7 +105,7 @@ class OpticalFlow:
         self.options.update(options)
 
     def get_displacements(
-        self, recompute: bool = False, unit: str = "pixels", scale: float = 1.0
+        self, recompute: bool = False, unit: str = "um", scale: float = 1.0
     ) -> np.ndarray:
         """Compute motion of all images relative to reference frame
 
@@ -145,7 +145,7 @@ class OpticalFlow:
                 self._disp *= data.info.get("um_per_pixel", 1.0)
             else:
                 if scale < 1.0:
-                    self._disp /= np.sqrt(scale)
+                    self._disp /= scale
 
         return self._disp
 

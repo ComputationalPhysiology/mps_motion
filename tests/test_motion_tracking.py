@@ -100,26 +100,3 @@ def test_get_displacement_scale_algs(
     """Test that there are now exceptions raised"""
     m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
     m.get_displacements(unit=unit, scale=0.5)
-
-
-@pytest.mark.parametrize("unit", ["um", "pixels"])
-def test_get_displacement_scale(test_data: utils.MPSData, unit):
-
-    m = OpticalFlow(test_data)
-
-    disp_1 = m.get_displacements(unit=unit, scale=1.0)
-    disp_08 = m.get_displacements(unit=unit, scale=0.8)
-    disp_05 = m.get_displacements(unit=unit, scale=0.5)
-    disp_03 = m.get_displacements(unit=unit, scale=0.3)
-    disp_02 = m.get_displacements(unit=unit, scale=0.2)
-
-    maxs = []
-    mins = []
-    for d in [disp_1, disp_08, disp_05, disp_03, disp_02]:
-        maxs.append(d.max())
-        mins.append(d.min())
-
-    assert not all(x < y for x, y in zip(maxs, maxs[1:]))
-    assert not all(x > y for x, y in zip(maxs, maxs[1:]))
-    assert not all(x < y for x, y in zip(mins, mins[1:]))
-    assert not all(x > y for x, y in zip(mins, mins[1:]))

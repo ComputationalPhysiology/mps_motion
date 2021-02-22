@@ -113,7 +113,7 @@ def resize_frames(
 def resize_data(data: MPSData, scale: float) -> MPSData:
     new_frames = resize_frames(data.frames, scale)
     info = data.info.copy()
-    info["um_per_pixel"] /= np.sqrt(scale)
+    info["um_per_pixel"] /= scale
     info["size_x"], info["size_y"], info["num_frames"] = new_frames.shape
     return MPSData(new_frames, data.time_stamps, info)
 
