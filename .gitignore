@@ -3,6 +3,11 @@
 *.mp4
 *.png
 sandbox
+*.gif
+*.db
+presentation
+datasets/mps_data
+demo/PointH4A_ChannelBF_VC_Seq0018*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
