@@ -27,6 +27,34 @@ def test_principal_strain(mech_obj):
     assert np.allclose(e2[:, :, 1], eig.max())
 
 
+@pytest.mark.parametrize("dx", [1.0, 0.5, 2.0])
+def test_dx(dx):
+    width = 10
+    height = 15
+
+    # f(x, y) = (x / width - y / height & y / height - x / width)
+    # Df = (1/width & -1/height \\ -1/width & 1/height)
+
+    a11 = 1 / width
+    a12 = -1 / height
+    a21 = -1 / width
+    a22 = 1 / height
+
+    u = np.zeros((width, height, 2, 1))
+    u[:, :, 0, 0] = np.fromfunction(
+        lambda x, y: a11 * x + a12 * y, shape=(width, height), dtype=float
+    )
+    u[:, :, 1, 0] = np.fromfunction(
+        lambda x, y: a21 * x + a22 * y, shape=(width, height), dtype=float
+    )
+    m = Mechancis(u, dx=dx)
+
+    assert da.isclose(m.du[:, :, :, 0, 0], a11 / dx).all().compute()
+    assert da.isclose(m.du[:, :, :, 0, 1], a12 / dx).all().compute()
+    assert da.isclose(m.du[:, :, :, 1, 0], a21 / dx).all().compute()
+    assert da.isclose(m.du[:, :, :, 1, 1], a22 / dx).all().compute()
+
+
 @pytest.fixture
 def mech_obj():
 
@@ -70,4 +98,5 @@ def test_shapes():
 if __name__ == "__main__":
     # main()
     # mech_obj()
-    test_shapes()
+    # test_shapes()
+    test_dx(0.5)
