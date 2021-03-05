@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 
-from mps_motion_tracking import farneback, utils
+from mps_motion_tracking import Mechancis, OpticalFlow, farneback, utils
 
 here = Path(__file__).absolute().parent
 
@@ -166,8 +166,31 @@ def plot_displacements():
     # plt.show()
 
 
+def plot_strain():
+
+    # data = utils.MPSData(
+    #     **np.load(
+    #         here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+    #     ).item()
+    # )
+    import mps
+
+    data = mps.MPS(here.parent.joinpath("PointH4A_ChannelBF_VC_Seq0018.nd2"))
+
+    flow = OpticalFlow(data, "farneback")
+    u = flow.get_displacements(scale=0.3)
+    mech = Mechancis(u)
+
+    print(mech)
+    from IPython import embed
+
+    embed()
+    exit()
+
+
 if __name__ == "__main__":
-    main()
-    postprocess_displacement()
-    postprocess_velocities()
-    plot_displacements()
+    # main()
+    # postprocess_displacement()
+    # postprocess_velocities()
+    # plot_displacements()
+    plot_strain()

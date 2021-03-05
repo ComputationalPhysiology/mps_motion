@@ -13,7 +13,7 @@ import cv2
 import numpy as np
 import tqdm
 
-from . import utils
+from . import scaling, utils
 
 logger = logging.getLogger(__name__)
 LKFlow = namedtuple("LKFlow", ["flow", "points"])
@@ -31,7 +31,7 @@ def default_options():
 
 
 def rbfinterp2d_map(args):
-    return utils.rbfinterp2d(*args)
+    return scaling.rbfinterp2d(*args)
 
 
 def flow_map(args):
@@ -62,7 +62,7 @@ def flow(
 
     f = _flow(image, reference_image, points, winSize, maxLevel, criteria)
     if interpolate:
-        f = utils.rbfinterp2d(
+        f = scaling.rbfinterp2d(
             points.squeeze(), f, np.arange(image.shape[1]), np.arange(image.shape[0])
         )
     return f
@@ -147,7 +147,7 @@ def get_displacements(
         flows = int_flows
     else:
         if reshape:
-            out = utils.reshape_lk(reference_points, flows)
+            out = scaling.reshape_lk(reference_points, flows)
             flows = out
         if resize:
             new_shape: Tuple[int, int] = (
@@ -155,10 +155,10 @@ def get_displacements(
                 reference_image.shape[1],
             )
             int_flows = np.zeros((new_shape[0], new_shape[1], 2, num_frames))
-            int_flows[:, :, 0, :] = utils.resize_frames(
+            int_flows[:, :, 0, :] = scaling.resize_frames(
                 flows[:, :, 0, :], new_shape=new_shape
             )
-            int_flows[:, :, 1, :] = utils.resize_frames(
+            int_flows[:, :, 1, :] = scaling.resize_frames(
                 flows[:, :, 1, :], new_shape=new_shape
             )
             flows = int_flows

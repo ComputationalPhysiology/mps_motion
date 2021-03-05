@@ -154,9 +154,8 @@ def main(
             data = MPSData(**np.load(filename_, allow_pickle=True).item())
 
         logger.info(f"Analyze motion in file {filename}...")
-        data = utils.resize_data(data=data, scale=scale)
         opt_flow = OpticalFlow(data, algoritm)
-        disp = opt_flow.get_displacements()
+        disp = opt_flow.get_displacements(scale=scale)
 
     mech = Mechancis(disp)
 

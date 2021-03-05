@@ -33,7 +33,8 @@ from typing import Tuple
 import numpy as np
 import tqdm
 
-from .utils import jit, resize_frames
+from .scaling import resize_frames
+from .utils import jit
 
 __author__ = "Henrik Finsberg (henriknf@simula.no), 2017--2020"
 __maintainer__ = "Henrik Finsberg"

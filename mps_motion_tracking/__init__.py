@@ -13,6 +13,7 @@ from . import (
     lucas_kanade,
     mechanics,
     motion_tracking,
+    scaling,
     utils,
 )
 from .mechanics import Mechancis
@@ -31,4 +32,5 @@ __all__ = [
     "motion_tracking",
     "FLOW_ALGORITHMS",
     "OpticalFlow",
+    "scaling",
 ]

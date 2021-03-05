@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 
-from . import block_matching, dualtvl10, farneback, lucas_kanade, utils
+from . import block_matching, dualtvl10, farneback, lucas_kanade, scaling, utils
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class FLOW_ALGORITHMS(str, Enum):
 
 
 def _check_algorithm(alg):
-    msg = f"Expected flow algorithm to be one of {FLOW_ALGORITHMS}, got {alg}"
+    msg = f"Expected flow algorithm to be one of {FLOW_ALGORITHMS._member_names_}, got {alg}"
     if alg not in FLOW_ALGORITHMS._member_names_:
         raise ValueError(msg)
 
@@ -132,7 +132,7 @@ class OpticalFlow:
         if scale > 1.0:
             raise ValueError("Cannot have scale larger than 1.0")
         if scale < 1.0:
-            data = utils.resize_data(data, scale)
+            data = scaling.resize_data(data, scale)
             _, reference_image = get_referenece_image(
                 self.reference_frame, data.frames, data.time_stamps
             )
