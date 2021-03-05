@@ -17,6 +17,7 @@ extras_require = {
     "benchmark": ["flowiz"],
     "dualtvl10": ["opencv-contrib-python"],
     "block_matching": ["numba", "scipy"],
+    "legacy": ["cached_property"],
 }
 
 extras_require.update(
