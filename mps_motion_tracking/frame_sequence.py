@@ -26,6 +26,9 @@ class FrameSequence:
         assert isinstance(array, (da.core.Array, np.ndarray))
         self.array = array
 
+    def __getitem__(self, *args, **kwargs):
+        return self.array.__getitem__(*args, **kwargs)
+
     @property
     def shape(self):
         return self.array.shape
