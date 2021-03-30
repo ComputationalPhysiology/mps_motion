@@ -109,8 +109,12 @@ class OpticalFlow:
         self.options.update(options)
 
     def get_displacements(
-        self, recompute: bool = False, unit: str = "um", scale: float = 1.0
-    ) -> fs.VectorFrameSequence:
+        self,
+        recompute: bool = False,
+        unit: str = "um",
+        scale: float = 1.0,
+        raw: bool = False,
+    ) -> Union[fs.VectorFrameSequence, np.ndarray]:
         """Compute motion of all images relative to reference frame
 
         Parameters
@@ -124,7 +128,9 @@ class OpticalFlow:
             key 'um_per_pixel'.
         scale : float, optional
             If less than 1.0, downsample images before estimating motion, by default 1.0
-
+        raw: bool, optional
+            If True, return the raw numpy array without casting it to
+            dask and VectorFrameSequnce
         Returns
         -------
         np.ndarray
@@ -132,7 +138,9 @@ class OpticalFlow:
         """
         assert unit in ["pixels", "um"]
         data = self.data
+
         reference_image = self.reference_image
+
         if scale > 1.0:
             raise ValueError("Cannot have scale larger than 1.0")
         if scale < 1.0:
@@ -140,16 +148,23 @@ class OpticalFlow:
             _, reference_image = get_referenece_image(
                 self.reference_frame, data.frames, data.time_stamps
             )
+
         if not hasattr(self, "_displacement") or recompute or scale != self._scale:
+
             u = self._get_displacements(data.frames, reference_image, **self.options)
             self._scale = scale
+
             if unit == "um":
                 dx = data.info.get("um_per_pixel", 1.0)
             else:
                 dx = 1 / scale
-            self._displacement = fs.VectorFrameSequence(
-                da.from_array(np.swapaxes(u, 2, 3)), dx=dx
-            )
+
+            if raw:
+                self._displacement = u
+                return self._displacement
+
+            U = da.from_array(np.swapaxes(u, 2, 3))
+            self._displacement = fs.VectorFrameSequence(U, dx=dx)
 
         return self._displacement
 

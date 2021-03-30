@@ -4,9 +4,11 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from mps_motion_tracking import FLOW_ALGORITHMS, OpticalFlow, utils
+from mps_motion_tracking import FLOW_ALGORITHMS as _FLOW_ALGORITHMS
+from mps_motion_tracking import OpticalFlow, utils
 
 # from typing import Type
+FLOW_ALGORITHMS = [alg for alg in dir(_FLOW_ALGORITHMS) if not alg.startswith("_")]
 
 
 @pytest.mark.parametrize("reference_frame", ["min", "max", "median", "mean"])
@@ -71,7 +73,7 @@ def test_get_displacement_lazy(
 
     with mock.patch(f"mps_motion_tracking.{flow_algorithm}.get_displacements") as _mock:
         m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
-        m.get_displacements()
+        m.get_displacements(raw=True)
     _mock.assert_called_once()
 
 
@@ -79,16 +81,21 @@ def test_get_displacement_lazy(
 def test_get_displacement(test_data: utils.MPSData, flow_algorithm: str):
     m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
     disp = m.get_displacements()
-    assert disp.shape == (test_data.size_x, test_data.size_y, 2, test_data.num_frames)
+    assert disp.shape == (test_data.size_x, test_data.size_y, test_data.num_frames, 2)
 
 
 def test_get_displacement_unit(test_data: utils.MPSData):
 
     m = OpticalFlow(test_data)
     disp_px = m.get_displacements(unit="pixels")
-    disp_um = m.get_displacements(unit="um")
-
-    assert abs(disp_um.max() - disp_px.max() * test_data.info["um_per_pixel"]) < 1e-12
+    disp_um = m.get_displacements(unit="um", recompute=True)
+    assert (
+        abs(
+            disp_um.max().max().compute()
+            - disp_px.max().max().compute() * test_data.info["um_per_pixel"]
+        )
+        < 1e-12
+    )
 
 
 @pytest.mark.parametrize(

@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 
 from mps_motion_tracking import Mechancis
+from mps_motion_tracking import frame_sequence as fs
 
 
 def test_E_symmetry(mech_obj):
@@ -40,14 +41,16 @@ def test_dx(dx):
     a21 = -1 / width
     a22 = 1 / height
 
-    u = np.zeros((width, height, 2, 1))
+    u = np.zeros((width, height, 1, 2))
     u[:, :, 0, 0] = np.fromfunction(
         lambda x, y: a11 * x + a12 * y, shape=(width, height), dtype=float
     )
-    u[:, :, 1, 0] = np.fromfunction(
+    u[:, :, 0, 1] = np.fromfunction(
         lambda x, y: a21 * x + a22 * y, shape=(width, height), dtype=float
     )
-    m = Mechancis(u, dx=dx)
+
+    U = fs.VectorFrameSequence(u, dx=dx)
+    m = Mechancis(U)
 
     assert da.isclose(m.du[:, :, :, 0, 0], a11 / dx).all().compute()
     assert da.isclose(m.du[:, :, :, 0, 1], a12 / dx).all().compute()
@@ -62,21 +65,21 @@ def mech_obj():
     height = 15
     num_time_points = 4
 
-    u = np.zeros((height, width, 2, num_time_points))
+    u = np.zeros((height, width, num_time_points, 2))
     # First time point is zero
     # Second time point has a linar displacement in x
-    u[:, :, 0, 1] = np.fromfunction(
+    u[:, :, 1, 0] = np.fromfunction(
         lambda y, x: x / width, shape=(height, width), dtype=float
     )
     # Third points have linear displacement in y
-    u[:, :, 1, 2] = np.fromfunction(
+    u[:, :, 2, 1] = np.fromfunction(
         lambda y, x: y / height, shape=(height, width), dtype=float
     )
     # Forth is linear in both
-    u[:, :, 0, 3] = u[:, :, 0, 1]
-    u[:, :, 1, 3] = u[:, :, 1, 2]
+    u[:, :, 2, 0] = u[:, :, 1, 0]
+    u[:, :, 3, 1] = u[:, :, 2, 1]
 
-    return Mechancis(u)
+    return Mechancis(fs.VectorFrameSequence(u))
 
 
 def test_shapes():
@@ -85,8 +88,8 @@ def test_shapes():
     height = 12
     num_time_steps = 14
 
-    u = np.random.random((width, height, 2, num_time_steps))
-    m = Mechancis(u)
+    u = np.random.random((width, height, num_time_steps, 2))
+    m = Mechancis(fs.VectorFrameSequence(u))
 
     assert m.u.shape == (width, height, num_time_steps, 2)
     assert m.du.shape == (width, height, num_time_steps, 2, 2)
