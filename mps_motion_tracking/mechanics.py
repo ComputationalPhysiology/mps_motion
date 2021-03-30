@@ -53,15 +53,28 @@ class Mechancis:
         u should be in the correct units, e.g um.
         It is assumed that axis are as follows:
         X x Y x 2 x T
-    dx : float
-        Physical size of one pixel in the Frame, by default 1.0
+    scale : float
+        How much the corresponding image has been scaled. This
+        is the inverse of dx, i.e the Physical size of one
+        pixel in the Frame, by default 1.0. Note this can
+        also incorporate translation from pixel size to
+        physical size.
 
     """
 
-    def __init__(self, u: Array, dx: float = 1):
-        logger.debug("Convert displacement to dask array")
-        self.u = fs.VectorFrameSequence(da.from_array(np.swapaxes(u, 2, 3)))
-        self.dx = dx
+    def __init__(self, u: fs.VectorFrameSequence):
+        # logger.debug("Convert displacement to dask array")
+        assert isinstance(u, fs.VectorFrameSequence)
+        self.u = u
+
+        # self.u = fs.VectorFrameSequence(
+        #     da.from_array(np.swapaxes(u, 2, 3)), scale=scale
+        # )
+        # self.scale = scale
+
+    @property
+    def dx(self) -> float:
+        return self.u.dx
 
     @property
     def width(self) -> int:
@@ -89,16 +102,20 @@ class Mechancis:
 
     @property
     def du(self) -> fs.TensorFrameSequence:
-        return fs.TensorFrameSequence(compute_gradients(self.u.array, dx=self.dx))
+        return fs.TensorFrameSequence(
+            compute_gradients(self.u._array, dx=self.dx), dx=1.0
+        )
 
     @property
     def F(self) -> fs.TensorFrameSequence:
-        return fs.TensorFrameSequence(self.du.array + da.eye(2)[None, None, None, :, :])
+        return fs.TensorFrameSequence(
+            self.du.array + da.eye(2)[None, None, None, :, :], dx=1.0
+        )
 
     @property
     def E(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
-            compute_green_lagrange_strain_tensor(self.F.array)
+            compute_green_lagrange_strain_tensor(self.F.array), dx=1.0
         )
 
     @cached_property

@@ -2,9 +2,12 @@ import logging
 from enum import Enum
 from typing import Optional, Tuple, Union
 
+import dask.array as da
 import numpy as np
 
-from . import block_matching, dualtvl10, farneback, lucas_kanade, scaling, utils
+from . import block_matching, dualtvl10, farneback
+from . import frame_sequence as fs
+from . import lucas_kanade, scaling, utils
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +72,7 @@ class OpticalFlow:
         self._reference_frame, self._reference_image = get_referenece_image(
             reference_frame, data.frames, data.time_stamps
         )
+        self._scale = 1.0
         self._handle_algorithm()
 
     def _handle_algorithm(self):
@@ -106,7 +110,7 @@ class OpticalFlow:
 
     def get_displacements(
         self, recompute: bool = False, unit: str = "um", scale: float = 1.0
-    ) -> np.ndarray:
+    ) -> fs.VectorFrameSequence:
         """Compute motion of all images relative to reference frame
 
         Parameters
@@ -136,18 +140,18 @@ class OpticalFlow:
             _, reference_image = get_referenece_image(
                 self.reference_frame, data.frames, data.time_stamps
             )
-
-        if not hasattr(self, "_displacement") or recompute:
-            self._disp = self._get_displacements(
-                data.frames, reference_image, **self.options
-            )
+        if not hasattr(self, "_displacement") or recompute or scale != self._scale:
+            u = self._get_displacements(data.frames, reference_image, **self.options)
+            self._scale = scale
             if unit == "um":
-                self._disp *= data.info.get("um_per_pixel", 1.0)
+                dx = data.info.get("um_per_pixel", 1.0)
             else:
-                if scale < 1.0:
-                    self._disp /= scale
+                dx = 1 / scale
+            self._displacement = fs.VectorFrameSequence(
+                da.from_array(np.swapaxes(u, 2, 3)), dx=dx
+            )
 
-        return self._disp
+        return self._displacement
 
     def get_velocities(self):
         raise NotImplementedError

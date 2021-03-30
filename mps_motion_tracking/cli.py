@@ -29,9 +29,9 @@ def print_dict(d: Dict[str, Any], fmt="{:<10}: {}"):
 def plot_displacement(mechanics, time_stamps, path):
 
     fig, ax = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
-    ax[0].plot(time_stamps, mechanics.u_mean_norm.compute())
-    ax[1].plot(time_stamps, mechanics.u_mean(axis=0).compute())
-    ax[2].plot(time_stamps, mechanics.u_mean(axis=1).compute())
+    ax[0].plot(time_stamps, mechanics.u.norm().mean().compute())
+    ax[1].plot(time_stamps, mechanics.u.x.mean().compute())
+    ax[2].plot(time_stamps, mechanics.u.y.mean().compute())
 
     for axi in ax:
         axi.grid()
@@ -46,10 +46,10 @@ def plot_displacement(mechanics, time_stamps, path):
 def plot_strain(mechanics, time_stamps, path, scale=1.0):
     fig, ax = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
 
-    E = mechanics.E() * scale
-    Exx = E.mean((1, 2))[:, 0, 0]
-    Exy = E.mean((1, 2))[:, 1, 0]
-    Eyy = E.mean((1, 2))[:, 1, 1]
+    E = mechanics.E
+    Exx = E.x.mean()
+    Exy = E.xy.mean()
+    Eyy = E.y.mean()
     ax[0].plot(time_stamps, Exx)
     ax[1].plot(time_stamps, Exy)
     ax[2].plot(time_stamps, Eyy)
@@ -115,7 +115,6 @@ def main(
     filename_ = Path(filename)
     if outdir is None:
         outdir_ = filename_.with_suffix("").joinpath("motion")
-        outdir_.mkdir(exist_ok=True, parents=True)
     else:
         outdir_ = Path(outdir)
 
@@ -158,11 +157,12 @@ def main(
         disp = opt_flow.get_displacements(scale=scale)
 
     mech = Mechancis(disp)
-
+    outdir_.mkdir(exist_ok=True, parents=True)
     # Plot
     plot_displacement(mech, data.time_stamps, outdir_.joinpath("displacement.png"))
     plot_strain(mech, data.time_stamps, outdir_.joinpath("strain.png"), scale=scale)
 
     with open(settings_file, "w") as f:
         yaml.dump(settings, f)
-    np.save(disp_file, disp)
+
+    np.save(disp_file, disp.array.compute())
