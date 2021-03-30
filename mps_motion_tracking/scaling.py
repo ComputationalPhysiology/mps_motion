@@ -16,49 +16,6 @@ INTERPOLATION_METHODS = {
 }
 
 
-class ScaledDisplacement:
-    def __init__(self, u: np.ndarray, scale: float = 1.0, um_per_pixel: float = 1.0):
-        """Constructor for ScaledDisplacement
-
-        Parameters
-        ----------
-        u : np.ndarray
-            Array with displacement with shape (height, width, 2, num_time_points)
-        scale : float, optional
-            Factor between 0 and 1 with how much the data is scaled, by default 1.0
-        um_per_pixel : float, optional
-            Factor for converting from pixel unit to micrometer, by default 1.0
-        """
-
-        if len(u.shape) == 3:
-            u = np.expand_dims(u, -1)
-
-        assert u.shape[2] == 2, f"Expected u to have two components, got {u.shape[2]}"
-
-        self.array = u
-        self.scale = scale
-        self.um_per_pixel = um_per_pixel
-
-    @property
-    def height(self):
-        return self.array.shape[0]
-
-    @property
-    def width(self):
-        return self.array.shape[1]
-
-    @property
-    def dim(self):
-        return self.array.shape[2]
-
-    @property
-    def num_time_points(self):
-        return self.array.shape[3]
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(u=array of shape{self.array.shape}, scale={self.scale}, um_per_pixel={self.um_per_pixel})"
-
-
 def resize_data(data: MPSData, scale: float) -> MPSData:
     new_frames = resize_frames(data.frames, scale)
     info = data.info.copy()
