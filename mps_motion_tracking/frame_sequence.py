@@ -32,7 +32,6 @@ class FrameSequence:
         assert isinstance(array, (da.core.Array, np.ndarray))
         self._array = array
         self.dx = dx
-        print("DX = ", dx)
 
     def __getitem__(self, *args, **kwargs):
         return self.array.__getitem__(*args, **kwargs)
@@ -60,7 +59,6 @@ class FrameSequence:
         return self.array.shape
 
     def mean(self) -> Array:
-        print("MEAN")
         return self.array.mean((0, 1)) / self.dx
 
     def max(self) -> Array:

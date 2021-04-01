@@ -63,14 +63,8 @@ class Mechancis:
     """
 
     def __init__(self, u: fs.VectorFrameSequence):
-        # logger.debug("Convert displacement to dask array")
         assert isinstance(u, fs.VectorFrameSequence)
         self.u = u
-
-        # self.u = fs.VectorFrameSequence(
-        #     da.from_array(np.swapaxes(u, 2, 3)), scale=scale
-        # )
-        # self.scale = scale
 
     @property
     def dx(self) -> float:
