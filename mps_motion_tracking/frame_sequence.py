@@ -3,7 +3,7 @@ from typing import Union
 import dask.array as da
 import numpy as np
 
-Array = Union[da.Array, np.ndarray]
+Array = Union[da.core.Array, np.ndarray]
 
 
 class FrameSequence:
@@ -64,7 +64,7 @@ class FrameSequence:
         return self.array.max(2)
 
     def __eq__(self, other) -> bool:
-        return np.isclose(self.array, other.array).all()
+        return bool(np.isclose(self.array, other.array).all())
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.array.shape}, dx={self.dx})"
