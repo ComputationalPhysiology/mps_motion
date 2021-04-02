@@ -89,10 +89,11 @@ def test_get_displacement_unit(test_data: utils.MPSData):
     m = OpticalFlow(test_data)
     disp_px = m.get_displacements(unit="pixels")
     disp_um = m.get_displacements(unit="um", recompute=True)
+
     assert (
         abs(
-            disp_um.max().max().compute()
-            - disp_px.max().max().compute() * test_data.info["um_per_pixel"]
+            disp_um.x.mean().max().compute()
+            - disp_px.x.mean().max().compute() * test_data.info["um_per_pixel"]
         )
         < 1e-12
     )
