@@ -148,7 +148,7 @@ def main(
             data = mps.MPS(filename_)
         except ImportError:
             logger.warning("Missing `mps` pacakge.")
-            from .motion_tracking.utils import MPSData
+            from .utils import MPSData
 
             data = MPSData(**np.load(filename_, allow_pickle=True).item())
 
