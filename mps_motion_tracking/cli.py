@@ -66,7 +66,7 @@ def plot_strain(mechanics, time_stamps, path, scale=1.0):
 
 def main(
     filename: str,
-    algoritm: mt.FLOW_ALGORITHMS = mt.FLOW_ALGORITHMS.farneback,
+    algorithm: mt.FLOW_ALGORITHMS = mt.FLOW_ALGORITHMS.farneback,
     outdir: Optional[str] = None,
     scale: float = 0.3,
     verbose: bool = False,
@@ -120,7 +120,7 @@ def main(
 
     settings = {
         "filename": filename_,
-        "algorithm": algoritm,
+        "algorithm": algorithm,
         "outdir": outdir_,
         "scale": scale,
         "timestamp": datetime.datetime.now().isoformat(),
@@ -153,7 +153,7 @@ def main(
             data = MPSData(**np.load(filename_, allow_pickle=True).item())
 
         logger.info(f"Analyze motion in file {filename}...")
-        opt_flow = OpticalFlow(data, algoritm)
+        opt_flow = OpticalFlow(data, algorithm)
         disp = opt_flow.get_displacements(scale=scale)
 
     mech = Mechancis(disp)

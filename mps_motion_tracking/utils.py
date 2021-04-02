@@ -13,7 +13,7 @@ except ImportError:
         "numba not found - Numba is just to speed up the motion tracking algorithm\n"
         "To install numba use: pip install numba"
     )
-    logger.warning(msg)
+    logger.debug(msg)
     prange = range
 
     # Create a dummy decorator

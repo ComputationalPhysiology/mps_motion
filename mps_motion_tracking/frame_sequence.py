@@ -22,8 +22,7 @@ class FrameSequence:
             Frame sequence of shape
             (width, height, num_time_steps)
         dx : float
-            How much the corresponding image has been dxd. This
-            is the inverse of dx, i.e the Physical size of one
+            The Physical size of one
             pixel in the Frame, by default 1.0. Note this can
             also incorporate translation from pixel size to
             physical size.
@@ -86,8 +85,7 @@ class VectorFrameSequence(FrameSequence):
             Tensor sequence of shape
             (width, height, num_time_steps, 2)
         dx : float
-            How much the corresponding image has been dxd. This
-            is the inverse of dx, i.e the Physical size of one
+            The Physical size of one
             pixel in the Frame, by default 1.0. Note this can
             also incorporate translation from pixel size to
             physical size.
@@ -126,8 +124,7 @@ class TensorFrameSequence(FrameSequence):
             Tensor sequence of shape
             (width, height, num_time_steps, 2, 2)
         dx : float
-            How much the corresponding image has been dxd. This
-            is the inverse of dx, i.e the Physical size of one
+            The Physical size of one
             pixel in the Frame, by default 1.0. Note this can
             also incorporate translation from pixel size to
             physical size.
