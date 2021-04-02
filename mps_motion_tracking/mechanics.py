@@ -2,7 +2,7 @@ import logging
 from typing import Union
 
 try:
-    from functools import cached_property
+    from functools import cached_property  # type: ignore
 except ImportError:
     # This is only supported in python 3.8 and above
     try:

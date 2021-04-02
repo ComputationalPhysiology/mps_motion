@@ -92,8 +92,8 @@ def test_get_displacement_unit(test_data: utils.MPSData):
 
     assert (
         abs(
-            disp_um.x.mean().max().compute()
-            - disp_px.x.mean().max().compute() * test_data.info["um_per_pixel"]
+            disp_um.x.mean().max().compute()  # type: ignore
+            - disp_px.x.mean().max().compute() * test_data.info["um_per_pixel"]  # type: ignore
         )
         < 1e-12
     )

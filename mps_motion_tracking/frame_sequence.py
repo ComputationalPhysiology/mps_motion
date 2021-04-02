@@ -157,7 +157,7 @@ class TensorFrameSequence(FrameSequence):
     def compute_eigenvalues(self) -> VectorFrameSequence:
         try:
             # If we have a dask array
-            array = self._array.compute()
+            array = self._array.compute()  # type: ignore
         except AttributeError:
             array = self._array
 
