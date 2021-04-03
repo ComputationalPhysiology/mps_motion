@@ -75,7 +75,7 @@ class FrameSequence:
     def array_np(self) -> np.ndarray:
         array = self.array
         if isinstance(self._array, da.core.Array):
-            array = self.array.compute()
+            array = self.array.compute()  # type: ignore
         return array
 
     @property
