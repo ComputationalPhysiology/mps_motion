@@ -13,7 +13,7 @@ class FrameSequence:
 
     """
 
-    def __init__(self, array: Array, dx: float = 1.0):
+    def __init__(self, array: Array, dx: float = 1.0, scale: float = 1.0):
         """Constructor
 
         Parameters
@@ -26,18 +26,21 @@ class FrameSequence:
             pixel in the Frame, by default 1.0. Note this can
             also incorporate translation from pixel size to
             physical size.
+        scale : float
+            Another factor that should be reflexted and averaging
 
         """
         assert isinstance(array, (da.core.Array, np.ndarray))
         self._array = array
         self.dx = dx
+        self.scale = scale
 
     def __getitem__(self, *args, **kwargs):
         return self.array.__getitem__(*args, **kwargs)
 
     @property
     def array(self):
-        return self._array * self.dx
+        return self._array
 
     @property
     def dx(self):
@@ -49,6 +52,15 @@ class FrameSequence:
         self._dx = dx
 
     @property
+    def scale(self):
+        return self._scale
+
+    @scale.setter
+    def scale(self, scale):
+        assert scale > 0, "scale has to be positive"
+        self._scale = scale
+
+    @property
     def original_shape(self):
         w, h = self.shape[:2]
         return (int(w * self.dx), int(h * self.dx), *self.shape[2:])
@@ -58,7 +70,7 @@ class FrameSequence:
         return self.array.shape
 
     def mean(self) -> Array:
-        return self.array.mean((0, 1)) / self.dx
+        return self.array.mean((0, 1)) * self.scale
 
     def max(self) -> Array:
         return self.array.max(2)
@@ -67,7 +79,7 @@ class FrameSequence:
         return bool(np.isclose(self.array, other.array).all())
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.array.shape}, dx={self.dx})"
+        return f"{self.__class__.__name__}({self.array.shape}, dx={self.dx}, scale={self.scale})"
 
 
 class VectorFrameSequence(FrameSequence):
@@ -76,7 +88,7 @@ class VectorFrameSequence(FrameSequence):
 
     """
 
-    def __init__(self, array: Array, dx: float = 1.0):
+    def __init__(self, array: Array, dx: float = 1.0, scale: float = 1.0):
         """Constructor
 
         Parameters
@@ -89,23 +101,27 @@ class VectorFrameSequence(FrameSequence):
             pixel in the Frame, by default 1.0. Note this can
             also incorporate translation from pixel size to
             physical size.
+        scale : float
+            Another factor that should be reflexted and averaging
 
         """
-        super().__init__(array, dx)
+        super().__init__(array, dx, scale)
         self._ns = np if isinstance(array, np.ndarray) else da
         assert len(array.shape) == 4
         assert array.shape[3] == 2
 
     def norm(self) -> FrameSequence:
-        return FrameSequence(self._ns.linalg.norm(self._array, axis=3), dx=self.dx)
+        return FrameSequence(
+            self._ns.linalg.norm(self._array, axis=3), dx=self.dx, scale=self.scale
+        )
 
     @property
     def x(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 0], dx=self.dx)
+        return FrameSequence(self._array[:, :, :, 0], dx=self.dx, scale=self.scale)
 
     @property
     def y(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 1], dx=self.dx)
+        return FrameSequence(self._array[:, :, :, 1], dx=self.dx, scale=self.scale)
 
 
 class TensorFrameSequence(FrameSequence):
@@ -115,7 +131,7 @@ class TensorFrameSequence(FrameSequence):
 
     """
 
-    def __init__(self, array: Array, dx: float = 1.0):
+    def __init__(self, array: Array, dx: float = 1.0, scale: float = 1.0):
         """Constructor
 
         Parameters
@@ -128,31 +144,35 @@ class TensorFrameSequence(FrameSequence):
             pixel in the Frame, by default 1.0. Note this can
             also incorporate translation from pixel size to
             physical size.
+        scale : float
+            Another factor that should be reflexted and averaging
 
         """
-        super().__init__(array, dx)
+        super().__init__(array, dx, scale)
         self._ns = np if isinstance(array, np.ndarray) else da
         assert len(array.shape) == 5
         assert array.shape[3] == array.shape[4] == 2
 
     def norm(self) -> FrameSequence:
-        return FrameSequence(self._ns.linalg.norm(self._array, axis=(3, 4)), dx=self.dx)
+        return FrameSequence(
+            self._ns.linalg.norm(self._array, axis=(3, 4)), dx=self.dx, scale=self.scale
+        )
 
     @property
     def x(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 0, 0], dx=self.dx)
+        return FrameSequence(self._array[:, :, :, 0, 0], dx=self.dx, scale=self.scale)
 
     @property
     def y(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 1, 1], dx=self.dx)
+        return FrameSequence(self._array[:, :, :, 1, 1], dx=self.dx, scale=self.scale)
 
     @property
     def xy(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 1, 0], dx=self.dx)
+        return FrameSequence(self._array[:, :, :, 1, 0], dx=self.dx, scale=self.scale)
 
     @property
     def yx(self) -> FrameSequence:
-        return FrameSequence(self.array[:, :, :, 0, 1], dx=self.dx)
+        return FrameSequence(self.array[:, :, :, 0, 1], dx=self.dx, scale=self.scale)
 
     def compute_eigenvalues(self) -> VectorFrameSequence:
         try:
@@ -161,4 +181,6 @@ class TensorFrameSequence(FrameSequence):
         except AttributeError:
             array = self._array
 
-        return VectorFrameSequence(np.linalg.eigvalsh(array), dx=self.dx)
+        return VectorFrameSequence(
+            np.linalg.eigvalsh(array), dx=self.dx, scale=self.scale
+        )

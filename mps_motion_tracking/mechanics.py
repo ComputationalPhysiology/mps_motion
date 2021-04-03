@@ -24,12 +24,12 @@ logger = logging.getLogger(__name__)
 
 def compute_gradients(displacement: Array, dx=1):
     logger.debug("Compute gradient")
-    dudx = 1 / dx * da.gradient(displacement[:, :, :, 0], axis=0)
-    dudy = 1 / dx * da.gradient(displacement[:, :, :, 0], axis=1)
-    dvdx = 1 / dx * da.gradient(displacement[:, :, :, 1], axis=0)
-    dvdy = 1 / dx * da.gradient(displacement[:, :, :, 1], axis=1)
+    dudx = da.gradient(displacement[:, :, :, 0], axis=0)
+    dudy = da.gradient(displacement[:, :, :, 0], axis=1)
+    dvdx = da.gradient(displacement[:, :, :, 1], axis=0)
+    dvdy = da.gradient(displacement[:, :, :, 1], axis=1)
 
-    return da.moveaxis(
+    return (1 / dx) * da.moveaxis(
         da.moveaxis(da.stack([[dudx, dudy], [dvdx, dvdy]]), 0, -1), 0, -1
     )
 
@@ -71,6 +71,10 @@ class Mechancis:
         return self.u.dx
 
     @property
+    def scale(self) -> float:
+        return self.u.scale
+
+    @property
     def width(self) -> int:
         return self.u.shape[2]
 
@@ -92,24 +96,26 @@ class Mechancis:
         )
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(u={self.u}, dx={self.dx})"
+        return (
+            f"{self.__class__.__name__}(u={self.u}, dx={self.dx}, scale={self.scale})"
+        )
 
     @property
     def du(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
-            compute_gradients(self.u._array, dx=self.dx), dx=1.0
+            compute_gradients(self.u._array, dx=self.dx), dx=1.0, scale=self.scale
         )
 
     @property
     def F(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
-            self.du.array + da.eye(2)[None, None, None, :, :], dx=1.0
+            self.du.array + da.eye(2)[None, None, None, :, :], dx=1.0, scale=self.scale
         )
 
     @property
     def E(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
-            compute_green_lagrange_strain_tensor(self.F.array), dx=1.0
+            compute_green_lagrange_strain_tensor(self.F.array), dx=1.0, scale=self.scale
         )
 
     @cached_property

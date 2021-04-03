@@ -98,6 +98,22 @@ def test_get_displacement_unit(test_data: utils.MPSData):
         < 1e-12
     )
 
+    assert (
+        abs(
+            disp_um.max().max().compute()  # type: ignore
+            - disp_px.max().max().compute() * test_data.info["um_per_pixel"]  # type: ignore
+        )
+        < 1e-12
+    )
+
+    assert (
+        abs(
+            disp_um.norm().max().max().compute()  # type: ignore
+            - disp_px.norm().max().max().compute() * test_data.info["um_per_pixel"]  # type: ignore
+        )
+        < 1e-12
+    )
+
 
 @pytest.mark.parametrize(
     "flow_algorithm, unit", it.product(FLOW_ALGORITHMS, ["um", "pixels"])

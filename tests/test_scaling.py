@@ -66,12 +66,17 @@ def _test_resize_frames_units():
         mech = Mechancis(u)
 
         # import dask.array as da
-        # U = mech.E.compute_eigenvalues()
+        U = mech.E.compute_eigenvalues()
 
-        U = mech.u
+        # U = mech.u
 
-        u_norm = U.norm().array.compute()
-        u_norm_time = U.norm().mean().compute()
+        u_norm = U.norm().array  # .compute()
+        u_norm_time = U.norm().mean()  # .compute()
+
+        # from IPython import embed
+
+        # embed()
+        # exit()
 
         # u_norm = mech.E.x.array.compute()
         # u_norm_time = mech.E.x.mean().compute()

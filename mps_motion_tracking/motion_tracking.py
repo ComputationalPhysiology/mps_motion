@@ -154,18 +154,20 @@ class OpticalFlow:
             u = self._get_displacements(data.frames, reference_image, **self.options)
             self._scale = scale
 
-            dx = scale
+            dx = 1
+            u /= scale
 
             if unit == "um":
-                u *= data.info.get("um_per_pixel", 1.0)
-                dx *= data.info.get("um_per_pixel", 1.0)
+                # um_per_pixel is allready divided be scale
+                u *= data.info.get("um_per_pixel", 1.0) * scale
+                dx *= data.info.get("um_per_pixel", 1.0) * scale
 
             if raw:
                 self._displacement = u
                 return self._displacement
 
             U = da.from_array(np.swapaxes(u, 2, 3))
-            self._displacement = fs.VectorFrameSequence(U, dx=dx)
+            self._displacement = fs.VectorFrameSequence(U, dx=dx, scale=scale)
 
         return self._displacement
 
