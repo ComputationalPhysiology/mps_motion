@@ -107,5 +107,22 @@ def test_tensor_frame_sequence(ns):
     assert np.isclose(p.array, q).all()
 
 
+@pytest.mark.parametrize("ns", [np, da])
+def test_local_averages(ns):
+
+    width = 10
+    height = 15
+    num_time_steps = 14
+
+    arr = ns.ones((width, height, num_time_steps))
+
+    x = fs.FrameSequence(arr)
+
+    N = 3
+
+    la = x.local_averages(N)
+    assert la.shape == (width // (height // N), N, num_time_steps)
+
+
 if __name__ == "__main__":
-    test_vector_frame_sequence(np)
+    test_local_averages(np)

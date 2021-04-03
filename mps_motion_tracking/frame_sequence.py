@@ -38,9 +38,45 @@ class FrameSequence:
     def __getitem__(self, *args, **kwargs):
         return self.array.__getitem__(*args, **kwargs)
 
+    def local_averages(self, N: int, background_correction: bool = False):
+        """Compute averages in local regions
+
+        Parameters
+        ----------
+        N : int
+            Number of regions along major axis
+        background_correction : bool
+            If true apply background correction algorithm
+            to remove drift.
+
+        Returns
+        -------
+        np.ndarray
+            The local averages
+        """
+        try:
+            from mps.analysis import local_averages
+        except ImportError as ex:
+            msg = "Please install the mps package for computing local averages"
+            raise ImportError(msg) from ex
+
+        return local_averages(
+            self.array_np,
+            np.arange(self.shape[2]),
+            background_correction=background_correction,
+            N=N,
+        )
+
     @property
-    def array(self):
+    def array(self) -> Array:
         return self._array
+
+    @property
+    def array_np(self) -> np.ndarray:
+        array = self.array
+        if isinstance(self._array, da.core.Array):
+            array = self.array.compute()
+        return array
 
     @property
     def dx(self):
@@ -175,12 +211,6 @@ class TensorFrameSequence(FrameSequence):
         return FrameSequence(self.array[:, :, :, 0, 1], dx=self.dx, scale=self.scale)
 
     def compute_eigenvalues(self) -> VectorFrameSequence:
-        try:
-            # If we have a dask array
-            array = self._array.compute()  # type: ignore
-        except AttributeError:
-            array = self._array
-
         return VectorFrameSequence(
-            np.linalg.eigvalsh(array), dx=self.dx, scale=self.scale
+            np.linalg.eigvalsh(self.array_np), dx=self.dx, scale=self.scale
         )
