@@ -2,6 +2,13 @@ import dask.array as da
 import numpy as np
 import pytest
 
+try:
+    import mps  # noqa: F401
+
+    MPS_NOT_FOUND = False
+except ImportError:
+    MPS_NOT_FOUND = True
+
 from mps_motion_tracking import frame_sequence as fs
 
 array_type = {da: da.core.Array, np: np.ndarray}
@@ -107,6 +114,7 @@ def test_tensor_frame_sequence(ns):
     assert np.isclose(p.array, q).all()
 
 
+@pytest.mark.skipif(MPS_NOT_FOUND, reason="MPS not found")
 @pytest.mark.parametrize("ns", [np, da])
 def test_local_averages(ns):
 
