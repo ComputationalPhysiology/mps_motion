@@ -18,6 +18,7 @@ extras_require = {
     "dualtvl10": ["opencv-contrib-python"],
     "block_matching": ["numba", "scipy"],
     "legacy": ["cached_property"],
+    "h5py": ["h5py"],
 }
 
 extras_require.update(
