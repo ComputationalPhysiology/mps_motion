@@ -1,9 +1,18 @@
+from pathlib import Path
 from typing import Union
 
 import dask.array as da
 import numpy as np
 
+try:
+    import h5py
+
+    has_h5py = True
+except ImportError:
+    has_h5py = False
+
 Array = Union[da.core.Array, np.ndarray]
+PathStr = Union[Path, str]
 
 
 class FrameSequence:
@@ -37,6 +46,65 @@ class FrameSequence:
 
     def __getitem__(self, *args, **kwargs):
         return self.array.__getitem__(*args, **kwargs)
+
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+
+        if self.scale != other.scale:
+            return False
+        if self.dx != other.dx:
+            return False
+        if (self.array == other.array).all():
+            return True
+        return False
+
+    def save(self, path: PathStr) -> None:
+        path = Path(path)
+
+        suffixes = [".h5", ".npy"]
+        msg = f"Expected suffix to be one of {suffixes}, got {path.suffix}"
+        assert path.suffix in suffixes, msg
+        if path.suffix == ".h5":
+            if not has_h5py:
+                raise IOError("Cannot save to HDF5 format. Please install h5py")
+
+            with h5py.File(path, "w") as f:
+                dataset = f.create_dataset("array", data=self.array_np)
+                attr_manager = h5py.AttributeManager(dataset)
+                attr_manager.create("scale", str(self.scale))
+                attr_manager.create("dx", str(self.dx))
+        else:
+            np.save(path, {"array": self.array_np, "scale": self.scale, "dx": self.dx})
+
+    @classmethod
+    def from_file(cls, path):
+
+        path = Path(path)
+
+        suffixes = [".h5", ".npy"]
+        msg = f"Expected suffix to be one of {suffixes}, got {path.suffix}"
+        assert path.suffix in suffixes, msg
+        data = {}
+        if path.suffix == ".h5":
+            with h5py.File(path) as f:
+                if "array" in f:
+                    data["array"] = f["array"][...]
+                    data.update(
+                        dict(
+                            zip(
+                                f["array"].attrs.keys(),
+                                map(float, f["array"].attrs.values()),
+                            )
+                        )
+                    )
+        else:
+            data.update(np.load(path, allow_pickle=True).item())
+
+        if "array" not in data:
+            raise IOError(f"Unable to load data from file {path}")
+
+        return cls(**data)
 
     def local_averages(self, N: int, background_correction: bool = False):
         """Compute averages in local regions
@@ -110,9 +178,6 @@ class FrameSequence:
 
     def max(self) -> Array:
         return self.array.max(2)
-
-    def __eq__(self, other) -> bool:
-        return bool(np.isclose(self.array, other.array).all())
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.array.shape}, dx={self.dx}, scale={self.scale})"

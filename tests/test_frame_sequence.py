@@ -1,3 +1,6 @@
+from itertools import product
+from pathlib import Path
+
 import dask.array as da
 import numpy as np
 import pytest
@@ -132,5 +135,23 @@ def test_local_averages(ns):
     assert la.shape == (width // (height // N), N, num_time_steps)
 
 
+@pytest.mark.parametrize("ns, suffix", product([np, da], [".h5", ".npy"]))
+def test_save_load(ns, suffix):
+
+    width = 10
+    height = 15
+    num_time_steps = 14
+
+    arr = ns.ones((width, height, num_time_steps))
+
+    x = fs.FrameSequence(arr)
+    path = Path("test").with_suffix(suffix)
+    x.save(path)
+
+    new_x = fs.FrameSequence.from_file(path)
+
+    assert x == new_x
+
+
 if __name__ == "__main__":
-    test_local_averages(np)
+    test_save_load(np, ".h5")
