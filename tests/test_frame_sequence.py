@@ -151,6 +151,7 @@ def test_save_load(ns, suffix):
     new_x = fs.FrameSequence.from_file(path)
 
     assert x == new_x
+    path.unlink()
 
 
 if __name__ == "__main__":

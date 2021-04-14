@@ -62,6 +62,9 @@ class FrameSequence:
     def save(self, path: PathStr) -> None:
         path = Path(path)
 
+        if path.is_file():
+            path.unlink()
+
         suffixes = [".h5", ".npy"]
         msg = f"Expected suffix to be one of {suffixes}, got {path.suffix}"
         assert path.suffix in suffixes, msg
@@ -78,9 +81,11 @@ class FrameSequence:
             np.save(path, {"array": self.array_np, "scale": self.scale, "dx": self.dx})
 
     @classmethod
-    def from_file(cls, path):
+    def from_file(cls, path, use_dask=True):
 
         path = Path(path)
+        if not path.is_file():
+            raise IOError(f"File {path} foes not exist")
 
         suffixes = [".h5", ".npy"]
         msg = f"Expected suffix to be one of {suffixes}, got {path.suffix}"
@@ -103,6 +108,10 @@ class FrameSequence:
 
         if "array" not in data:
             raise IOError(f"Unable to load data from file {path}")
+
+        if use_dask:
+            array = da.from_array(data["array"])
+            data["array"] = array
 
         return cls(**data)
 
