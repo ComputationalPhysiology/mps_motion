@@ -5,7 +5,7 @@ watchdog
 flake8
 Sphinx
 twine
-
+types-PyYAML
 pytest
 pytest-cov
 black
