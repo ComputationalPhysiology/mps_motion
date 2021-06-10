@@ -1,5 +1,4 @@
 import logging
-from collections import namedtuple
 
 import cv2
 import numpy as np
@@ -27,10 +26,18 @@ except ImportError:
         return decorator
 
 
-_MPSData = namedtuple("_MPSData", ["frames", "time_stamps", "info"])
+class MPSData:
+    def __init__(self, frames, time_stamps, info, pacing=None, metadata=None) -> None:
+        self.frames = frames
+        self.time_stamps = time_stamps
+        self.info = info
+        if pacing is None:
+            pacing = np.zeros_like(time_stamps)
+        self.pacing = pacing
+        if metadata is None:
+            metadata = {}
+        self.metadata = metadata
 
-
-class MPSData(_MPSData):
     @property
     def size_x(self):
         return self.frames.shape[0]

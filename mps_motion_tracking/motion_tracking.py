@@ -27,7 +27,9 @@ def _check_algorithm(alg):
 
 def get_referenece_image(
     reference_frame, frames, time_stamps: Optional[np.ndarray] = None
-) -> Tuple[str, np.ndarray]:
+) -> Tuple[str, np.ndarray, int]:
+
+    reference_frame_index = 0
     try:
         reference_time = float(reference_frame)
         reference_str = str(reference_frame)
@@ -46,15 +48,28 @@ def get_referenece_image(
         if time_stamps is None:
             raise ValueError("Please provide time stamps")
         try:
-            reference_frame = next(
+            reference_frame_index = next(
                 i for i, t in enumerate(time_stamps) if t >= reference_time
             )
         except StopIteration:
-            reference_frame = len(time_stamps) - 1
+            reference_frame_index = len(time_stamps) - 1
 
-        reference_frame = min(reference_frame, len(time_stamps) - 1)
-        reference_image = frames[:, :, int(reference_frame)]
-    return reference_str, reference_image
+        reference_frame_index = int(min(reference_frame_index, len(time_stamps) - 1))
+        # Pick neighbouring index
+        if reference_frame_index == 0:
+            reference_image = frames[
+                :, :, reference_frame_index : reference_frame_index + 3
+            ].mean(-1)
+        elif reference_frame_index == len(time_stamps) - 1:
+            reference_image = frames[
+                :, :, reference_frame_index - 2 : reference_frame_index + 1
+            ].mean(-1)
+        else:
+            reference_image = frames[
+                :, :, reference_frame_index - 1 : reference_frame_index + 2
+            ].mean(-1)
+
+    return reference_str, reference_image, reference_frame_index
 
 
 class OpticalFlow:
@@ -69,10 +84,12 @@ class OpticalFlow:
 
         self.flow_algorithm = flow_algorithm
         self.options = options
-        self._reference_frame, self._reference_image = get_referenece_image(
-            reference_frame, data.frames, data.time_stamps
-        )
-        self._scale = 1.0
+        (
+            self._reference_frame,
+            self._reference_image,
+            self._reference_frame_index,
+        ) = get_referenece_image(reference_frame, data.frames, data.time_stamps)
+
         self._handle_algorithm()
 
     def _handle_algorithm(self):
@@ -145,14 +162,13 @@ class OpticalFlow:
             raise ValueError("Cannot have scale larger than 1.0")
         if scale < 1.0:
             data = scaling.resize_data(data, scale)
-            _, reference_image = get_referenece_image(
+            _, reference_image, _ = get_referenece_image(
                 self.reference_frame, data.frames, data.time_stamps
             )
 
-        if not hasattr(self, "_displacement") or recompute or scale != self._scale:
+        if not hasattr(self, "_displacement") or recompute:
 
             u = self._get_displacements(data.frames, reference_image, **self.options)
-            self._scale = scale
 
             dx = 1
             u /= scale
@@ -180,6 +196,10 @@ class OpticalFlow:
     @property
     def reference_frame(self) -> str:
         return self._reference_frame
+
+    @property
+    def reference_frame_index(self) -> Optional[int]:
+        return self._reference_frame_index
 
     @property
     def reference_image(self) -> np.ndarray:

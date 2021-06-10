@@ -22,29 +22,41 @@ def test_reference_frame_np(
     assert np.all(ref == m.reference_image)
 
 
-@pytest.mark.parametrize("reference_index", [0, 1, -1])
+@pytest.mark.parametrize(
+    "reference_index, interval", [(0, (0, 3)), (1, (0, 3)), (2, (1, 4)), (-1, (-3, -1))]
+)
 def test_reference_frame_digit(
     test_data: utils.MPSData,
     reference_index: int,
+    interval,
 ):
+
     reference_frame = test_data.time_stamps[int(reference_index)]
     m = OpticalFlow(test_data, reference_frame=reference_frame)
+    if reference_index == -1:
+        interval = (interval[0], test_data.time_stamps.size)
 
     assert abs(float(m.reference_frame) - reference_frame) < 1e-8
-    ref = test_data.frames[:, :, int(reference_index)]
-    assert np.all(ref == m.reference_image)
+    ref = test_data.frames[:, :, interval[0] : interval[1]].mean(-1)
+
+    assert np.all(abs(ref - m.reference_image) < 1e-12)
 
 
-@pytest.mark.parametrize("reference_index", ["0", "1", "-1"])
+@pytest.mark.parametrize(
+    "reference_index, interval",
+    [("0", (0, 3)), ("1", (0, 3)), ("2", (1, 4)), ("-1", (-3, -1))],
+)
 def test_reference_frame_digit_str(
-    test_data: utils.MPSData,
-    reference_index: str,
+    test_data: utils.MPSData, reference_index: str, interval
 ):
     reference_frame = test_data.time_stamps[int(reference_index)]
     m = OpticalFlow(test_data, reference_frame=reference_frame)
+    if reference_index == "-1":
+        interval = (interval[0], test_data.time_stamps.size)
+
     assert abs(float(m.reference_frame) - reference_frame) < 1e-8
-    ref = test_data.frames[:, :, int(reference_index)]
-    assert np.all(ref == m.reference_image)
+    ref = test_data.frames[:, :, interval[0] : interval[1]].mean(-1)
+    assert np.all(abs(ref - m.reference_image) < 1e-12)
 
 
 @pytest.mark.parametrize("reference_frame", ["a", "std", ""])

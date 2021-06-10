@@ -53,16 +53,14 @@ class Mechancis:
         u should be in the correct units, e.g um.
         It is assumed that axis are as follows:
         X x Y x 2 x T
-    scale : float
-        How much the corresponding image has been scaled. This
-        is the inverse of dx, i.e the Physical size of one
-        pixel in the Frame, by default 1.0. Note this can
-        also incorporate translation from pixel size to
-        physical size.
+
 
     """
 
-    def __init__(self, u: fs.VectorFrameSequence):
+    def __init__(
+        self,
+        u: fs.VectorFrameSequence,
+    ):
         assert isinstance(u, fs.VectorFrameSequence)
         self.u = u
 

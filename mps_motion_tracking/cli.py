@@ -26,12 +26,38 @@ def print_dict(d: Dict[str, Any], fmt="{:<10}: {}"):
     return s
 
 
-def plot_displacement(mechanics, time_stamps, path):
+def normalize_baseline_func(
+    arr: np.ndarray, normalize_baseline: bool, index: Optional[int]
+):
+    if normalize_baseline:
+        assert index is not None
+        return arr - arr[index]
+    return arr
+
+
+def plot_displacement(
+    mechanics, time_stamps, path, normalize_baseline: bool, index: Optional[int]
+):
 
     fig, ax = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
-    ax[0].plot(time_stamps, mechanics.u.norm().mean().compute())
-    ax[1].plot(time_stamps, mechanics.u.x.mean().compute())
-    ax[2].plot(time_stamps, mechanics.u.y.mean().compute())
+    ax[0].plot(
+        time_stamps,
+        normalize_baseline_func(
+            mechanics.u.norm().mean().compute(), normalize_baseline, index
+        ),
+    )
+    ax[1].plot(
+        time_stamps,
+        normalize_baseline_func(
+            mechanics.u.x.mean().compute(), normalize_baseline, index
+        ),
+    )
+    ax[2].plot(
+        time_stamps,
+        normalize_baseline_func(
+            mechanics.u.y.mean().compute(), normalize_baseline, index
+        ),
+    )
 
     for axi in ax:
         axi.grid()
@@ -43,16 +69,18 @@ def plot_displacement(mechanics, time_stamps, path):
     fig.savefig(path)
 
 
-def plot_strain(mechanics, time_stamps, path, scale=1.0):
+def plot_strain(
+    mechanics, time_stamps, path, normalize_baseline: bool, index: Optional[int]
+):
     fig, ax = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
 
     E = mechanics.E
     Exx = E.x.mean()
     Exy = E.xy.mean()
     Eyy = E.y.mean()
-    ax[0].plot(time_stamps, Exx)
-    ax[1].plot(time_stamps, Exy)
-    ax[2].plot(time_stamps, Eyy)
+    ax[0].plot(time_stamps, normalize_baseline_func(Exx, normalize_baseline, index))
+    ax[1].plot(time_stamps, normalize_baseline_func(Exy, normalize_baseline, index))
+    ax[2].plot(time_stamps, normalize_baseline_func(Eyy, normalize_baseline, index))
 
     for axi in ax.flatten():
         axi.grid()
@@ -64,10 +92,25 @@ def plot_strain(mechanics, time_stamps, path, scale=1.0):
     fig.savefig(path)
 
 
+def load_data(filename_):
+    try:
+        import mps
+
+        data = mps.MPS(filename_)
+    except ImportError:
+        logger.warning("Missing `mps` pacakge.")
+        from .utils import MPSData
+
+        data = MPSData(**np.load(filename_, allow_pickle=True).item())
+    return data
+
+
 def main(
     filename: str,
     algorithm: mt.FLOW_ALGORITHMS = mt.FLOW_ALGORITHMS.farneback,
     outdir: Optional[str] = None,
+    reference_frame: str = "0",
+    normalize_baseline: bool = False,
     scale: float = 0.3,
     verbose: bool = False,
     overwrite: bool = True,
@@ -123,6 +166,7 @@ def main(
         "algorithm": algorithm,
         "outdir": outdir_,
         "scale": scale,
+        "reference_frame": reference_frame,
         "timestamp": datetime.datetime.now().isoformat(),
     }
     logger.debug("\nSettings : \n{}".format(print_dict(settings)))
@@ -130,6 +174,8 @@ def main(
     settings_file = outdir_.joinpath("settings.yaml")
     disp_file = outdir_.joinpath("displacement.npy")
     # Check if file is allready analyzed
+    opt_flow = None
+    index = None
     if settings_file.is_file() and disp_file.is_file() and not overwrite:
         with open(settings_file, "r") as f:
             settings = yaml.load(f)
@@ -142,25 +188,40 @@ def main(
         if not (0 < scale <= 1.0):
             raise ValueError("Scale has to be between 0 and 1.0")
 
-        try:
-            import mps
-
-            data = mps.MPS(filename_)
-        except ImportError:
-            logger.warning("Missing `mps` pacakge.")
-            from .utils import MPSData
-
-            data = MPSData(**np.load(filename_, allow_pickle=True).item())
-
+        data = load_data(filename_)
         logger.info(f"Analyze motion in file {filename}...")
-        opt_flow = OpticalFlow(data, algorithm)
+        opt_flow = OpticalFlow(data, algorithm, reference_frame=reference_frame)
         disp = opt_flow.get_displacements(scale=scale)
+
+    if normalize_baseline:
+        if opt_flow is None:
+            data = load_data(filename)
+            opt_flow = OpticalFlow(data, algorithm, reference_frame=reference_frame)
+
+        if opt_flow.reference_frame_index is None:
+            print(
+                "Unable to normalize baseline. Please select a different reference frame"
+            )
+        else:
+            index = opt_flow.reference_frame_index
 
     mech = Mechancis(disp)
     outdir_.mkdir(exist_ok=True, parents=True)
     # Plot
-    plot_displacement(mech, data.time_stamps, outdir_.joinpath("displacement.png"))
-    plot_strain(mech, data.time_stamps, outdir_.joinpath("strain.png"), scale=scale)
+    plot_displacement(
+        mech,
+        data.time_stamps,
+        outdir_.joinpath("displacement.png"),
+        normalize_baseline=normalize_baseline,
+        index=index,
+    )
+    plot_strain(
+        mech,
+        data.time_stamps,
+        outdir_.joinpath("strain.png"),
+        normalize_baseline=normalize_baseline,
+        index=index,
+    )
 
     with open(settings_file, "w") as f:
         yaml.dump(settings, f)
