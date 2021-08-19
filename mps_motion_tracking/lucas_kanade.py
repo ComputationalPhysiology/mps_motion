@@ -19,10 +19,6 @@ logger = logging.getLogger(__name__)
 LKFlow = namedtuple("LKFlow", ["flow", "points"])
 
 
-class ShapeError(RuntimeError):
-    pass
-
-
 def default_options():
     return dict(
         winSize=(15, 15),
@@ -120,28 +116,6 @@ def get_uniform_reference_points(image, step=48):
     return np.expand_dims(grid.astype(np.float32).reshape(2, -1).T, 1)
 
 
-def check_frame_dimensions(frames, reference_image):
-    if not isinstance(frames, np.ndarray):
-        frames = np.asanyarray(frames)
-    if len(frames.shape) != 3:
-        raise ShapeError(f"Expected frame to be 3 dimensional, got {frames.shape}")
-    if len(reference_image.shape) != 2:
-        raise ShapeError(
-            f"Expected refernce image to be 2 dimensional, got {frames.shape}"
-        )
-    num_frames = frames.shape[-1]
-    shape = reference_image.shape
-    if frames.shape != (shape[0], shape[1], num_frames):
-        msg = (
-            "Shape mistmact between frames and reference image. "
-            f"Got frames with shape {frames.shape}, and reference "
-            f"image with shape {reference_image.shape}"
-        )
-        raise ShapeError(msg)
-
-    return frames
-
-
 def get_displacements(
     frames,
     reference_image: np.ndarray,
@@ -156,7 +130,7 @@ def get_displacements(
 ):
     logger.info("Get displacements using Lucas Kanade")
 
-    frames = check_frame_dimensions(frames, reference_image)
+    frames = utils.check_frame_dimensions(frames, reference_image)
 
     reference_points = get_uniform_reference_points(reference_image, step=step)
 

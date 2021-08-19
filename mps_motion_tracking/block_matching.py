@@ -34,7 +34,7 @@ import numpy as np
 import tqdm
 
 from .scaling import resize_frames
-from .utils import jit
+from .utils import check_frame_dimensions, jit
 
 __author__ = "Henrik Finsberg (henriknf@simula.no), 2017--2020"
 __maintainer__ = "Henrik Finsberg"
@@ -67,7 +67,7 @@ def flow_map(args):
     Helper function for running block maching algorithm in paralell
 
     """
-    return flow(*args)
+    return _flow(*args)
 
 
 def flow(
@@ -237,6 +237,7 @@ def get_displacements(
     filter_kernel_size: int = 9,
     resize=True,
 ):
+    frames = check_frame_dimensions(frames, reference_image)
 
     logger.info("Get displacements using block mathching")
     args = (
