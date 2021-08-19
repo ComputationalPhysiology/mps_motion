@@ -96,8 +96,8 @@ def _flow(
 ) -> np.ndarray:
 
     next_points, status, error = cv2.calcOpticalFlowPyrLK(
-        reference_image,
-        image,
+        utils.to_uint8(reference_image),
+        utils.to_uint8(image),
         points,
         None,
         winSize=winSize,
@@ -134,20 +134,19 @@ def get_displacements(
 
     reference_points = get_uniform_reference_points(reference_image, step=step)
 
-    args = (
-        (im, reference_image, reference_points, winSize, maxLevel, criteria)
-        for im in np.rollaxis(frames, 2)
-    )
     num_frames = frames.shape[-1]
     flows = np.zeros((reference_points.shape[0], 2, num_frames))
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        for i, uv in tqdm.tqdm(
-            enumerate(executor.map(flow_map, args)),
+    for i, im in enumerate(
+        tqdm.tqdm(
+            np.rollaxis(frames, 2),
             desc="Compute displacement",
             total=num_frames,
-        ):
-            flows[:, :, i] = uv
+        )
+    ):
+        flows[:, :, i] = _flow(
+            im, reference_image, reference_points, winSize, maxLevel, criteria
+        )
 
     if interpolate:
         int_flows = np.zeros(
