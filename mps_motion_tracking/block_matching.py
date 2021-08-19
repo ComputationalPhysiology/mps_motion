@@ -76,7 +76,7 @@ def flow(
     block_size: int = 9,
     max_block_movement: int = 18,
     filter_kernel_size: int = 5,
-    resize: bool = False,
+    resize: bool = True,
 ):
     """
     Computes the displacements from `reference_image` to `image`

@@ -39,10 +39,13 @@ def reshape_lk(reference_points: np.ndarray, flows: np.ndarray) -> np.ndarray:
 
     xp = ((x - np.min(x)) / dx).astype(int)
     yp = ((y - np.min(y)) / dy).astype(int)
-    num_frames = flows.shape[-1]
-
-    out = np.zeros((yp.max() + 1, xp.max() + 1, 2, num_frames))
-    out[yp, xp, :, :] = flows
+    if len(flows.shape) == 3:
+        num_frames = flows.shape[-1]
+        out = np.zeros((yp.max() + 1, xp.max() + 1, 2, num_frames))
+        out[yp, xp, :, :] = flows
+    else:
+        out = np.zeros((yp.max() + 1, xp.max() + 1, 2))
+        out[yp, xp, :] = flows
     return out
 
 
@@ -55,7 +58,6 @@ def resize_frames(
 
     msg = f"Expected interpolation method to be one of {INTERPOLATION_METHODS.keys()}, got {interpolation_method}"
     assert interpolation_method in INTERPOLATION_METHODS, msg
-    print(interpolation_method)
     if scale != 1.0 or new_shape is not None:
 
         if len(frames.shape) == 2:

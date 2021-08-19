@@ -49,9 +49,9 @@ def flow(
     winSize: Tuple[int, int] = (15, 15),
     maxLevel: int = 2,
     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
-    return_points: bool = False,
     step: int = 16,
-    interpolate=True,
+    interpolate: bool = False,
+    resize: bool = True,
 ) -> np.ndarray:
     if points is None:
         points = get_uniform_reference_points(reference_image, step=step)
@@ -61,10 +61,28 @@ def flow(
         reference_image = utils.to_uint8(reference_image)
 
     f = _flow(image, reference_image, points, winSize, maxLevel, criteria)
+    points = points.squeeze()
+
     if interpolate:
         f = scaling.rbfinterp2d(
-            points.squeeze(), f, np.arange(image.shape[1]), np.arange(image.shape[0])
+            points, f, np.arange(image.shape[1]), np.arange(image.shape[0])
         )
+    else:
+        # We only check resize if interpolate is set to False
+        if resize:
+            new_f = scaling.reshape_lk(points, f)
+            new_shape: Tuple[int, int] = (
+                reference_image.shape[0],
+                reference_image.shape[1],
+            )
+            int_flows = np.zeros((new_shape[0], new_shape[1], 2))
+            int_flows[:, :, 0] = scaling.resize_frames(
+                new_f[:, :, 0], new_shape=new_shape
+            )
+            int_flows[:, :, 1] = scaling.resize_frames(
+                new_f[:, :, 1], new_shape=new_shape
+            )
+            f = int_flows
     return f
 
 
@@ -150,6 +168,7 @@ def get_displacements(
             out = scaling.reshape_lk(reference_points, flows)
             flows = out
         if resize:
+
             new_shape: Tuple[int, int] = (
                 reference_image.shape[0],
                 reference_image.shape[1],
