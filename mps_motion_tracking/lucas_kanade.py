@@ -95,9 +95,14 @@ def _flow(
     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
 ) -> np.ndarray:
 
+    if image.dtype != np.uint8:
+        image = utils.to_uint8(image)
+    if reference_image.dtype != np.uint8:
+        reference_image = utils.to_uint8(reference_image)
+
     next_points, status, error = cv2.calcOpticalFlowPyrLK(
-        utils.to_uint8(reference_image),
-        utils.to_uint8(image),
+        reference_image,
+        image,
         points,
         None,
         winSize=winSize,
