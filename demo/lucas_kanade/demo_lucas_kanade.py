@@ -60,7 +60,10 @@ def plot_saved_displacement():
     print("Plot")
 
     trace = apf.Beats(
-        u_norm, data.time_stamps, pacing=data.pacing, correct_background=True
+        u_norm,
+        data.time_stamps,
+        pacing=data.pacing,
+        background_correction_method="subract",
     )
     beats = trace.chop(ignore_pacing=True)
     fig, ax = plt.subplots(2, 2)
