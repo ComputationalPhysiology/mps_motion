@@ -15,6 +15,7 @@ from . import (
     motion_tracking,
     scaling,
     utils,
+    visu,
 )
 from .mechanics import Mechancis
 from .motion_tracking import FLOW_ALGORITHMS, OpticalFlow
@@ -33,4 +34,5 @@ __all__ = [
     "FLOW_ALGORITHMS",
     "OpticalFlow",
     "scaling",
+    "visu",
 ]

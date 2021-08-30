@@ -9,7 +9,7 @@ import numpy as np
 import tqdm
 
 from mps_motion_tracking import frame_sequence as fs
-from mps_motion_tracking import lucas_kanade, utils
+from mps_motion_tracking import lucas_kanade, utils, visu
 
 here = Path(__file__).absolute().parent
 
@@ -58,15 +58,15 @@ def plot_saved_displacement():
     u_norm = u.norm().mean().compute()
 
     print("Plot")
-
     trace = apf.Beats(
         u_norm,
         data.time_stamps,
         pacing=data.pacing,
-        background_correction_method="subract",
+        background_correction_method="subtract",
+        zero_index=60,
     )
     beats = trace.chop(ignore_pacing=True)
-    fig, ax = plt.subplots(2, 2)
+    fig, ax = plt.subplots(3, 2)
     ax[0, 0].plot(trace.t, trace.y)
 
     for beat in beats:
@@ -77,6 +77,8 @@ def plot_saved_displacement():
 
     avg_beat = trace.average_beat()
     ax[1, 1].plot(avg_beat.t, avg_beat.y)
+    ax[2, 0].plot(trace.t, trace.original_y)
+    ax[2, 0].plot(trace.t, trace.background.background)
     fig.savefig("displacement_norm.png")
 
 
@@ -117,7 +119,22 @@ def postprocess_displacement():
     cv2.destroyAllWindows()
 
 
+def create_flow_field():
+
+    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    # disp = lucas_kanade.get_displacements(
+    #     data.frames,
+    #     data.frames[:, :, 0],
+    #     step=48,
+    # )
+    disp = np.load("disp.npy", mmap_mode="r")
+
+    visu.quiver_video(data, disp, "flow.mp4")
+    visu.hsv_video(data, disp, "hsv.mp4")
+
+
 if __name__ == "__main__":
     # main()
     # postprocess_displacement()
-    plot_saved_displacement()
+    # plot_saved_displacement()
+    create_flow_field()

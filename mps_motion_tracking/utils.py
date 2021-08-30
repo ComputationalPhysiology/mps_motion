@@ -1,4 +1,6 @@
 import logging
+import os
+from typing import Union
 
 import cv2
 import numpy as np
@@ -28,6 +30,9 @@ except ImportError:
 
 class ShapeError(RuntimeError):
     pass
+
+
+PathLike = Union[str, os.PathLike]
 
 
 def check_frame_dimensions(frames, reference_image):
