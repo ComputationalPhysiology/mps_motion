@@ -96,6 +96,7 @@ class FrameSequence:
         msg = f"Expected suffix to be one of {suffixes}, got {path.suffix}"
         assert path.suffix in suffixes, msg
         data = {}
+        h5file = None
         if path.suffix == ".h5":
             h5file = h5py.File(path, "r")
             if "array" in h5file:
