@@ -43,6 +43,7 @@ class FrameSequence:
         self._array = array
         self.dx = dx
         self.scale = scale
+        self._h5file = None
 
     def __getitem__(self, *args, **kwargs):
         return self.array.__getitem__(*args, **kwargs)
@@ -58,6 +59,10 @@ class FrameSequence:
         if (self.array == other.array).all():
             return True
         return False
+
+    def __del__(self):
+        if self._h5file is not None:
+            self._h5file.close()
 
     def save(self, path: PathStr) -> None:
         path = Path(path)
@@ -92,28 +97,32 @@ class FrameSequence:
         assert path.suffix in suffixes, msg
         data = {}
         if path.suffix == ".h5":
-            with h5py.File(path) as f:
-                if "array" in f:
-                    data["array"] = f["array"][...]
-                    data.update(
-                        dict(
-                            zip(
-                                f["array"].attrs.keys(),
-                                map(float, f["array"].attrs.values()),
-                            )
+            h5file = h5py.File(path, "r")
+            if "array" in h5file:
+                if use_dask:
+                    data["array"] = da.from_array(h5file["array"])
+                else:
+                    data["array"] = h5file["array"[...]]
+                data.update(
+                    dict(
+                        zip(
+                            h5file["array"].attrs.keys(),
+                            map(float, h5file["array"].attrs.values()),
                         )
                     )
+                )
         else:
             data.update(np.load(path, allow_pickle=True).item())
+
+            if use_dask:
+                data["array"] = da.from_array(data["array"])
 
         if "array" not in data:
             raise IOError(f"Unable to load data from file {path}")
 
-        if use_dask:
-            array = da.from_array(data["array"])
-            data["array"] = array
-
-        return cls(**data)
+        obj = cls(**data)
+        obj._h5file = h5file
+        return obj
 
     def local_averages(self, N: int, background_correction: bool = False):
         """Compute averages in local regions
