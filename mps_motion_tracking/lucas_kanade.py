@@ -6,7 +6,7 @@ http://cseweb.ucsd.edu/classes/sp02/cse252/lucaskanade81.pdf
 """
 import concurrent.futures
 import logging
-from collections import namedtuple
+from enum import Enum
 from typing import Optional, Tuple
 
 import cv2
@@ -16,29 +16,22 @@ import tqdm
 from . import scaling, utils
 
 logger = logging.getLogger(__name__)
-LKFlow = namedtuple("LKFlow", ["flow", "points"])
+
+
+class Interpolation(str, Enum):
+    none = "none"
+    reshape = "reshape"
+    rbf = "rbf"
+    nearest = "nearest"
 
 
 def default_options():
     return dict(
         winSize=(15, 15),
         maxLevel=2,
-        interpolate=False,
-        reshape=True,
+        interpolation=Interpolation.nearest,
         criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
         step=16,
-    )
-
-
-def rbfinterp2d_map(args):
-    return scaling.rbfinterp2d(*args)
-
-
-def flow_map(args):
-    reference_image, image, *remaining_args = args
-
-    return _flow(
-        utils.to_uint8(reference_image), utils.to_uint8(image), *remaining_args
     )
 
 
@@ -50,9 +43,43 @@ def flow(
     maxLevel: int = 2,
     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
     step: int = 16,
-    interpolate: bool = False,
-    resize: bool = True,
+    interpolation: Interpolation = Interpolation.nearest,
 ) -> np.ndarray:
+    """Compute the optical from reference_image to image
+
+    Parameters
+    ----------
+    image : np.ndarray
+        The target image
+    reference_image : np.ndarray
+        The reference image
+    points : np.ndarray
+        Points where to compute the motion vectors
+    winSize : Tuple[int, int], optional
+        Size of search window in each pyramid level, by default (15, 15)
+    maxLevel : int, optional
+        0-based maximal pyramid level number; if set to 0,
+        pyramids are not used (single level), if set to 1,
+        two levels are used, and so on; if pyramids are
+        passed to input then algorithm will use as many
+        levels as pyramids have but no more than maxLevel, by default 2
+    criteria : tuple, optional
+        Parameter, specifying the termination criteria of the iterative
+        search algorithm (after the specified maximum number of iterations
+        criteria.maxCount or when the search window moves by less than
+        criteria.epsilon, by default (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03)
+    step : int, optional
+        Step in pixels between points where motion is computed, by default 16
+    interpolation : Interpolation
+        Interpolate flow to original shape using radial basis function ('rbf'),
+        nearest neigbour interpolation ('nearest') or do not interpolate but reshape ('reshape'),
+        or use the original output from the LK algorithm ('none'), by default 'nearest'
+
+    Returns
+    -------
+    np.ndarray
+        Array of optical flow from reference image to image
+    """
     if points is None:
         points = get_uniform_reference_points(reference_image, step=step)
     if image.dtype != np.uint8:
@@ -63,26 +90,24 @@ def flow(
     f = _flow(image, reference_image, points, winSize, maxLevel, criteria)
     points = points.squeeze()
 
-    if interpolate:
-        f = scaling.rbfinterp2d(
+    if interpolation == Interpolation.none:
+        return f
+
+    if interpolation == Interpolation.rbf:
+        return scaling.rbfinterp2d(
             points, f, np.arange(image.shape[1]), np.arange(image.shape[0])
         )
-    else:
-        # We only check resize if interpolate is set to False
-        if resize:
-            new_f = scaling.reshape_lk(points, f)
-            new_shape: Tuple[int, int] = (
-                reference_image.shape[0],
-                reference_image.shape[1],
-            )
-            int_flows = np.zeros((new_shape[0], new_shape[1], 2))
-            int_flows[:, :, 0] = scaling.resize_frames(
-                new_f[:, :, 0], new_shape=new_shape
-            )
-            int_flows[:, :, 1] = scaling.resize_frames(
-                new_f[:, :, 1], new_shape=new_shape
-            )
-            f = int_flows
+
+    f = scaling.reshape_lk(points, f)
+    if interpolation == Interpolation.nearest:
+        new_shape: Tuple[int, int] = (
+            reference_image.shape[0],
+            reference_image.shape[1],
+        )
+        int_flows = np.zeros((new_shape[0], new_shape[1], 2))
+        int_flows[:, :, 0] = scaling.resize_frames(f[:, :, 0], new_shape=new_shape)
+        int_flows[:, :, 1] = scaling.resize_frames(f[:, :, 1], new_shape=new_shape)
+        f = int_flows
     return f
 
 
@@ -94,6 +119,35 @@ def _flow(
     maxLevel: int = 2,
     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
 ) -> np.ndarray:
+    """Compute the optical from reference_image to image
+
+    Parameters
+    ----------
+    image : np.ndarray
+        The target image
+    reference_image : np.ndarray
+        The reference image
+    points : np.ndarray
+        Points where to compute the motion vectors
+    winSize : Tuple[int, int], optional
+        Size of search window in each pyramid level, by default (15, 15)
+    maxLevel : int, optional
+        0-based maximal pyramid level number; if set to 0,
+        pyramids are not used (single level), if set to 1,
+        two levels are used, and so on; if pyramids are
+        passed to input then algorithm will use as many
+        levels as pyramids have but no more than maxLevel, by default 2
+    criteria : tuple, optional
+        Parameter, specifying the termination criteria of the iterative
+        search algorithm (after the specified maximum number of iterations
+        criteria.maxCount or when the search window moves by less than
+        criteria.epsilon, by default (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03)
+
+    Returns
+    -------
+    np.ndarray
+        Array of optical flow from reference image to image
+    """
 
     if image.dtype != np.uint8:
         image = utils.to_uint8(image)
@@ -115,7 +169,23 @@ def _flow(
     return flow
 
 
-def get_uniform_reference_points(image, step=48):
+def get_uniform_reference_points(image: np.ndarray, step: int = 48) -> np.ndarray:
+    """Create a grid of uniformly spaced points width
+    the gived steps size constraind by the image
+    dimensions.
+
+    Parameters
+    ----------
+    image : np.ndarray
+        An image used to set the constraint on the dimensions
+    step : int, optional
+        The stepsize, by default 48
+
+    Returns
+    -------
+    np.ndarray
+        An array of uniformly spaced points
+    """
     h, w = image.shape[:2]
     grid = np.mgrid[step // 2 : w : step, step // 2 : h : step].astype(int)
     return np.expand_dims(grid.astype(np.float32).reshape(2, -1).T, 1)
@@ -128,11 +198,42 @@ def get_displacements(
     winSize: Tuple[int, int] = (15, 15),
     maxLevel: int = 2,
     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
-    return_refpoints: bool = False,
-    interpolate: bool = False,
-    reshape: bool = True,
-    resize: bool = True,
-):
+    interpolation: Interpolation = Interpolation.nearest,
+) -> np.ndarray:
+    """Compute the optical flow using the Lucas Kanade method from
+    the reference frame to all other frames
+
+    Parameters
+    ----------
+    frames : np.ndarray
+        The frames with some moving objects
+    reference_image : np.ndarray
+        The reference image
+    step : int, optional
+        Step in pixels between points where motion is computed, by default 16
+    winSize : Tuple[int, int], optional
+        Size of search window in each pyramid level, by default (15, 15)
+    maxLevel : int, optional
+        0-based maximal pyramid level number; if set to 0,
+        pyramids are not used (single level), if set to 1,
+        two levels are used, and so on; if pyramids are
+        passed to input then algorithm will use as many
+        levels as pyramids have but no more than maxLevel, by default 2
+    criteria : tuple, optional
+        Parameter, specifying the termination criteria of the iterative
+        search algorithm (after the specified maximum number of iterations
+        criteria.maxCount or when the search window moves by less than
+        criteria.epsilon, by default (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03)
+    interpolation : Interpolation
+        Interpolate flow to original shape using radial basis function ('rbf'),
+        nearest neigbour interpolation ('nearest') or do not interpolate but reshape ('reshape'),
+        or use the original output from the LK algorithm ('none'), by default 'nearest'
+
+    Returns
+    -------
+    np.ndarray
+        An array of motion vectors relative to the reference image
+    """
     logger.info("Get displacements using Lucas Kanade")
 
     frames = utils.check_frame_dimensions(frames, reference_image)
@@ -153,7 +254,10 @@ def get_displacements(
             im, reference_image, reference_points, winSize, maxLevel, criteria
         )
 
-    if interpolate:
+    if interpolation == Interpolation.none:
+        return flows
+
+    if interpolation == Interpolation.rbf:
         int_flows = np.zeros(
             (reference_image.shape[0], reference_image.shape[1], 2, num_frames)
         )
@@ -163,31 +267,27 @@ def get_displacements(
         int_args = ((p, f, x, y) for f in np.rollaxis(flows, 2))
         with concurrent.futures.ProcessPoolExecutor() as executor:
             for i, q in tqdm.tqdm(
-                enumerate(executor.map(rbfinterp2d_map, int_args)),
+                enumerate(executor.map(scaling.rbfinterp2d_map, int_args)),
                 desc="Interpolate",
                 total=num_frames,
             ):
                 int_flows[:, :, :, i] = q
+        return int_flows
+
+    flows = scaling.reshape_lk(reference_points, flows)
+
+    if interpolation == Interpolation.nearest:
+
+        new_shape: Tuple[int, int] = (
+            reference_image.shape[0],
+            reference_image.shape[1],
+        )
+        int_flows = np.zeros((new_shape[0], new_shape[1], 2, num_frames))
+        int_flows[:, :, 0, :] = scaling.resize_frames(
+            flows[:, :, 0, :], new_shape=new_shape
+        )
+        int_flows[:, :, 1, :] = scaling.resize_frames(
+            flows[:, :, 1, :], new_shape=new_shape
+        )
         flows = int_flows
-    else:
-        if reshape:
-            out = scaling.reshape_lk(reference_points, flows)
-            flows = out
-        if resize:
-
-            new_shape: Tuple[int, int] = (
-                reference_image.shape[0],
-                reference_image.shape[1],
-            )
-            int_flows = np.zeros((new_shape[0], new_shape[1], 2, num_frames))
-            int_flows[:, :, 0, :] = scaling.resize_frames(
-                flows[:, :, 0, :], new_shape=new_shape
-            )
-            int_flows[:, :, 1, :] = scaling.resize_frames(
-                flows[:, :, 1, :], new_shape=new_shape
-            )
-            flows = int_flows
-
-    if return_refpoints:
-        return LKFlow(flows, reference_points)
     return flows

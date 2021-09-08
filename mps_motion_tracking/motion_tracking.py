@@ -8,6 +8,7 @@ import numpy as np
 from . import block_matching, dualtvl10, farneback
 from . import frame_sequence as fs
 from . import lucas_kanade, scaling, utils
+from .mechanics import compute_velocity
 
 logger = logging.getLogger(__name__)
 
@@ -96,31 +97,19 @@ class OpticalFlow:
         _check_algorithm(self.flow_algorithm)
 
         if self.flow_algorithm == "lucas_kanade":
-            self._flow = lucas_kanade.flow
-            self._flow_map = lucas_kanade.flow_map
             self._get_displacements = lucas_kanade.get_displacements
-            self._get_velocities = None  # lucas_kanade.get_velocities
             options = lucas_kanade.default_options()
 
         elif self.flow_algorithm == "block_matching":
-            self._flow = block_matching.flow
-            self._flow_map = block_matching.flow_map
             self._get_displacements = block_matching.get_displacements
-            self._get_velocities = None  # block_matching.get_velocities
             options = block_matching.default_options()
 
         elif self.flow_algorithm == "farneback":
-            self._flow = farneback.flow
-            self._flow_map = farneback.flow_map
             self._get_displacements = farneback.get_displacements
-            self._get_velocities = farneback.get_velocities
             options = farneback.default_options()
 
         elif self.flow_algorithm == "dualtvl10":
-            self._flow = dualtvl10.flow
-            self._flow_map = dualtvl10.flow_map
             self._get_displacements = dualtvl10.get_displacements
-            self._get_velocities = dualtvl10.get_velocities
             options = dualtvl10.default_options()
 
         self.options.update(options)
@@ -130,8 +119,7 @@ class OpticalFlow:
         recompute: bool = False,
         unit: str = "um",
         scale: float = 1.0,
-        raw: bool = False,
-    ) -> Union[fs.VectorFrameSequence, np.ndarray]:
+    ) -> fs.VectorFrameSequence:
         """Compute motion of all images relative to reference frame
 
         Parameters
@@ -145,9 +133,7 @@ class OpticalFlow:
             key 'um_per_pixel'.
         scale : float, optional
             If less than 1.0, downsample images before estimating motion, by default 1.0
-        raw: bool, optional
-            If True, return the raw numpy array without casting it to
-            dask and VectorFrameSequnce
+
         Returns
         -------
         np.ndarray
@@ -178,20 +164,16 @@ class OpticalFlow:
                 u *= data.info.get("um_per_pixel", 1.0) * scale
                 dx *= data.info.get("um_per_pixel", 1.0) * scale
 
-            if raw:
-                self._displacement = u
-                return self._displacement
-
             U = da.from_array(np.swapaxes(u, 2, 3))
             self._displacement = fs.VectorFrameSequence(U, dx=dx, scale=scale)
 
         return self._displacement
 
-    def get_velocities(self):
-        raise NotImplementedError
-
-    def dump(self):
-        raise NotImplementedError
+    def get_velocities(
+        self, recompute: bool = False, unit: str = "um", scale: float = 1.0
+    ):
+        u = self.get_displacements(recompute=recompute, unit=unit, scale=scale)
+        return compute_velocity(u.array, self.data.time_stamps)
 
     @property
     def reference_frame(self) -> str:
@@ -208,5 +190,5 @@ class OpticalFlow:
     def __repr__(self):
         return (
             f"{self.__class__.__name__}("
-            f"data={self.data}, flow_algorithm={self.flow_algorithm})"
+            f"data={self.data}, flow_algorithm={self.flow_algorithm}, reference_frame={self._reference_frame})"
         )

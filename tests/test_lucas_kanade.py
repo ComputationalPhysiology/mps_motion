@@ -5,22 +5,25 @@ from mps_motion_tracking import lucas_kanade as lk
 
 
 @pytest.mark.parametrize(
-    "size, step, interpolate, resize, expected_shape, expected_type",
+    "size, step, interpolation, expected_shape, expected_type",
     [
-        ((64, 64), 16, False, False, (16, 2), np.float32),
-        ((64, 64), 16, False, True, (64, 64, 2), np.float64),
-        ((64, 64), 16, True, False, (64, 64, 2), np.float64),
-        ((64, 64), 16, True, True, (64, 64, 2), np.float64),
+        ((64, 64), 16, "none", (16, 2), np.float32),
+        ((64, 64), 16, "reshape", (4, 4, 2), np.float64),
+        ((64, 64), 16, "nearest", (64, 64, 2), np.float64),
+        ((64, 64), 16, "rbf", (64, 64, 2), np.float64),
     ],
 )
-def test_flow_shape(size, step, interpolate, resize, expected_shape, expected_type):
+def test_flow_shape(size, step, interpolation, expected_shape, expected_type):
 
     reference_image = 255 * np.random.randint(0, 255, size=size, dtype=np.uint8)
     image = 255 * np.random.randint(0, 255, size=size, dtype=np.uint8)
 
     reference_points = lk.get_uniform_reference_points(reference_image, step)
     flow = lk.flow(
-        image, reference_image, reference_points, interpolate=interpolate, resize=resize
+        image,
+        reference_image,
+        reference_points,
+        interpolation=interpolation,
     )
 
     assert flow.shape == expected_shape
@@ -57,15 +60,3 @@ def test_get_displacements():
         reference_image=reference_image,
     )
     assert u.shape == (size[0], size[1], 2, len(frames))
-
-
-def test_flow_map():
-
-    reference_image = 255 * np.random.randint(0, 255, size=(64, 64), dtype=np.uint8)
-    image = 255 * np.random.randint(0, 255, size=(64, 64), dtype=np.uint8)
-
-    step = 16
-    reference_points = lk.get_uniform_reference_points(reference_image, step)
-    flow = lk.flow_map((image, reference_image, reference_points))
-    assert flow.shape == (reference_points.shape[0], reference_points.shape[2])
-    assert flow.dtype == np.float32

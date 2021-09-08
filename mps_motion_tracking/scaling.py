@@ -143,6 +143,10 @@ def interpolate_lk_flow(
     return disp_full
 
 
+def rbfinterp2d_map(args):
+    return rbfinterp2d(*args)
+
+
 def rbfinterp2d(  # noqa:C901
     coord,
     input_array,
