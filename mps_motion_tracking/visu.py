@@ -75,6 +75,7 @@ def quiver_video(
     step: int = 16,
     scale: float = 1.0,
     convert: bool = True,
+    velocity: bool = False,
 ) -> None:
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -88,8 +89,9 @@ def quiver_video(
         p.unlink()
     out = cv2.VideoWriter(p.as_posix(), fourcc, fps, (width, height))
 
-    time_axis = vectors.shape.index(data.num_frames)
-    for i in tqdm.tqdm(range(data.num_frames), desc=f"Create quiver video at {p}"):
+    num_frames = data.num_frames - 1 if velocity else data.num_frames
+    time_axis = vectors.shape.index(num_frames)
+    for i in tqdm.tqdm(range(num_frames), desc=f"Create quiver video at {p}"):
         im = utils.to_uint8(data.frames[:, :, i])
         flow = np.take(vectors, i, axis=time_axis)
         out.write(draw_flow(im, flow, step=step, scale=scale))

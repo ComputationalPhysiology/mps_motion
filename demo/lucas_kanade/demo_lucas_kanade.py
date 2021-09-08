@@ -9,7 +9,7 @@ import numpy as np
 import tqdm
 
 from mps_motion_tracking import frame_sequence as fs
-from mps_motion_tracking import lucas_kanade, utils, visu
+from mps_motion_tracking import lucas_kanade, mechanics, utils, visu
 
 here = Path(__file__).absolute().parent
 
@@ -82,6 +82,41 @@ def plot_saved_displacement():
     fig.savefig("displacement_norm.png")
 
 
+def plot_velocity():
+
+    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    disp = np.load("disp.npy", mmap_mode="r")
+
+    U = da.from_array(np.swapaxes(disp, 2, 3))
+    V = mechanics.compute_velocity(U, data.time_stamps)
+
+    v = fs.VectorFrameSequence(V)
+    # print("Compute norm")
+    v_norm = v.norm().mean().compute()
+    trace = apf.Beats(
+        v_norm,
+        data.time_stamps[:-1],
+        pacing=data.pacing,
+        background_correction_method="subtract",
+        # zero_index=60,
+    )
+    beats = trace.chop(ignore_pacing=True)
+    fig, ax = plt.subplots(3, 2)
+    ax[0, 0].plot(trace.t, trace.y)
+
+    for beat in beats:
+        ax[0, 1].plot(beat.t, beat.y)
+
+    for beat in beats:
+        ax[1, 0].plot(beat.t - beat.t[0], beat.y)
+
+    avg_beat = trace.average_beat()
+    ax[1, 1].plot(avg_beat.t, avg_beat.y)
+    ax[2, 0].plot(trace.t, trace.original_y)
+    ax[2, 0].plot(trace.t, trace.background.background)
+    fig.savefig("velocity_norm.png")
+
+
 def postprocess_displacement():
     # data = utils.MPSData(
     #     **np.load(
@@ -129,8 +164,22 @@ def create_flow_field():
     # )
     disp = np.load("disp.npy", mmap_mode="r")
 
-    visu.quiver_video(data, disp, "flow.mp4")
-    visu.hsv_video(data, disp, "hsv.mp4")
+    visu.quiver_video(data, disp, "flow.mp4", step=48, scale=10)
+    # visu.hsv_video(data, disp, "hsv.mp4")
+
+
+def create_velocity_flow_field():
+
+    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    # disp = lucas_kanade.get_displacements(
+    #     data.frames,
+    #     data.frames[:, :, 0],
+    #     step=48,
+    # )
+    disp = np.load("disp.npy", mmap_mode="r")
+    V = mechanics.compute_velocity(disp, data.time_stamps)
+
+    visu.quiver_video(data, V, "velocity_flow.mp4", step=48, scale=500, velocity=True)
 
 
 if __name__ == "__main__":
@@ -138,3 +187,5 @@ if __name__ == "__main__":
     # postprocess_displacement()
     # plot_saved_displacement()
     create_flow_field()
+    # plot_velocity()
+    # create_velocity_flow_field()
