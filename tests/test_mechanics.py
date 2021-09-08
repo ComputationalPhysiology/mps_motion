@@ -58,6 +58,23 @@ def test_dx(dx):
     assert da.isclose(m.du[:, :, :, 1, 1], a22 / dx).all().compute()
 
 
+def test_velocity(mech_obj):
+    v = mech_obj.velocity
+
+    assert np.isclose(
+        v[:, :, 0, 0], mech_obj.u[:, :, 1, 0] - mech_obj.u[:, :, 0, 0]
+    ).all()
+    assert np.isclose(
+        v[:, :, 1, 0], mech_obj.u[:, :, 2, 0] - mech_obj.u[:, :, 1, 0]
+    ).all()
+    assert np.isclose(
+        v[:, :, 0, 1], mech_obj.u[:, :, 1, 1] - mech_obj.u[:, :, 0, 1]
+    ).all()
+    assert np.isclose(
+        v[:, :, 1, 1], mech_obj.u[:, :, 2, 1] - mech_obj.u[:, :, 1, 1]
+    ).all()
+
+
 @pytest.fixture
 def mech_obj():
 

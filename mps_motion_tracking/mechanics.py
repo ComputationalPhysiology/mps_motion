@@ -1,5 +1,5 @@
 import logging
-from typing import Union
+from typing import Optional, Union
 
 try:
     from functools import cached_property  # type: ignore
@@ -43,26 +43,53 @@ def compute_green_lagrange_strain_tensor(F: Array):
     return E
 
 
+def compute_velocity(u: Array, t: Array):
+
+    time_axis = u.shape.index(len(t))
+    assert time_axis == 2, "Time axis should be the first axis"
+    assert u.shape[-1] == 2, "Final axis should be ux and uy"
+    du = da.diff(u, axis=time_axis)
+    dt = da.diff(t)
+
+    # Need to have time axis
+    return da.moveaxis(da.moveaxis(du, 2, 3) / dt, 2, 3).compute()
+
+
 class Mechancis:
-    """Class to compute mechanical quantities
-
-    Parameters
-    ----------
-    u : Array
-        numpy or dask array representing the displacements.
-        u should be in the correct units, e.g um.
-        It is assumed that axis are as follows:
-        X x Y x 2 x T
-
-
-    """
-
     def __init__(
         self,
         u: fs.VectorFrameSequence,
+        t: Optional[Array] = None,
     ):
+        """Craete a mechanics object
+
+        Parameters
+        ----------
+        u : fs.VectorFrameSequence
+            Displacment of shape height x width x time x 2
+        t : Optional[Array], optional
+            Time stamps of length (time), by default None.
+            If not provided `t` will be an evenly spaced
+            array with a step of 1.0. Note that `t` is only
+            relevant when computing time derivaties such as velocity.
+        """
         assert isinstance(u, fs.VectorFrameSequence)
         self.u = u
+        self.t = t
+
+    @property
+    def t(self) -> Array:
+        return self._t
+
+    @t.setter
+    def t(self, t: Optional[Array]) -> None:
+        if t is None:
+            t = np.arange(self.num_time_points)
+        if not len(t) == self.num_time_points:
+            raise RuntimeError(
+                "Expected time stamps to have the same number of points at 'u'"
+            )
+        self._t = t
 
     @property
     def dx(self) -> float:
@@ -73,24 +100,24 @@ class Mechancis:
         return self.u.scale
 
     @property
-    def width(self) -> int:
-        return self.u.shape[2]
+    def height(self) -> int:
+        return self.u.shape[0]
 
     @property
-    def height(self) -> int:
+    def width(self) -> int:
         return self.u.shape[1]
 
     @property
     def num_time_points(self) -> int:
-        return self.u.shape[0]
+        return self.u.shape[2]
 
     def __str__(self):
         return (
-            f"{self.__class__.__name__}("
+            f"{self.__class__.__name__} object with "
             f"num_time_points={self.num_time_points}, "
             f"height={self.height}, "
             f"width={self.width}, "
-            f"dx={self.dx})"
+            f"dx={self.dx}"
         )
 
     def __repr__(self):
@@ -101,7 +128,7 @@ class Mechancis:
     @property
     def du(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
-            compute_gradients(self.u._array, dx=self.dx), dx=1.0, scale=self.scale
+            compute_gradients(self.u.array, dx=self.dx), dx=1.0, scale=self.scale
         )
 
     @property
@@ -115,6 +142,10 @@ class Mechancis:
         return fs.TensorFrameSequence(
             compute_green_lagrange_strain_tensor(self.F.array), dx=1.0, scale=self.scale
         )
+
+    @cached_property
+    def velocity(self):
+        return fs.VectorFrameSequence(compute_velocity(self.u.array, self.t))
 
     @cached_property
     def principal_strain(self) -> fs.VectorFrameSequence:

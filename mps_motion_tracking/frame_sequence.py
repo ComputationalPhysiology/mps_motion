@@ -51,14 +51,13 @@ class FrameSequence:
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-
         if self.scale != other.scale:
             return False
         if self.dx != other.dx:
             return False
-        if (self.array == other.array).all():
-            return True
-        return False
+        if not (self.array == other.array).all():
+            return False
+        return True
 
     def __del__(self):
         if self._h5file is not None:
@@ -103,7 +102,7 @@ class FrameSequence:
                 if use_dask:
                     data["array"] = da.from_array(h5file["array"])
                 else:
-                    data["array"] = h5file["array"[...]]
+                    data["array"] = h5file["array"][...]
                 data.update(
                     dict(
                         zip(
