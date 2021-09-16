@@ -102,7 +102,7 @@ def quiver_video(
         )
         raise ValueError(msg) from ex
 
-    vector_shape = (vectors.shape[0], vectors.shape[1], vectors.shape[3])
+    vector_shape = (vectors.shape[0], vectors.shape[1], vectors.shape[time_axis])
     if not data.frames.shape == vector_shape:
         msg = (
             "Shape of frames and vector does not match. "
