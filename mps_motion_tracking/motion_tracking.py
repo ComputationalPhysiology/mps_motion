@@ -146,23 +146,25 @@ class OpticalFlow:
 
         if scale > 1.0:
             raise ValueError("Cannot have scale larger than 1.0")
+
+        scaled_data = data
         if scale < 1.0:
-            data = scaling.resize_data(data, scale)
+            scaled_data = scaling.resize_data(data, scale)
             _, reference_image, _ = get_referenece_image(
-                self.reference_frame, data.frames, data.time_stamps
+                self.reference_frame, scaled_data.frames, scaled_data.time_stamps
             )
 
         if not hasattr(self, "_displacement") or recompute:
 
-            u = self._get_displacements(data.frames, reference_image, **self.options)
+            u = self._get_displacements(
+                scaled_data.frames, reference_image, **self.options
+            )
 
             dx = 1
             u /= scale
-
             if unit == "um":
-                # um_per_pixel is allready divided be scale
-                u *= data.info.get("um_per_pixel", 1.0) * scale
-                dx *= data.info.get("um_per_pixel", 1.0) * scale
+                u *= scaled_data.info.get("um_per_pixel", 1.0)
+                dx *= scaled_data.info.get("um_per_pixel", 1.0)
 
             U = da.from_array(np.swapaxes(u, 2, 3))
             self._displacement = fs.VectorFrameSequence(U, dx=dx, scale=scale)

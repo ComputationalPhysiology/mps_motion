@@ -4,7 +4,15 @@ from mps_motion_tracking import Mechancis, OpticalFlow, scaling, utils
 
 
 def test_resize_data():
-    pass
+    frames = np.ones((100, 100, 3))
+    times = np.linspace(0, 5000, frames.shape[-1])
+    info = dict(um_per_pixel=1.0)
+    data = utils.MPSData(frames=frames, time_stamps=times, info=info)
+    scale = 0.5
+    scaled_data = scaling.resize_data(data, scale)
+    assert scaled_data.info["um_per_pixel"] == info["um_per_pixel"] / scale
+    assert scaled_data.frames.shape == (50, 50, 3)
+    assert np.isclose(scaled_data.time_stamps, times).all()
 
 
 def test_resize_frames():

@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import tqdm
 
-from . import utils
+from . import scaling, utils
 
 
 def _draw_flow(image, x, y, fx, fy):
@@ -73,28 +73,52 @@ def quiver_video(
     vectors: np.ndarray,
     path: utils.PathLike,
     step: int = 16,
-    scale: float = 1.0,
+    vector_scale: float = 1.0,
+    frame_scale: float = 1.0,
     convert: bool = True,
     velocity: bool = False,
 ) -> None:
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
+    if frame_scale < 1.0:
+        data = scaling.resize_data(data, frame_scale)
+
     width = data.size_y
     height = data.size_x
     fps = data.framerate
+
+    num_frames = data.num_frames - 1 if velocity else data.num_frames
+
+    # Check shapes
+    try:
+        time_axis = vectors.shape.index(num_frames)
+    except ValueError as ex:
+        msg = (
+            "Time axis for frames and vetors does not match. "
+            f"Got frames of shape {data.frames.shape}, and "
+            f"vector of shape {vectors.shape}."
+        )
+        raise ValueError(msg) from ex
+
+    vector_shape = (vectors.shape[0], vectors.shape[1], vectors.shape[3])
+    if not data.frames.shape == vector_shape:
+        msg = (
+            "Shape of frames and vector does not match. "
+            f"Got frames of shape {data.frames.shape}, and "
+            f"vector of shape {vectors.shape}."
+            f"Extected frames to have shape {vector_shape}."
+        )
+        raise ValueError(msg)
 
     p = Path(path).with_suffix(".mp4")
     if p.is_file():
         p.unlink()
     out = cv2.VideoWriter(p.as_posix(), fourcc, fps, (width, height))
-
-    num_frames = data.num_frames - 1 if velocity else data.num_frames
-    time_axis = vectors.shape.index(num_frames)
     for i in tqdm.tqdm(range(num_frames), desc=f"Create quiver video at {p}"):
         im = utils.to_uint8(data.frames[:, :, i])
         flow = np.take(vectors, i, axis=time_axis)
-        out.write(draw_flow(im, flow, step=step, scale=scale))
+        out.write(draw_flow(im, flow, step=step, scale=vector_scale))
 
     out.release()
     cv2.destroyAllWindows()
