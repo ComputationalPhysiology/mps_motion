@@ -7,13 +7,15 @@ http://cseweb.ucsd.edu/classes/sp02/cse252/lucaskanade81.pdf
 import concurrent.futures
 import logging
 from enum import Enum
-from typing import Optional, Tuple
+from typing import Optional
+from typing import Tuple
 
 import cv2
 import numpy as np
 import tqdm
 
-from . import scaling, utils
+from . import scaling
+from . import utils
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +97,10 @@ def flow(
 
     if interpolation == Interpolation.rbf:
         return scaling.rbfinterp2d(
-            points, f, np.arange(image.shape[1]), np.arange(image.shape[0])
+            points,
+            f,
+            np.arange(image.shape[1]),
+            np.arange(image.shape[0]),
         )
 
     f = scaling.reshape_lk(points, f)
@@ -248,17 +253,22 @@ def get_displacements(
             np.rollaxis(frames, 2),
             desc="Compute displacement",
             total=num_frames,
-        )
+        ),
     ):
         flows[:, :, i] = _flow(
-            im, reference_image, reference_points, winSize, maxLevel, criteria
+            im,
+            reference_image,
+            reference_points,
+            winSize,
+            maxLevel,
+            criteria,
         )
     if interpolation == Interpolation.none:
         return flows
 
     if interpolation == Interpolation.rbf:
         int_flows = np.zeros(
-            (reference_image.shape[0], reference_image.shape[1], 2, num_frames)
+            (reference_image.shape[0], reference_image.shape[1], 2, num_frames),
         )
         p = reference_points.squeeze()
         x = np.arange(reference_image.shape[1])
@@ -283,10 +293,12 @@ def get_displacements(
         )
         int_flows = np.zeros((new_shape[0], new_shape[1], 2, num_frames))
         int_flows[:, :, 0, :] = scaling.resize_frames(
-            flows[:, :, 0, :], new_shape=new_shape
+            flows[:, :, 0, :],
+            new_shape=new_shape,
         )
         int_flows[:, :, 1, :] = scaling.resize_frames(
-            flows[:, :, 1, :], new_shape=new_shape
+            flows[:, :, 1, :],
+            new_shape=new_shape,
         )
         flows = int_flows
     return flows

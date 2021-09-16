@@ -1,4 +1,5 @@
-from typing import Optional, Tuple
+from typing import Optional
+from typing import Tuple
 
 import cv2
 import numpy as np
@@ -80,7 +81,8 @@ def resize_frames(
 
         resized_frames = np.zeros((width, height, num_frames))
         for i in tqdm.tqdm(
-            range(num_frames), desc=f"Resize frames from {(w, h)} to {(width, height)}"
+            range(num_frames),
+            desc=f"Resize frames from {(w, h)} to {(width, height)}",
         ):
             resized_frames[:, :, i] = cv2.resize(
                 frames[:, :, i],
@@ -135,10 +137,16 @@ def interpolate_lk_flow(
         values_y = disp[:, 1, i]
 
         disp_full[:, :, 0, i] = griddata(
-            ref_points, values_x, (grid_y, grid_x), method=interpolation_method
+            ref_points,
+            values_x,
+            (grid_y, grid_x),
+            method=interpolation_method,
         )
         disp_full[:, :, 1, i] = griddata(
-            ref_points, values_y, (grid_y, grid_x), method=interpolation_method
+            ref_points,
+            values_y,
+            (grid_y, grid_x),
+            method=interpolation_method,
         )
     return disp_full
 
@@ -228,7 +236,7 @@ def rbfinterp2d(  # noqa:C901
     else:
         raise ValueError(
             "input_array must have 1 (n) or 2 dimensions (n, m), but it has %i"
-            % input_array.ndim
+            % input_array.ndim,
         )
 
     npoints = input_array.shape[0]
@@ -236,7 +244,7 @@ def rbfinterp2d(  # noqa:C901
     if npoints == 0:
         raise ValueError(
             "input_array (n, m) must contain at least one sample, but it has %i"
-            % npoints
+            % npoints,
         )
 
     # only one sample, return uniform fields
@@ -250,13 +258,13 @@ def rbfinterp2d(  # noqa:C901
 
     if coord.ndim != 2:
         raise ValueError(
-            "coord must have 2 dimensions (n, 2), but it has %i" % coord.ndim
+            "coord must have 2 dimensions (n, 2), but it has %i" % coord.ndim,
         )
 
     if npoints != coord.shape[0]:
         raise ValueError(
             "the number of samples in the input_array does not match the "
-            + "number of coordinates %i!=%i" % (npoints, coord.shape[0])
+            + "number of coordinates %i!=%i" % (npoints, coord.shape[0]),
         )
 
     # normalize coordinates
@@ -269,7 +277,7 @@ def rbfinterp2d(  # noqa:C901
         raise ValueError(
             "Unknown rbfunction '{}'\n".format(rbfunction)
             + "The available rbfunctions are: "
-            + str(_rbfunctions)
+            + str(_rbfunctions),
         ) from None
 
     # generate the target grid
@@ -305,9 +313,12 @@ def rbfinterp2d(  # noqa:C901
         if k == 0:
             # use all points
             d = scipy.spatial.distance.cdist(coord, subgrid, "euclidean").transpose()
-            inds = np.arange(npoints)[None, :] * np.ones(
-                (subgrid.shape[0], npoints)
-            ).astype(int)
+            inds = (
+                np.arange(npoints)[None, :]
+                * np.ones(
+                    (subgrid.shape[0], npoints),
+                ).astype(int)
+            )
 
         else:
             # use k-nearest neighbours
@@ -338,9 +349,13 @@ def rbfinterp2d(  # noqa:C901
 
             # interpolate
             for j in range(nvar):
-                output_array[i0 : (i0 + idelta), j] = np.sum(
-                    w * input_array[inds, j], axis=1
-                ) / np.sum(w, axis=1)
+                output_array[i0 : (i0 + idelta), j] = (
+                    np.sum(
+                        w * input_array[inds, j],
+                        axis=1,
+                    )
+                    / np.sum(w, axis=1)
+                )
 
         i0 += idelta
 

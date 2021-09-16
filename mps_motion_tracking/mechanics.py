@@ -1,5 +1,6 @@
 import logging
-from typing import Optional, Union
+from typing import Optional
+from typing import Union
 
 try:
     from functools import cached_property  # type: ignore
@@ -9,7 +10,7 @@ except ImportError:
         from cached_property import cached_property  # type: ignore
     except ImportError as e:
         raise ImportError(
-            "Please install cached_property - pip install cached_property"
+            "Please install cached_property - pip install cached_property",
         ) from e
 
 
@@ -30,7 +31,9 @@ def compute_gradients(displacement: Array, dx=1):
     dvdy = da.gradient(displacement[:, :, :, 1], axis=1)
 
     return (1 / dx) * da.moveaxis(
-        da.moveaxis(da.stack([[dudx, dudy], [dvdx, dvdy]]), 0, -1), 0, -1
+        da.moveaxis(da.stack([[dudx, dudy], [dvdx, dvdy]]), 0, -1),
+        0,
+        -1,
     )
 
 
@@ -87,7 +90,7 @@ class Mechancis:
             t = np.arange(self.num_time_points)
         if not len(t) == self.num_time_points:
             raise RuntimeError(
-                "Expected time stamps to have the same number of points at 'u'"
+                "Expected time stamps to have the same number of points at 'u'",
             )
         self._t = t
 
@@ -128,19 +131,25 @@ class Mechancis:
     @property
     def du(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
-            compute_gradients(self.u.array, dx=self.dx), dx=1.0, scale=self.scale
+            compute_gradients(self.u.array, dx=self.dx),
+            dx=1.0,
+            scale=self.scale,
         )
 
     @property
     def F(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
-            self.du.array + da.eye(2)[None, None, None, :, :], dx=1.0, scale=self.scale
+            self.du.array + da.eye(2)[None, None, None, :, :],
+            dx=1.0,
+            scale=self.scale,
         )
 
     @property
     def E(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
-            compute_green_lagrange_strain_tensor(self.F.array), dx=1.0, scale=self.scale
+            compute_green_lagrange_strain_tensor(self.F.array),
+            dx=1.0,
+            scale=self.scale,
         )
 
     @cached_property

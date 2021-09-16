@@ -4,7 +4,8 @@ import mps
 import numpy as np
 import tqdm
 
-from mps_motion_tracking import farneback, utils
+from mps_motion_tracking import farneback
+from mps_motion_tracking import utils
 
 
 def load_test_data():
@@ -32,10 +33,16 @@ def main():
     fps = data.framerate
 
     out_flow = cv2.VideoWriter(
-        "farneback_displacement_flow.mp4", fourcc, fps, (width, height)
+        "farneback_displacement_flow.mp4",
+        fourcc,
+        fps,
+        (width, height),
     )
     out_hsv = cv2.VideoWriter(
-        "farneback_displacement_hsv.mp4", fourcc, fps, (width, height)
+        "farneback_displacement_hsv.mp4",
+        fourcc,
+        fps,
+        (width, height),
     )
 
     for i in tqdm.tqdm(range(data.num_frames)):

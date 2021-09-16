@@ -1,13 +1,19 @@
 import logging
 from enum import Enum
-from typing import Optional, Tuple, Union
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import dask.array as da
 import numpy as np
 
-from . import block_matching, dualtvl10, farneback
+from . import block_matching
+from . import dualtvl10
+from . import farneback
 from . import frame_sequence as fs
-from . import lucas_kanade, scaling, utils
+from . import lucas_kanade
+from . import scaling
+from . import utils
 from .mechanics import compute_velocity
 
 logger = logging.getLogger(__name__)
@@ -27,7 +33,9 @@ def _check_algorithm(alg):
 
 
 def get_referenece_image(
-    reference_frame, frames, time_stamps: Optional[np.ndarray] = None
+    reference_frame,
+    frames,
+    time_stamps: Optional[np.ndarray] = None,
 ) -> Tuple[str, np.ndarray, int]:
 
     reference_frame_index = 0
@@ -151,7 +159,9 @@ class OpticalFlow:
         if scale < 1.0:
             scaled_data = scaling.resize_data(data, scale)
             _, reference_image, _ = get_referenece_image(
-                self.reference_frame, scaled_data.frames, scaled_data.time_stamps
+                self.reference_frame,
+                scaled_data.frames,
+                scaled_data.time_stamps,
             )
 
         if not hasattr(self, "_displacement") or recompute:
@@ -172,7 +182,10 @@ class OpticalFlow:
         return self._displacement
 
     def get_velocities(
-        self, recompute: bool = False, unit: str = "um", scale: float = 1.0
+        self,
+        recompute: bool = False,
+        unit: str = "um",
+        scale: float = 1.0,
     ):
         u = self.get_displacements(recompute=recompute, unit=unit, scale=scale)
         return compute_velocity(u.array, self.data.time_stamps)

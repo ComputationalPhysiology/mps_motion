@@ -6,7 +6,6 @@
 # software you agree with the terms and conditions of this license
 # agreement. If you do not accept the terms of this license agreement
 # you may not install or use this software.
-
 # Permission to use, copy, modify and distribute any part of this
 # software for non-profit educational and research purposes, without
 # fee, and without a written agreement is hereby granted, provided
@@ -25,7 +24,6 @@
 # SIMULA RESEARCH LABORATORY MAKES NO REPRESENTATIONS AND EXTENDS NO
 # WARRANTIES OF ANY KIND, EITHER IMPLIED OR EXPRESSED, INCLUDING, BUT
 # NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS
-
 import concurrent.futures
 import logging
 from typing import Tuple
@@ -34,18 +32,14 @@ import numpy as np
 import tqdm
 
 from .scaling import resize_frames
-from .utils import check_frame_dimensions, jit
+from .utils import check_frame_dimensions
+from .utils import jit
 
 __author__ = "Henrik Finsberg (henriknf@simula.no), 2017--2020"
 __maintainer__ = "Henrik Finsberg"
 __email__ = "henriknf@simula.no"
 
-"""
 
-This module is based on the Matlab code in the script scripttotry1105_nd2.m
-provided by Berenice
-
-"""
 logger = logging.getLogger(__name__)
 
 
@@ -182,13 +176,13 @@ def _flow(
 
                 # Loop over values around the block within the `max_block_movement` range
                 for i, y_block_ref in enumerate(
-                    range(-max_block_movement, max_block_movement + 1)
+                    range(-max_block_movement, max_block_movement + 1),
                 ):
                     for j, x_block_ref in enumerate(
                         range(
                             -max_block_movement,
                             max_block_movement + 1,
-                        )
+                        ),
                     ):
 
                         y_image_ref = y_image + y_block_ref
@@ -208,9 +202,12 @@ def _flow(
                                 x_image_ref : x_image_ref + block_size,
                             ]
                             # Could improve this cost function / template matching
-                            costs[i, j] = np.sum(
-                                np.abs(np.subtract(block, ref_block))
-                            ) / (block_size ** 2)
+                            costs[i, j] = (
+                                np.sum(
+                                    np.abs(np.subtract(block, ref_block)),
+                                )
+                                / (block_size ** 2)
+                            )
 
                 # Find minimum cost vector and store it
                 dy, dx = np.where(costs == np.nanmin(costs))

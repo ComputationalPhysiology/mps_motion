@@ -3,7 +3,6 @@ Farnebäck, G. (2003, June). Two-frame motion estimation based on polynomial exp
 
 
 """
-
 import concurrent.futures
 import logging
 from typing import Optional
@@ -95,11 +94,12 @@ def get_velocities(
     )
     num_frames = frames.shape[-1]
     flows = np.zeros(
-        (reference_image.shape[0], reference_image.shape[1], 2, num_frames)
+        (reference_image.shape[0], reference_image.shape[1], 2, num_frames),
     )
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for i, uv in tqdm.tqdm(
-            enumerate(executor.map(flow_map, args)), total=num_frames
+            enumerate(executor.map(flow_map, args)),
+            total=num_frames,
         ):
             flows[:, :, :, i] = uv
 
@@ -138,7 +138,7 @@ def get_displacements(
     )
     num_frames = frames.shape[-1]
     flows = np.zeros(
-        (reference_image.shape[0], reference_image.shape[1], 2, num_frames)
+        (reference_image.shape[0], reference_image.shape[1], 2, num_frames),
     )
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for i, uv in tqdm.tqdm(

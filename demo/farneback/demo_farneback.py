@@ -5,7 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 
-from mps_motion_tracking import Mechancis, OpticalFlow, farneback, utils
+from mps_motion_tracking import farneback
+from mps_motion_tracking import Mechancis
+from mps_motion_tracking import OpticalFlow
+from mps_motion_tracking import utils
 
 here = Path(__file__).absolute().parent
 
@@ -14,7 +17,8 @@ def main():
 
     data = utils.MPSData(
         **np.load(
-            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+            here.joinpath("../../datasets/mps_data.npy"),
+            allow_pickle=True,
         ).item()
     )
 
@@ -27,7 +31,8 @@ def main():
 def postprocess_displacement():
     data = utils.MPSData(
         **np.load(
-            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+            here.joinpath("../../datasets/mps_data.npy"),
+            allow_pickle=True,
         ).item()
     )
     disp = np.load("farneback_disp.npy")
@@ -39,10 +44,16 @@ def postprocess_displacement():
     fps = data.framerate
 
     out_flow = cv2.VideoWriter(
-        "farneback_displacement_flow.mp4", fourcc, fps, (width, height)
+        "farneback_displacement_flow.mp4",
+        fourcc,
+        fps,
+        (width, height),
     )
     out_hsv = cv2.VideoWriter(
-        "farneback_displacement_hsv.mp4", fourcc, fps, (width, height)
+        "farneback_displacement_hsv.mp4",
+        fourcc,
+        fps,
+        (width, height),
     )
 
     for i in tqdm.tqdm(range(data.num_frames)):
@@ -65,7 +76,8 @@ def postprocess_displacement():
 def postprocess_velocities():
     data = utils.MPSData(
         **np.load(
-            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+            here.joinpath("../../datasets/mps_data.npy"),
+            allow_pickle=True,
         ).item()
     )
     disp = np.load("farneback_vel.npy")
@@ -77,10 +89,16 @@ def postprocess_velocities():
     fps = data.framerate
 
     out_flow = cv2.VideoWriter(
-        "farneback_velocity_flow.mp4", fourcc, fps, (width, height)
+        "farneback_velocity_flow.mp4",
+        fourcc,
+        fps,
+        (width, height),
     )
     out_hsv = cv2.VideoWriter(
-        "farneback_velocity_hsv.mp4", fourcc, fps, (width, height)
+        "farneback_velocity_hsv.mp4",
+        fourcc,
+        fps,
+        (width, height),
     )
 
     for i in tqdm.tqdm(range(1, data.num_frames)):
@@ -104,7 +122,8 @@ def plot_displacements():
 
     data = utils.MPSData(
         **np.load(
-            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+            here.joinpath("../../datasets/mps_data.npy"),
+            allow_pickle=True,
         ).item()
     )
     disp = np.load("farneback_disp.npy") * data.info["um_per_pixel"]

@@ -1,6 +1,9 @@
 import numpy as np
 
-from mps_motion_tracking import Mechancis, OpticalFlow, scaling, utils
+from mps_motion_tracking import Mechancis
+from mps_motion_tracking import OpticalFlow
+from mps_motion_tracking import scaling
+from mps_motion_tracking import utils
 
 
 def test_resize_data():
@@ -24,10 +27,14 @@ def test_resize_frames():
     np.random.seed(1)
     u = np.zeros((height, width, 2, num_time_points))
     u[:, :, 0, 0] = np.fromfunction(
-        lambda y, x: x / width, shape=(height, width), dtype=float
+        lambda y, x: x / width,
+        shape=(height, width),
+        dtype=float,
     )
     u[:, :, 1, 0] = np.fromfunction(
-        lambda y, x: y / height, shape=(height, width), dtype=float
+        lambda y, x: y / height,
+        shape=(height, width),
+        dtype=float,
     )
     u_x_resized = scaling.resize_frames(u[:, :, 0, :], scale=scale)
     u_y_resized = scaling.resize_frames(u[:, :, 1, :], scale=scale)
@@ -104,7 +111,11 @@ def _test_resize_frames_units():
         )
 
         fig, ax = plt.subplots(
-            la.shape[0], la.shape[1], sharex=True, sharey=True, figsize=(12, 12)
+            la.shape[0],
+            la.shape[1],
+            sharex=True,
+            sharey=True,
+            figsize=(12, 12),
         )
         for i in range(la.shape[0]):
             for j in range(la.shape[1]):

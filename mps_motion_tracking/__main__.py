@@ -17,11 +17,12 @@ def main(
             """
         Path to file to be analyzed, typically an .nd2 or .
         czi Brightfield file
-        """
+        """,
         ),
     ),
     algorithm: FLOW_ALGORITHMS = typer.Option(
-        FLOW_ALGORITHMS.farneback, help="The algorithm used to estimate motion"
+        FLOW_ALGORITHMS.farneback,
+        help="The algorithm used to estimate motion",
     ),
     reference_frame: str = typer.Option(
         "0",
@@ -33,7 +34,7 @@ def main(
         displacements. This can either be a number indicating the
         timepoint, or the value 'mean', 'median', 'max' or 'mean'.
         Default: '0' (i.e the first frame)
-        """
+        """,
         ),
     ),
     normalize_baseline: bool = typer.Option(
@@ -43,7 +44,7 @@ def main(
         help=dedent(
             """
             If True, subtract value at time of referece frame so that
-            e.g displacement at this point becomes zero."""
+            e.g displacement at this point becomes zero.""",
         ),
     ),
     outdir: Optional[str] = typer.Option(
@@ -55,7 +56,7 @@ def main(
         Directory where to store the results. If not provided, a folder with the the same
         as the filename will be created and results will be stored in a subfolder inside
         that called `motion`
-        """
+        """,
         ),
     ),
     scale: float = typer.Option(
@@ -64,7 +65,7 @@ def main(
             """
         Rescale data before running motion track. This is useful if the spatial resoltion
         of the images are large. Scale = 1.0 will keep the original size
-        """
+        """,
         ),
     ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="More verbose"),
@@ -76,7 +77,7 @@ def main(
         allready exist. If False, then the olddata will
         be copied to a subdirectory with version number
         of the software. If version number is not found
-        it will be saved to a folder called "old"."""
+        it will be saved to a folder called "old".""",
         ),
     ),
 ):

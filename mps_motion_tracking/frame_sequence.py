@@ -108,8 +108,8 @@ class FrameSequence:
                         zip(
                             h5file["array"].attrs.keys(),
                             map(float, h5file["array"].attrs.values()),
-                        )
-                    )
+                        ),
+                    ),
                 )
         else:
             data.update(np.load(path, allow_pickle=True).item())
@@ -231,7 +231,9 @@ class VectorFrameSequence(FrameSequence):
 
     def norm(self) -> FrameSequence:
         return FrameSequence(
-            self._ns.linalg.norm(self._array, axis=3), dx=self.dx, scale=self.scale
+            self._ns.linalg.norm(self._array, axis=3),
+            dx=self.dx,
+            scale=self.scale,
         )
 
     @property
@@ -274,7 +276,9 @@ class TensorFrameSequence(FrameSequence):
 
     def norm(self) -> FrameSequence:
         return FrameSequence(
-            self._ns.linalg.norm(self._array, axis=(3, 4)), dx=self.dx, scale=self.scale
+            self._ns.linalg.norm(self._array, axis=(3, 4)),
+            dx=self.dx,
+            scale=self.scale,
         )
 
     @property
@@ -295,5 +299,7 @@ class TensorFrameSequence(FrameSequence):
 
     def compute_eigenvalues(self) -> VectorFrameSequence:
         return VectorFrameSequence(
-            np.linalg.eigvalsh(self.array_np), dx=self.dx, scale=self.scale
+            np.linalg.eigvalsh(self.array_np),
+            dx=self.dx,
+            scale=self.scale,
         )

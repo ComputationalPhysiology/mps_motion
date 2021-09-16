@@ -5,7 +5,6 @@ ZACH, Christopher; POCK, Thomas; BISCHOF, Horst. A duality based approach for re
 http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.709.4597&rep=rep1&type=pdf
 
 """
-
 import concurrent.futures
 import logging
 
@@ -46,7 +45,8 @@ def flow(
         warps,
     )
     est_flow = np.zeros(
-        shape=(reference_image.shape[0], reference_image.shape[1], 2), dtype=np.float32
+        shape=(reference_image.shape[0], reference_image.shape[1], 2),
+        dtype=np.float32,
     )
 
     if image.dtype != "uint8":
@@ -79,7 +79,7 @@ def get_displacements(
     )
     num_frames = frames.shape[-1]
     flows = np.zeros(
-        (reference_image.shape[0], reference_image.shape[1], 2, num_frames)
+        (reference_image.shape[0], reference_image.shape[1], 2, num_frames),
     )
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for i, uv in tqdm.tqdm(
@@ -108,11 +108,12 @@ def get_velocities(
     )
     num_frames = frames.shape[-1]
     flows = np.zeros(
-        (reference_image.shape[0], reference_image.shape[1], 2, num_frames)
+        (reference_image.shape[0], reference_image.shape[1], 2, num_frames),
     )
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for i, uv in tqdm.tqdm(
-            enumerate(executor.map(flow_map, args)), total=num_frames
+            enumerate(executor.map(flow_map, args)),
+            total=num_frames,
         ):
             flows[:, :, :, i] = uv
 

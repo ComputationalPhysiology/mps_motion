@@ -2,8 +2,8 @@ import dask.array as da
 import numpy as np
 import pytest
 
-from mps_motion_tracking import Mechancis
 from mps_motion_tracking import frame_sequence as fs
+from mps_motion_tracking import Mechancis
 
 
 def test_E_symmetry(mech_obj):
@@ -43,10 +43,14 @@ def test_dx(dx):
 
     u = np.zeros((width, height, 1, 2))
     u[:, :, 0, 0] = np.fromfunction(
-        lambda x, y: a11 * x + a12 * y, shape=(width, height), dtype=float
+        lambda x, y: a11 * x + a12 * y,
+        shape=(width, height),
+        dtype=float,
     )
     u[:, :, 0, 1] = np.fromfunction(
-        lambda x, y: a21 * x + a22 * y, shape=(width, height), dtype=float
+        lambda x, y: a21 * x + a22 * y,
+        shape=(width, height),
+        dtype=float,
     )
 
     U = fs.VectorFrameSequence(u, dx=dx)
@@ -62,16 +66,20 @@ def test_velocity(mech_obj):
     v = mech_obj.velocity
 
     assert np.isclose(
-        v[:, :, 0, 0], mech_obj.u[:, :, 1, 0] - mech_obj.u[:, :, 0, 0]
+        v[:, :, 0, 0],
+        mech_obj.u[:, :, 1, 0] - mech_obj.u[:, :, 0, 0],
     ).all()
     assert np.isclose(
-        v[:, :, 1, 0], mech_obj.u[:, :, 2, 0] - mech_obj.u[:, :, 1, 0]
+        v[:, :, 1, 0],
+        mech_obj.u[:, :, 2, 0] - mech_obj.u[:, :, 1, 0],
     ).all()
     assert np.isclose(
-        v[:, :, 0, 1], mech_obj.u[:, :, 1, 1] - mech_obj.u[:, :, 0, 1]
+        v[:, :, 0, 1],
+        mech_obj.u[:, :, 1, 1] - mech_obj.u[:, :, 0, 1],
     ).all()
     assert np.isclose(
-        v[:, :, 1, 1], mech_obj.u[:, :, 2, 1] - mech_obj.u[:, :, 1, 1]
+        v[:, :, 1, 1],
+        mech_obj.u[:, :, 2, 1] - mech_obj.u[:, :, 1, 1],
     ).all()
 
 
@@ -86,11 +94,15 @@ def mech_obj():
     # First time point is zero
     # Second time point has a linar displacement in x
     u[:, :, 1, 0] = np.fromfunction(
-        lambda y, x: x / width, shape=(height, width), dtype=float
+        lambda y, x: x / width,
+        shape=(height, width),
+        dtype=float,
     )
     # Third points have linear displacement in y
     u[:, :, 2, 1] = np.fromfunction(
-        lambda y, x: y / height, shape=(height, width), dtype=float
+        lambda y, x: y / height,
+        shape=(height, width),
+        dtype=float,
     )
     # Forth is linear in both
     u[:, :, 2, 0] = u[:, :, 1, 0]

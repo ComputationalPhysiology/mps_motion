@@ -41,7 +41,7 @@ def check_frame_dimensions(frames, reference_image):
         raise ShapeError(f"Expected frame to be 3 dimensional, got {frames.shape}")
     if len(reference_image.shape) != 2:
         raise ShapeError(
-            f"Expected refernce image to be 2 dimensional, got {frames.shape}"
+            f"Expected refernce image to be 2 dimensional, got {frames.shape}",
         )
     num_frames = frames.shape[-1]
     shape = reference_image.shape

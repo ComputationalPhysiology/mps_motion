@@ -5,7 +5,8 @@ import numpy as np
 import pytest
 
 from mps_motion_tracking import FLOW_ALGORITHMS as _FLOW_ALGORITHMS
-from mps_motion_tracking import OpticalFlow, utils
+from mps_motion_tracking import OpticalFlow
+from mps_motion_tracking import utils
 
 # from typing import Type
 FLOW_ALGORITHMS = [alg for alg in dir(_FLOW_ALGORITHMS) if not alg.startswith("_")]
@@ -23,7 +24,8 @@ def test_reference_frame_np(
 
 
 @pytest.mark.parametrize(
-    "reference_index, interval", [(0, (0, 3)), (1, (0, 3)), (2, (1, 4)), (-1, (-3, -1))]
+    "reference_index, interval",
+    [(0, (0, 3)), (1, (0, 3)), (2, (1, 4)), (-1, (-3, -1))],
 )
 def test_reference_frame_digit(
     test_data: utils.MPSData,
@@ -47,7 +49,9 @@ def test_reference_frame_digit(
     [("0", (0, 3)), ("1", (0, 3)), ("2", (1, 4)), ("-1", (-3, -1))],
 )
 def test_reference_frame_digit_str(
-    test_data: utils.MPSData, reference_index: str, interval
+    test_data: utils.MPSData,
+    reference_index: str,
+    interval,
 ):
     reference_frame = test_data.time_stamps[int(reference_index)]
     m = OpticalFlow(test_data, reference_frame=reference_frame)
@@ -109,7 +113,7 @@ def test_get_displacement_unit(test_data: utils.MPSData):
     assert (
         abs(
             disp_um.x.mean().max().compute()  # type: ignore
-            - disp_px.x.mean().max().compute() * test_data.info["um_per_pixel"]  # type: ignore
+            - disp_px.x.mean().max().compute() * test_data.info["um_per_pixel"],  # type: ignore
         )
         < 1e-12
     )
@@ -117,7 +121,7 @@ def test_get_displacement_unit(test_data: utils.MPSData):
     assert (
         abs(
             disp_um.max().max().compute()  # type: ignore
-            - disp_px.max().max().compute() * test_data.info["um_per_pixel"]  # type: ignore
+            - disp_px.max().max().compute() * test_data.info["um_per_pixel"],  # type: ignore
         )
         < 1e-12
     )
@@ -125,17 +129,20 @@ def test_get_displacement_unit(test_data: utils.MPSData):
     assert (
         abs(
             disp_um.norm().max().max().compute()  # type: ignore
-            - disp_px.norm().max().max().compute() * test_data.info["um_per_pixel"]  # type: ignore
+            - disp_px.norm().max().max().compute() * test_data.info["um_per_pixel"],  # type: ignore
         )
         < 1e-12
     )
 
 
 @pytest.mark.parametrize(
-    "flow_algorithm, unit", it.product(FLOW_ALGORITHMS, ["um", "pixels"])
+    "flow_algorithm, unit",
+    it.product(FLOW_ALGORITHMS, ["um", "pixels"]),
 )
 def test_get_displacement_scale_algs(
-    test_data: utils.MPSData, flow_algorithm: str, unit: str
+    test_data: utils.MPSData,
+    flow_algorithm: str,
+    unit: str,
 ):
     """Test that there are now exceptions raised"""
     m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)

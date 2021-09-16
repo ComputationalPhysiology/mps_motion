@@ -37,7 +37,8 @@ def create_circle_data(
     A = []
     for x, y in zip(X, Y):
         a = np.fromfunction(
-            lambda i, j: np.sqrt((i - x) ** 2 + (j - y) ** 2) < r, (Nx, Ny)
+            lambda i, j: np.sqrt((i - x) ** 2 + (j - y) ** 2) < r,
+            (Nx, Ny),
         )
         A.append(a)
 

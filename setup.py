@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-
 """The setup script."""
-
-from setuptools import find_packages, setup
+from setuptools import find_packages
+from setuptools import setup
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -22,7 +21,7 @@ extras_require = {
 }
 
 extras_require.update(
-    {"all": [val for values in extras_require.values() for val in values]}
+    {"all": [val for values in extras_require.values() for val in values]},
 )
 
 setup(

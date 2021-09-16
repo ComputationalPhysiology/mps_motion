@@ -3,8 +3,10 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+from mps_motion_tracking import block_matching
+from mps_motion_tracking import utils
+
 # from mps_motion_tracking import motion_tracking as mt
-from mps_motion_tracking import block_matching, utils
 
 here = Path(__file__).absolute().parent
 
@@ -13,11 +15,15 @@ def main():
 
     data = utils.MPSData(
         **np.load(
-            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+            here.joinpath("../../datasets/mps_data.npy"),
+            allow_pickle=True,
         ).item()
     )
     disp = block_matching.get_displacements(
-        data.frames, data.frames[:, :, 0], block_size=3, max_block_movement=10
+        data.frames,
+        data.frames[:, :, 0],
+        block_size=3,
+        max_block_movement=10,
     )
 
     np.save("bm_disp.npy", disp)
@@ -41,7 +47,8 @@ def plot_displacements():
 
     data = utils.MPSData(
         **np.load(
-            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+            here.joinpath("../../datasets/mps_data.npy"),
+            allow_pickle=True,
         ).item()
     )
     disp = np.load("bm_disp.npy") * data.info["um_per_pixel"]

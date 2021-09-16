@@ -27,7 +27,9 @@ def print_dict(d: Dict[str, Any], fmt="{:<10}: {}"):
 
 
 def normalize_baseline_func(
-    arr: np.ndarray, normalize_baseline: bool, index: Optional[int]
+    arr: np.ndarray,
+    normalize_baseline: bool,
+    index: Optional[int],
 ):
     if normalize_baseline:
         assert index is not None
@@ -36,26 +38,36 @@ def normalize_baseline_func(
 
 
 def plot_displacement(
-    mechanics, time_stamps, path, normalize_baseline: bool, index: Optional[int]
+    mechanics,
+    time_stamps,
+    path,
+    normalize_baseline: bool,
+    index: Optional[int],
 ):
 
     fig, ax = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
     ax[0].plot(
         time_stamps,
         normalize_baseline_func(
-            mechanics.u.norm().mean().compute(), normalize_baseline, index
+            mechanics.u.norm().mean().compute(),
+            normalize_baseline,
+            index,
         ),
     )
     ax[1].plot(
         time_stamps,
         normalize_baseline_func(
-            mechanics.u.x.mean().compute(), normalize_baseline, index
+            mechanics.u.x.mean().compute(),
+            normalize_baseline,
+            index,
         ),
     )
     ax[2].plot(
         time_stamps,
         normalize_baseline_func(
-            mechanics.u.y.mean().compute(), normalize_baseline, index
+            mechanics.u.y.mean().compute(),
+            normalize_baseline,
+            index,
         ),
     )
 
@@ -70,7 +82,11 @@ def plot_displacement(
 
 
 def plot_strain(
-    mechanics, time_stamps, path, normalize_baseline: bool, index: Optional[int]
+    mechanics,
+    time_stamps,
+    path,
+    normalize_baseline: bool,
+    index: Optional[int],
 ):
     fig, ax = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
 
@@ -200,7 +216,7 @@ def main(
 
         if opt_flow.reference_frame_index is None:
             print(
-                "Unable to normalize baseline. Please select a different reference frame"
+                "Unable to normalize baseline. Please select a different reference frame",
             )
         else:
             index = opt_flow.reference_frame_index

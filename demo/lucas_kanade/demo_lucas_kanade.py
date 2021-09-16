@@ -9,7 +9,10 @@ import numpy as np
 import tqdm
 
 from mps_motion_tracking import frame_sequence as fs
-from mps_motion_tracking import lucas_kanade, mechanics, utils, visu
+from mps_motion_tracking import lucas_kanade
+from mps_motion_tracking import mechanics
+from mps_motion_tracking import utils
+from mps_motion_tracking import visu
 
 here = Path(__file__).absolute().parent
 
@@ -18,7 +21,8 @@ def main():
 
     data = utils.MPSData(
         **np.load(
-            here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
+            here.joinpath("../../datasets/mps_data.npy"),
+            allow_pickle=True,
         ).item()
     )
     data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
@@ -40,7 +44,6 @@ def main():
     u = fs.VectorFrameSequence(U)
     print("Compute norm")
     u_norm = u.norm().mean().compute()
-    breakpoint()
     print("Plot")
     plt.plot(data.time_stamps, u_norm)
     plt.show()
@@ -137,10 +140,16 @@ def postprocess_displacement():
     fps = data.framerate
 
     out_flow = cv2.VideoWriter(
-        "lukas_kanade_displacement_flow.mp4", fourcc, fps, (width, height)
+        "lukas_kanade_displacement_flow.mp4",
+        fourcc,
+        fps,
+        (width, height),
     )
     out_hsv = cv2.VideoWriter(
-        "lukas_kanade_displacement_hsv.mp4", fourcc, fps, (width, height)
+        "lukas_kanade_displacement_hsv.mp4",
+        fourcc,
+        fps,
+        (width, height),
     )
 
     for i in tqdm.tqdm(range(data.num_frames)):

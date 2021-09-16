@@ -4,7 +4,8 @@ import cv2
 import numpy as np
 import tqdm
 
-from . import scaling, utils
+from . import scaling
+from . import utils
 
 
 def _draw_flow(image, x, y, fx, fy):
