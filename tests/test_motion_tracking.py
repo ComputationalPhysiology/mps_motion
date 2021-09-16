@@ -140,3 +140,10 @@ def test_get_displacement_scale_algs(
     """Test that there are now exceptions raised"""
     m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
     m.get_displacements(unit=unit, scale=0.5)
+
+
+def test_OpticalFlow_options(test_data: utils.MPSData):
+
+    step = 4
+    m = OpticalFlow(test_data, flow_algorithm="lucas_kanade", step=step)
+    assert m.options["step"] == step

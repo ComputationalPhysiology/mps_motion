@@ -84,33 +84,33 @@ class OpticalFlow:
         self.data = data
 
         self.flow_algorithm = flow_algorithm
-        self.options = options
+
         (
             self._reference_frame,
             self._reference_image,
             self._reference_frame_index,
         ) = get_referenece_image(reference_frame, data.frames, data.time_stamps)
 
-        self._handle_algorithm()
+        self._handle_algorithm(options)
 
-    def _handle_algorithm(self):
+    def _handle_algorithm(self, options):
         _check_algorithm(self.flow_algorithm)
 
         if self.flow_algorithm == "lucas_kanade":
             self._get_displacements = lucas_kanade.get_displacements
-            options = lucas_kanade.default_options()
+            self.options = lucas_kanade.default_options()
 
         elif self.flow_algorithm == "block_matching":
             self._get_displacements = block_matching.get_displacements
-            options = block_matching.default_options()
+            self.options = block_matching.default_options()
 
         elif self.flow_algorithm == "farneback":
             self._get_displacements = farneback.get_displacements
-            options = farneback.default_options()
+            self.options = farneback.default_options()
 
         elif self.flow_algorithm == "dualtvl10":
             self._get_displacements = dualtvl10.get_displacements
-            options = dualtvl10.default_options()
+            self.options = dualtvl10.default_options()
 
         self.options.update(options)
 

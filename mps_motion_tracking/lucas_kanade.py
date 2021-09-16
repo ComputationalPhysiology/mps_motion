@@ -253,7 +253,6 @@ def get_displacements(
         flows[:, :, i] = _flow(
             im, reference_image, reference_points, winSize, maxLevel, criteria
         )
-
     if interpolation == Interpolation.none:
         return flows
 
