@@ -30,13 +30,17 @@ def reshape_lk(reference_points: np.ndarray, flows: np.ndarray) -> np.ndarray:
     xu = np.sort(np.unique(x))
     yu = np.sort(np.unique(y))
 
+    dx = xu[0]
     dxs = np.diff(xu)
-    dx = dxs[0]
-    assert np.all(dxs == dx)
+    if len(dxs) > 0:
+        dx = dxs[0]
+        assert np.all(dxs == dx)
 
+    dy = yu[0]
     dys = np.diff(yu)
-    dy = dys[0]
-    assert np.all(dys == dy)
+    if len(dys) > 0:
+        dy = dys[0]
+        assert np.all(dys == dy)
 
     xp = ((x - np.min(x)) / dx).astype(int)
     yp = ((y - np.min(y)) / dy).astype(int)
