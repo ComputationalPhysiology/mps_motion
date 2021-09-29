@@ -49,7 +49,7 @@ def compute_green_lagrange_strain_tensor(F: Array):
 def compute_velocity(u: Array, t: Array):
 
     time_axis = u.shape.index(len(t))
-    assert time_axis == 2, "Time axis should be the first axis"
+    assert time_axis == 2, "Time axis should be the third axis"
     assert u.shape[-1] == 2, "Final axis should be ux and uy"
     du = da.diff(u, axis=time_axis)
     dt = da.diff(t)

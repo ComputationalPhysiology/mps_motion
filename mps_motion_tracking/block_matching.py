@@ -44,14 +44,16 @@ logger = logging.getLogger(__name__)
 
 
 def default_options():
-    return dict(block_size=9, max_block_movement=18, filter_kernel_size=8)
+    return dict(block_size=9, max_block_movement=18, filter_kernel_size=5)
 
 
 def filter_vectors(vectors, filter_kernel_size):
-    from scipy import ndimage
 
-    vectors[:, :, 0] = ndimage.median_filter(vectors[:, :, 0], filter_kernel_size)
-    vectors[:, :, 1] = ndimage.median_filter(vectors[:, :, 1], filter_kernel_size)
+    if filter_kernel_size > 0:
+        from scipy import ndimage
+
+        vectors[:, :, 0] = ndimage.median_filter(vectors[:, :, 0], filter_kernel_size)
+        vectors[:, :, 1] = ndimage.median_filter(vectors[:, :, 1], filter_kernel_size)
     return vectors
 
 
@@ -149,7 +151,8 @@ def _flow(
     """
     # Shape of the image that is returned
     y_size, x_size = image.shape
-    shape = (y_size // block_size, x_size // block_size)
+    block_size = max(block_size, 1)
+    shape = (max(y_size // block_size, 1), max(x_size // block_size, 1))
     vectors = np.zeros((shape[0], shape[1], 2))
     costs = np.ones((2 * max_block_movement + 1, 2 * max_block_movement + 1))
 
@@ -231,7 +234,7 @@ def get_displacements(
     reference_image: np.ndarray,
     block_size: int = 9,
     max_block_movement: int = 18,
-    filter_kernel_size: int = 9,
+    filter_kernel_size: int = 5,
     resize=True,
 ):
     frames = check_frame_dimensions(frames, reference_image)
@@ -244,7 +247,8 @@ def get_displacements(
     num_frames = frames.shape[-1]
 
     y_size, x_size = reference_image.shape
-    shape = (y_size // block_size, x_size // block_size)
+    block_size = max(block_size, 1)
+    shape = (max(y_size // block_size, 1), max(x_size // block_size, 1))
     flows = np.zeros((shape[0], shape[1], 2, num_frames))
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
@@ -253,7 +257,7 @@ def get_displacements(
             desc="Compute displacement",
             total=num_frames,
         ):
-            flows[:, :, :, i] = uv
+            flows[:, :, :, i] = filter_vectors(uv, filter_kernel_size)
 
     if resize:
 
