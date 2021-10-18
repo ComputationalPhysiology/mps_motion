@@ -55,7 +55,7 @@ def compute_velocity(u: Array, t: Array):
     dt = da.diff(t)
 
     # Need to have time axis
-    return da.moveaxis(da.moveaxis(du, 2, 3) / dt, 2, 3).compute()
+    return da.moveaxis(da.moveaxis(du, 2, 3) / dt, 2, 3)
 
 
 class Mechancis:
@@ -132,7 +132,7 @@ class Mechancis:
     def du(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
             compute_gradients(self.u.array, dx=self.dx),
-            dx=1.0,
+            dx=self.dx,
             scale=self.scale,
         )
 
@@ -140,7 +140,7 @@ class Mechancis:
     def F(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
             self.du.array + da.eye(2)[None, None, None, :, :],
-            dx=1.0,
+            dx=self.dx,
             scale=self.scale,
         )
 
@@ -148,7 +148,7 @@ class Mechancis:
     def E(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
             compute_green_lagrange_strain_tensor(self.F.array),
-            dx=1.0,
+            dx=self.dx,
             scale=self.scale,
         )
 

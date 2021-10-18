@@ -8,6 +8,7 @@ import mps
 import numpy as np
 import tqdm
 
+import mps_motion_tracking as mmt
 from mps_motion_tracking import frame_sequence as fs
 from mps_motion_tracking import lucas_kanade
 from mps_motion_tracking import mechanics
@@ -171,30 +172,77 @@ def create_flow_field():
     #     data.frames[:, :, 0],
     #     step=48,
     # )
+    # np.save("disp.npy", disp)
     disp = np.load("disp.npy", mmap_mode="r")
 
-    visu.quiver_video(data, disp, "flow.mp4", step=48, scale=10)
+    visu.quiver_video(data, disp, "flow.mp4", step=48, vector_scale=10)
     # visu.hsv_video(data, disp, "hsv.mp4")
 
 
 def create_velocity_flow_field():
 
-    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    # data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
     # disp = lucas_kanade.get_displacements(
     #     data.frames,
     #     data.frames[:, :, 0],
-    #     step=48,
+    #     sca
     # )
-    disp = np.load("disp.npy", mmap_mode="r")
-    V = mechanics.compute_velocity(disp, data.time_stamps)
+    data = mmt.scaling.resize_data(
+        mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2"),
+        scale=0.4,
+    )
+    # disp = np.load("disp.npy", mmap_mode="r")
+    opt_flow = mmt.OpticalFlow(data, flow_algorithm="farneback", reference_frame=0)
+    # disp = da.from_array(np.swapaxes(disp, 2, 3))
+    u = opt_flow.get_displacements()
+    # V = mechanics.compute_velocity(u.array, data.time_stamps)
+    # vel = fs.VectorFrameSequence(V)
+    angle = u.angle().array.compute()
+    angle *= 180 / np.pi
+    x, y = np.meshgrid(
+        np.arange(u.shape[1]),
+        np.arange(u.shape[0]),
+    )
+    index = 83
+    plt.imshow(data.frames[:, :, index], cmap="gray")
+    N = 10
+    plt.quiver(
+        x[::N, ::N],
+        y[::N, ::N],
+        u.array[::N, ::N, index, 0],
+        -u.array[::N, ::N, index, 1],
+        angle[::N, ::N, index],
+        scale_units="inches",
+        scale=10,
+        cmap="twilight",
+        clim=(-180, 180),
+    )
+    # plt.imshow(angle[:, :, 71], cmap="twilight", vmin=-180, vmax=180)
+    plt.colorbar()
+    plt.show()
+    # breakpoint()
 
-    visu.quiver_video(data, V, "velocity_flow.mp4", step=48, scale=500, velocity=True)
+    # u_norm = u.norm().mean().compute()
+    # vel_norm = vel.norm().mean().compute() * 1000
+    # fig, ax = plt.subplots()
+    # (l1,) = ax.plot(data.time_stamps, u_norm)
+    # ax2 = ax.twinx()
+    # (l2,) = ax2.plot(data.time_stamps[:-1], vel_norm, color="r")
+    # ax.legend([l1, l2], ["displacement", "velocity"], loc="best")
+    # ax.set_xlabel("Time [ms]")
+    # ax.set_ylabel("Displacement [\u00B5m")
+    # ax2.set_ylabel("Displacement [\u00B5m / s")
+    # fig.savefig("disp_velocity.png")
+    # plt.show()
+
+    # breakpoint()
+    # visu.quiver_video(data, V, "velocity_flow.mp4", step=48, scale=500, velocity=True)
 
 
 if __name__ == "__main__":
     # main()
     # postprocess_displacement()
     # plot_saved_displacement()
-    create_flow_field()
+    # create_flow_field()
     # plot_velocity()
-    # create_velocity_flow_field()
+    create_velocity_flow_field()

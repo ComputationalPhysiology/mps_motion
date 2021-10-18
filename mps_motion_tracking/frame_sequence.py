@@ -40,6 +40,7 @@ class FrameSequence:
 
         """
         assert isinstance(array, (da.core.Array, np.ndarray))
+        self._ns = np if isinstance(array, np.ndarray) else da
         self._array = array
         self.dx = dx
         self.scale = scale
@@ -55,9 +56,7 @@ class FrameSequence:
             return False
         if self.dx != other.dx:
             return False
-        if not (self.array == other.array).all():
-            return False
-        return True
+        return self._ns.isclose(self.array, other.array).all()
 
     def __del__(self):
         if self._h5file is not None:
@@ -197,6 +196,9 @@ class FrameSequence:
     def max(self) -> Array:
         return self.array.max(2)
 
+    def compute(self) -> Array:
+        return self.array_np
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.array.shape}, dx={self.dx}, scale={self.scale})"
 
@@ -225,7 +227,6 @@ class VectorFrameSequence(FrameSequence):
 
         """
         super().__init__(array, dx, scale)
-        self._ns = np if isinstance(array, np.ndarray) else da
         assert len(array.shape) == 4
         assert array.shape[3] == 2
 
@@ -236,13 +237,20 @@ class VectorFrameSequence(FrameSequence):
             scale=self.scale,
         )
 
+    def angle(self) -> FrameSequence:
+        return FrameSequence(
+            self._ns.arctan2(self._array[:, :, :, 0], self._array[:, :, :, 1]),
+            dx=self.dx,
+            scale=self.scale,
+        )
+
     @property
     def x(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 0], dx=self.dx, scale=self.scale)
+        return FrameSequence(self._array[:, :, :, 1], dx=self.dx, scale=self.scale)
 
     @property
     def y(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 1], dx=self.dx, scale=self.scale)
+        return FrameSequence(self._array[:, :, :, 0], dx=self.dx, scale=self.scale)
 
 
 class TensorFrameSequence(FrameSequence):
@@ -283,11 +291,11 @@ class TensorFrameSequence(FrameSequence):
 
     @property
     def x(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 0, 0], dx=self.dx, scale=self.scale)
+        return FrameSequence(self._array[:, :, :, 1, 1], dx=self.dx, scale=self.scale)
 
     @property
     def y(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 1, 1], dx=self.dx, scale=self.scale)
+        return FrameSequence(self._array[:, :, :, 0, 0], dx=self.dx, scale=self.scale)
 
     @property
     def xy(self) -> FrameSequence:
