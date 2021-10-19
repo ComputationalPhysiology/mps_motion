@@ -234,11 +234,15 @@ def get_displacements(
         Interpolate flow to original shape using radial basis function ('rbf'),
         nearest neigbour interpolation ('nearest') or do not interpolate but reshape ('reshape'),
         or use the original output from the LK algorithm ('none'), by default 'nearest'
+    filter_kernel_size : int
+        Kernel in median filter that is applied after algorithm. To turn of filtering
+        you can set this value to zero, by default 3.
 
     Returns
     -------
-    np.ndarray
-        An array of motion vectors relative to the reference image.
+    Array
+        An array of motion vectors relative to the reference image. If shape of
+        input frames are (N, M, T) then the shape of the output is (N, M, T, 2).
     """
     logger.info("Get displacements using Lucas Kanade")
 

@@ -9,7 +9,7 @@ import daiquiri as _daiquiri
 
 from . import (
     block_matching,
-    dualtvl10,
+    dualtvl1,
     farneback,
     lucas_kanade,
     mechanics,
@@ -27,7 +27,7 @@ def set_log_level(level):
 
     loggers = [
         "block_matching.logger",
-        "dualtvl10.logger",
+        "dualtvl1.logger",
         "farneback.logger",
         "lucas_kanade.logger",
         "mechanics.logger",
@@ -43,7 +43,7 @@ _daiquiri.setup(level=_logging.INFO)
 
 __all__ = [
     "farneback",
-    "dualtvl10",
+    "dualtvl1",
     "lucas_kanade",
     "block_matching",
     "utils",

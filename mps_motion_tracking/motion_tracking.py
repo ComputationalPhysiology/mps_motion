@@ -8,7 +8,7 @@ import dask.array as da
 import numpy as np
 
 from . import block_matching
-from . import dualtvl10
+from . import dualtvl1
 from . import farneback
 from . import frame_sequence as fs
 from . import lucas_kanade
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class FLOW_ALGORITHMS(str, Enum):
     farneback = "farneback"
-    dualtvl10 = "dualtvl10"
+    dualtvl1 = "dualtvl1"
     lucas_kanade = "lucas_kanade"
     block_matching = "block_matching"
 
@@ -85,7 +85,7 @@ class OpticalFlow:
     def __init__(
         self,
         data: utils.MPSData,
-        flow_algorithm: str = "farneback",
+        flow_algorithm: FLOW_ALGORITHMS = FLOW_ALGORITHMS.farneback,
         reference_frame: Union[int, str] = 0,
         **options,
     ):
@@ -104,21 +104,21 @@ class OpticalFlow:
     def _handle_algorithm(self, options):
         _check_algorithm(self.flow_algorithm)
 
-        if self.flow_algorithm == "lucas_kanade":
+        if self.flow_algorithm == FLOW_ALGORITHMS.lucas_kanade:
             self._get_displacements = lucas_kanade.get_displacements
             self.options = lucas_kanade.default_options()
 
-        elif self.flow_algorithm == "block_matching":
+        elif self.flow_algorithm == FLOW_ALGORITHMS.block_matching:
             self._get_displacements = block_matching.get_displacements
             self.options = block_matching.default_options()
 
-        elif self.flow_algorithm == "farneback":
+        elif self.flow_algorithm == FLOW_ALGORITHMS.farneback:
             self._get_displacements = farneback.get_displacements
             self.options = farneback.default_options()
 
-        elif self.flow_algorithm == "dualtvl10":
-            self._get_displacements = dualtvl10.get_displacements
-            self.options = dualtvl10.default_options()
+        elif self.flow_algorithm == FLOW_ALGORITHMS.dualtvl1:
+            self._get_displacements = dualtvl1.get_displacements
+            self.options = dualtvl1.default_options()
 
         self.options.update(options)
 
