@@ -5,6 +5,7 @@ import dask.array as da
 import numpy as np
 
 from .utils import Array
+from .utils import filter_vectors_par
 from .utils import median_filter
 from .utils import PathLike
 
@@ -242,12 +243,10 @@ class VectorFrameSequence(FrameSequence):
         assert len(array.shape) == 4
         assert array.shape[3] == 2
 
-    def filter(self, size: int = 5) -> "FrameSequence":
+    def filter(self, size: int = 5) -> "VectorFrameSequence":
         """Apply a median filter"""
 
-        arr0 = median_filter(self._array[:, :, :, 0], size=size)
-        arr1 = median_filter(self._array[:, :, :, 1], size=size)
-        array = self._ns.stack([arr0, arr1], axis=-1)
+        array = filter_vectors_par(self._array, size=size)
 
         return VectorFrameSequence(array=array, dx=self.dx, scale=self.scale)
 

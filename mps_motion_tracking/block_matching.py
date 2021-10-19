@@ -31,7 +31,7 @@ import dask
 import dask.array as da
 import numpy as np
 
-from .scaling import resize_frames
+from . import scaling
 from .utils import check_frame_dimensions
 from .utils import filter_vectors
 from .utils import filter_vectors_par
@@ -47,15 +47,6 @@ logger = logging.getLogger(__name__)
 
 def default_options():
     return dict(block_size=9, max_block_movement=18, filter_kernel_size=5)
-
-
-def flow_map(args):
-    """
-
-    Helper function for running block maching algorithm in paralell
-
-    """
-    return _flow(*args)
 
 
 def flow(
@@ -102,10 +93,7 @@ def flow(
             reference_image.shape[0],
             reference_image.shape[1],
         )
-        int_vectors = np.zeros((new_shape[0], new_shape[1], 2))
-        int_vectors[:, :, 0] = resize_frames(vectors[:, :, 0], new_shape=new_shape)
-        int_vectors[:, :, 1] = resize_frames(vectors[:, :, 1], new_shape=new_shape)
-        vectors = int_vectors
+        vectors = scaling.resize_vectors(vectors, new_shape)
     return vectors
 
 
@@ -246,19 +234,16 @@ def get_displacements(
                 max_block_movement,
             ),
         )
-    flows = da.stack(*da.compute(all_flows), axis=-1)
+    flows = da.stack(*da.compute(all_flows), axis=2)
     if filter_kernel_size:
         flows = filter_vectors_par(flows, filter_kernel_size)
-    flows = flows.compute()
+
     if resize:
 
         new_shape: Tuple[int, int] = (
             reference_image.shape[0],
             reference_image.shape[1],
         )
-        int_flows = np.zeros((new_shape[0], new_shape[1], 2, num_frames))
-        int_flows[:, :, 0, :] = resize_frames(flows[:, :, 0, :], new_shape=new_shape)
-        int_flows[:, :, 1, :] = resize_frames(flows[:, :, 1, :], new_shape=new_shape)
-        flows = int_flows
+        flows = scaling.resize_vectors(flows, new_shape)
 
     return flows

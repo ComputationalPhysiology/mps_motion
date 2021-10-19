@@ -30,7 +30,7 @@ def test_filter_vectors_dask():
 
 def test_filter_vectors_par_numpy():
 
-    shape = (500, 500, 2, 100)
+    shape = (500, 500, 100, 2)
     np.random.seed(1)
     vectors = 10 * np.ones(shape) + np.random.random(shape)
 

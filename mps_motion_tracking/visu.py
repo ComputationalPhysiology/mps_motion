@@ -168,6 +168,7 @@ def hsv_video(
 
 
 def convert_imageio(path, fps):
+    logger.info("Convert video using imageio")
     import imageio
 
     tmp_path = path.parent.joinpath(path.stem + "_tmp").with_suffix(".mp4")
@@ -184,6 +185,7 @@ def heatmap(
     convert: bool = False,
 ):
 
+    logger.info("Create heatmap video")
     if isinstance(data, fs.FrameSequence):
         data_np: np.array = data.array_np
     else:
@@ -206,6 +208,6 @@ def heatmap(
 
     out.release()
     cv2.destroyAllWindows()
-
+    logger.info("Done creating heatmap video")
     if convert:
         convert_imageio(p, fps)

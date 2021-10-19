@@ -5,6 +5,7 @@ from typing import Union
 import dask
 import dask.array as da
 import numpy as np
+from dask.diagnostics import ProgressBar
 
 logger = logging.getLogger(__name__)
 
@@ -37,34 +38,30 @@ PathLike = Union[str, os.PathLike]
 Array = Union[da.core.Array, np.ndarray]
 
 
-def filter_vectors(vectors: Array, filter_kernel_size):
+def filter_vectors(vectors: Array, size):
 
-    if filter_kernel_size > 0:
+    if size > 0:
         is_numpy = False
         if isinstance(vectors, np.ndarray):
             is_numpy = True
             vectors = da.from_array(vectors)
 
-        vec0 = median_filter(vectors[:, :, 0], filter_kernel_size)
-        vec1 = median_filter(vectors[:, :, 1], filter_kernel_size)
+        vec0 = median_filter(vectors[:, :, 0], size)
+        vec1 = median_filter(vectors[:, :, 1], size)
         vectors = da.stack([vec0, vec1], axis=-1)
         if is_numpy:
             vectors = vectors.compute()
     return vectors
 
 
-def filter_vectors_map(args):
-    return filter_vectors(*args)
+def filter_vectors_par(vectors, size):
 
-
-def filter_vectors_par(vectors, filter_kernel_size):
-
-    if filter_kernel_size <= 0:
+    if size <= 0:
         return vectors
-
+    logger.info("Filter vectors")
     assert len(vectors.shape) == 4
-    assert vectors.shape[2] == 2
-    num_frames = vectors.shape[3]
+    assert vectors.shape[3] == 2
+    num_frames = vectors.shape[2]
 
     is_numpy = False
     if isinstance(vectors, np.ndarray):
@@ -74,12 +71,15 @@ def filter_vectors_par(vectors, filter_kernel_size):
     all_vectors = []
     for i in range(num_frames):
         all_vectors.append(
-            dask.delayed(filter_vectors)(vectors[:, :, :, i], filter_kernel_size),
+            dask.delayed(filter_vectors)(vectors[:, :, i, :], size),
         )
 
-    vectors = da.stack(*da.compute(all_vectors), axis=-1)
+    with ProgressBar():
+        vectors = da.stack(*da.compute(all_vectors), axis=2)
     if is_numpy:
         vectors = vectors.compute()
+
+    logger.info("Done filtering")
     return vectors
 
 

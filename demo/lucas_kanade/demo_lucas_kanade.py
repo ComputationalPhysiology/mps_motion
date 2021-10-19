@@ -170,13 +170,19 @@ def create_flow_field():
     disp = lucas_kanade.get_displacements(
         data.frames,
         data.frames[:, :, 0],
-        step=48,
+        step=16,
+        filter_kernel_size=3,
     )
     # np.save("disp.npy", disp)
-    disp = np.load("disp.npy", mmap_mode="r")
-    u = fs.VectorFrameSequence(da.from_array(np.swapaxes(disp, 2, 3)))
+    # disp = np.load("disp.npy", mmap_mode="r")
+    u = fs.VectorFrameSequence(disp)
     mech = mechanics.Mechancis(u=u, t=data.time_stamps)
-    Exx = mech.u.filter().norm()
+
+    # u_norm = mech.u.norm().mean().compute()
+    # fig, ax = plt.subplots()
+    # ax.plot(data.time_stamps, u_norm)
+    # plt.show()
+    Exx = mech.u.norm()
     visu.heatmap("heatmap_Exx.mp4", data=Exx, fps=data.framerate)
 
     # visu.quiver_video(data, disp, "flow.mp4", step=48, vector_scale=10)

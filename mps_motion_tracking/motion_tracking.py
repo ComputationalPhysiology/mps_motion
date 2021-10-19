@@ -169,7 +169,6 @@ class OpticalFlow:
             u = self._get_displacements(
                 scaled_data.frames, reference_image, **self.options
             )
-
             dx = 1
             u /= scale
             if unit == "um":
@@ -179,7 +178,6 @@ class OpticalFlow:
             if not isinstance(u, da.Array):
                 u = da.from_array(u)
 
-            u = da.swapaxes(u, 2, 3)
             self._displacement = fs.VectorFrameSequence(u, dx=dx, scale=scale)
 
         return self._displacement

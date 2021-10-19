@@ -11,6 +11,7 @@ import cv2
 import dask
 import dask.array as da
 import numpy as np
+from dask.diagnostics import ProgressBar
 
 from .utils import to_uint8
 
@@ -73,6 +74,10 @@ def get_displacements(
         all_flows.append(
             dask.delayed(flow)(im, reference_image, tau, lmbda, theta, nscales, warps),
         )
-    flows = da.stack(*da.compute(all_flows), axis=-1)
+
+    with ProgressBar():
+        flows = da.stack(*da.compute(all_flows), axis=2)
+
+    logger.info("Done running Dualt TV-L 1 algorithm")
 
     return flows

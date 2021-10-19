@@ -88,12 +88,12 @@ def test_get_displacement_lazy(
     flow_algorithm: str,
 ):
     np.random.seed(1)
-    arr = np.random.random((4, 5, 2, 3))  # (width, heighth, 2, num_time_points)
+    arr = np.random.random((4, 5, 3, 2))  # (width, heighth, num_time_points)
     with mock.patch(f"mps_motion_tracking.{flow_algorithm}.get_displacements") as _mock:
         _mock.return_value = arr
         m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
         U = m.get_displacements()
-        assert (U[:, :, 0, :] == arr[:, :, :, 0]).all().compute()
+        assert (U[:, :, 0, :] == arr[:, :, 0, :]).all().compute()
 
     _mock.assert_called_once()
 

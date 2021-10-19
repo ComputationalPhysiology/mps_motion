@@ -15,6 +15,7 @@ import dask
 import dask.array as da
 import numpy as np
 import tqdm
+from dask.diagnostics import ProgressBar
 
 from . import scaling
 from . import utils
@@ -111,10 +112,7 @@ def flow(
             reference_image.shape[0],
             reference_image.shape[1],
         )
-        int_flows = np.zeros((new_shape[0], new_shape[1], 2))
-        int_flows[:, :, 0] = scaling.resize_frames(f[:, :, 0], new_shape=new_shape)
-        int_flows[:, :, 1] = scaling.resize_frames(f[:, :, 1], new_shape=new_shape)
-        f = int_flows
+        f = scaling.resize_vectors(f, new_shape)
     return f
 
 
@@ -206,7 +204,7 @@ def get_displacements(
     maxLevel: int = 2,
     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
     interpolation: Interpolation = Interpolation.nearest,
-    filter_kernel_size: int = 0,
+    filter_kernel_size: int = 3,
 ) -> np.ndarray:
     """Compute the optical flow using the Lucas Kanade method from
     the reference frame to all other frames
@@ -240,7 +238,7 @@ def get_displacements(
     Returns
     -------
     np.ndarray
-        An array of motion vectors relative to the reference image
+        An array of motion vectors relative to the reference image.
     """
     logger.info("Get displacements using Lucas Kanade")
 
@@ -262,7 +260,10 @@ def get_displacements(
                 criteria,
             ),
         )
-    flows = da.stack(*da.compute(all_flows), axis=-1)
+
+    with ProgressBar():
+        flows = da.stack(*da.compute(all_flows), axis=-1)
+    logger.info("Done with Lucas-Kanade method")
 
     if interpolation == Interpolation.none:
         return flows
@@ -285,7 +286,7 @@ def get_displacements(
         return int_flows
 
     flows = scaling.reshape_lk(reference_points, flows)
-    flows = utils.filter_vectors_par(flows, filter_kernel_size)
+    flows = utils.filter_vectors_par(flows, size=filter_kernel_size)
 
     if interpolation == Interpolation.nearest:
 
@@ -293,14 +294,6 @@ def get_displacements(
             reference_image.shape[0],
             reference_image.shape[1],
         )
-        int_flows = np.zeros((new_shape[0], new_shape[1], 2, num_frames))
-        int_flows[:, :, 0, :] = scaling.resize_frames(
-            flows[:, :, 0, :],
-            new_shape=new_shape,
-        )
-        int_flows[:, :, 1, :] = scaling.resize_frames(
-            flows[:, :, 1, :],
-            new_shape=new_shape,
-        )
-        flows = int_flows
+
+        flows = scaling.resize_vectors(flows, new_shape)
     return flows

@@ -10,6 +10,7 @@ import cv2
 import dask
 import dask.array as da
 import numpy as np
+from dask.diagnostics import ProgressBar
 
 from .utils import to_uint8
 
@@ -95,6 +96,10 @@ def get_displacements(
                 flags,
             ),
         )
-    flows = da.stack(*da.compute(all_flows), axis=-1)
+
+    with ProgressBar():
+        flows = da.stack(*da.compute(all_flows), axis=2)
+
+    logger.info("Done running Farneback's algorithm")
 
     return flows

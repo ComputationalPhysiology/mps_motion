@@ -59,4 +59,4 @@ def test_get_displacements():
         frames=np.array(frames).T,
         reference_image=reference_image,
     )
-    assert u.shape == (size[0], size[1], 2, len(frames))
+    assert u.shape == (size[0], size[1], len(frames), 2)
