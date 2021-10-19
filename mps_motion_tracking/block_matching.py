@@ -24,15 +24,17 @@
 # SIMULA RESEARCH LABORATORY MAKES NO REPRESENTATIONS AND EXTENDS NO
 # WARRANTIES OF ANY KIND, EITHER IMPLIED OR EXPRESSED, INCLUDING, BUT
 # NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS
-import concurrent.futures
 import logging
 from typing import Tuple
 
+import dask
+import dask.array as da
 import numpy as np
-import tqdm
 
 from .scaling import resize_frames
 from .utils import check_frame_dimensions
+from .utils import filter_vectors
+from .utils import filter_vectors_par
 from .utils import jit
 
 __author__ = "Henrik Finsberg (henriknf@simula.no), 2017--2020"
@@ -45,16 +47,6 @@ logger = logging.getLogger(__name__)
 
 def default_options():
     return dict(block_size=9, max_block_movement=18, filter_kernel_size=5)
-
-
-def filter_vectors(vectors, filter_kernel_size):
-
-    if filter_kernel_size > 0:
-        from scipy import ndimage
-
-        vectors[:, :, 0] = ndimage.median_filter(vectors[:, :, 0], filter_kernel_size)
-        vectors[:, :, 1] = ndimage.median_filter(vectors[:, :, 1], filter_kernel_size)
-    return vectors
 
 
 def flow_map(args):
@@ -240,25 +232,24 @@ def get_displacements(
     frames = check_frame_dimensions(frames, reference_image)
 
     logger.info("Get displacements using block mathching")
-    args = (
-        (im, reference_image, block_size, max_block_movement)
-        for im in np.rollaxis(frames, 2)
-    )
     num_frames = frames.shape[-1]
-
-    y_size, x_size = reference_image.shape
     block_size = max(block_size, 1)
-    shape = (max(y_size // block_size, 1), max(x_size // block_size, 1))
-    flows = np.zeros((shape[0], shape[1], 2, num_frames))
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        for i, uv in tqdm.tqdm(
-            enumerate(executor.map(flow_map, args)),
-            desc="Compute displacement",
-            total=num_frames,
-        ):
-            flows[:, :, :, i] = filter_vectors(uv, filter_kernel_size)
+    all_flows = []
 
+    for i in range(num_frames):
+        all_flows.append(
+            dask.delayed(flow)(
+                frames[:, :, i],
+                reference_image,
+                block_size,
+                max_block_movement,
+            ),
+        )
+    flows = da.stack(*da.compute(all_flows), axis=-1)
+    if filter_kernel_size:
+        flows = filter_vectors_par(flows, filter_kernel_size)
+    flows = flows.compute()
     if resize:
 
         new_shape: Tuple[int, int] = (

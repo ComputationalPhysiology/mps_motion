@@ -3,13 +3,13 @@ Farnebäck, G. (2003, June). Two-frame motion estimation based on polynomial exp
 
 
 """
-import concurrent.futures
 import logging
 from typing import Optional
 
 import cv2
+import dask
+import dask.array as da
 import numpy as np
-import tqdm
 
 from .utils import to_uint8
 
@@ -64,48 +64,6 @@ def flow(
     )
 
 
-def get_velocities(
-    frames,
-    reference_image: np.ndarray,
-    mask_flow: Optional[np.ndarray] = None,
-    pyr_scale: float = 0.5,
-    levels: int = 3,
-    winsize: int = 15,
-    iterations: int = 3,
-    poly_n: int = 5,
-    poly_sigma: float = 1.2,
-    flags: int = 0,
-):
-
-    args = (
-        (
-            im,
-            ref,
-            mask_flow,
-            pyr_scale,
-            levels,
-            winsize,
-            iterations,
-            poly_n,
-            poly_sigma,
-            flags,
-        )
-        for (im, ref) in zip(np.rollaxis(frames, 2)[1:], np.rollaxis(frames, 2)[:-1])
-    )
-    num_frames = frames.shape[-1]
-    flows = np.zeros(
-        (reference_image.shape[0], reference_image.shape[1], 2, num_frames),
-    )
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        for i, uv in tqdm.tqdm(
-            enumerate(executor.map(flow_map, args)),
-            total=num_frames,
-        ):
-            flows[:, :, :, i] = uv
-
-    return flows
-
-
 def get_displacements(
     frames,
     reference_image: np.ndarray,
@@ -121,31 +79,22 @@ def get_displacements(
 
     logger.info("Get displacements using Farneback's algorithm")
 
-    args = (
-        (
-            im,
-            reference_image,
-            mask_flow,
-            pyr_scale,
-            levels,
-            winsize,
-            iterations,
-            poly_n,
-            poly_sigma,
-            flags,
+    all_flows = []
+    for im in np.rollaxis(frames, 2):
+        all_flows.append(
+            dask.delayed(flow)(
+                im,
+                reference_image,
+                mask_flow,
+                pyr_scale,
+                levels,
+                winsize,
+                iterations,
+                poly_n,
+                poly_sigma,
+                flags,
+            ),
         )
-        for im in np.rollaxis(frames, 2)
-    )
-    num_frames = frames.shape[-1]
-    flows = np.zeros(
-        (reference_image.shape[0], reference_image.shape[1], 2, num_frames),
-    )
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        for i, uv in tqdm.tqdm(
-            enumerate(executor.map(flow_map, args)),
-            desc="Compute displacement",
-            total=num_frames,
-        ):
-            flows[:, :, :, i] = uv
+    flows = da.stack(*da.compute(all_flows), axis=-1)
 
     return flows

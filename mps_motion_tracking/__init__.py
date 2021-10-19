@@ -5,6 +5,7 @@ __email__ = "henriknf@simula.no"
 __version__ = "0.1.0"
 
 import logging as _logging
+import daiquiri as _daiquiri
 
 from . import (
     block_matching,
@@ -20,7 +21,25 @@ from . import (
 from .mechanics import Mechancis
 from .motion_tracking import FLOW_ALGORITHMS, OpticalFlow
 
-_logging.basicConfig(level=_logging.INFO)
+
+def set_log_level(level):
+    from daiquiri import set_default_log_levels
+
+    loggers = [
+        "block_matching.logger",
+        "dualtvl10.logger",
+        "farneback.logger",
+        "lucas_kanade.logger",
+        "mechanics.logger",
+        "motion_tracking.logger",
+        "scaling.logger",
+        "utils.logger",
+        "visu.logger",
+    ]
+    set_default_log_levels((logger, level) for logger in loggers)
+
+
+_daiquiri.setup(level=_logging.INFO)
 
 __all__ = [
     "farneback",

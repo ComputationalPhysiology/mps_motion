@@ -1,6 +1,7 @@
 import itertools as it
 from unittest import mock
 
+import dask.array as da
 import numpy as np
 import pytest
 
@@ -110,28 +111,18 @@ def test_get_displacement_unit(test_data: utils.MPSData):
     disp_px = m.get_displacements(unit="pixels")
     disp_um = m.get_displacements(unit="um", recompute=True)
 
-    assert (
-        abs(
-            disp_um.x.mean().max().compute()  # type: ignore
-            - disp_px.x.mean().max().compute() * test_data.info["um_per_pixel"],  # type: ignore
-        )
-        < 1e-12
+    assert da.isclose(
+        disp_um.x.mean().max(),
+        disp_px.x.mean().max() * test_data.info["um_per_pixel"],
     )
 
-    assert (
-        abs(
-            disp_um.max().max().compute()  # type: ignore
-            - disp_px.max().max().compute() * test_data.info["um_per_pixel"],  # type: ignore
-        )
-        < 1e-12
+    assert da.isclose(
+        disp_um.max().max(),
+        disp_px.max().max() * test_data.info["um_per_pixel"],
     )
-
-    assert (
-        abs(
-            disp_um.norm().max().max().compute()  # type: ignore
-            - disp_px.norm().max().max().compute() * test_data.info["um_per_pixel"],  # type: ignore
-        )
-        < 1e-12
+    assert da.isclose(
+        disp_um.norm().max().max(),
+        disp_px.norm().max().max() * test_data.info["um_per_pixel"],
     )
 
 

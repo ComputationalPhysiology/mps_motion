@@ -11,6 +11,8 @@ from typing import Optional
 from typing import Tuple
 
 import cv2
+import dask
+import dask.array as da
 import numpy as np
 import tqdm
 
@@ -204,6 +206,7 @@ def get_displacements(
     maxLevel: int = 2,
     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
     interpolation: Interpolation = Interpolation.nearest,
+    filter_kernel_size: int = 0,
 ) -> np.ndarray:
     """Compute the optical flow using the Lucas Kanade method from
     the reference frame to all other frames
@@ -246,23 +249,21 @@ def get_displacements(
     reference_points = get_uniform_reference_points(reference_image, step=step)
 
     num_frames = frames.shape[-1]
-    flows = np.zeros((reference_points.shape[0], 2, num_frames))
 
-    for i, im in enumerate(
-        tqdm.tqdm(
-            np.rollaxis(frames, 2),
-            desc="Compute displacement",
-            total=num_frames,
-        ),
-    ):
-        flows[:, :, i] = _flow(
-            im,
-            reference_image,
-            reference_points,
-            winSize,
-            maxLevel,
-            criteria,
+    all_flows = []
+    for im in np.rollaxis(frames, 2):
+        all_flows.append(
+            dask.delayed(_flow)(
+                im,
+                reference_image,
+                reference_points,
+                winSize,
+                maxLevel,
+                criteria,
+            ),
         )
+    flows = da.stack(*da.compute(all_flows), axis=-1)
+
     if interpolation == Interpolation.none:
         return flows
 
@@ -284,6 +285,7 @@ def get_displacements(
         return int_flows
 
     flows = scaling.reshape_lk(reference_points, flows)
+    flows = utils.filter_vectors_par(flows, filter_kernel_size)
 
     if interpolation == Interpolation.nearest:
 

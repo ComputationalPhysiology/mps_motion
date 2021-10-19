@@ -1,12 +1,17 @@
+import logging
 from typing import Optional
 from typing import Tuple
 
 import cv2
+import dask
+import dask.array as da
 import numpy as np
 import scipy.spatial
 import tqdm
 
 from .utils import MPSData
+
+logger = logging.getLogger(__name__)
 
 INTERPOLATION_METHODS = {
     "nearest": cv2.INTER_NEAREST,
@@ -60,7 +65,7 @@ def resize_frames(
     new_shape: Optional[Tuple[int, int]] = None,
     interpolation_method="nearest",
 ) -> np.ndarray:
-
+    logger.info("Resize frames")
     msg = f"Expected interpolation method to be one of {INTERPOLATION_METHODS.keys()}, got {interpolation_method}"
     assert interpolation_method in INTERPOLATION_METHODS, msg
     if scale != 1.0 or new_shape is not None:
@@ -84,15 +89,16 @@ def resize_frames(
             return cv2.resize(frames, (height, width))
 
         resized_frames = np.zeros((width, height, num_frames))
-        for i in tqdm.tqdm(
-            range(num_frames),
-            desc=f"Resize frames from {(w, h)} to {(width, height)}",
-        ):
-            resized_frames[:, :, i] = cv2.resize(
-                frames[:, :, i],
-                (height, width),
-                INTERPOLATION_METHODS[interpolation_method],
+        all_resized_frames = []
+        for i in range(num_frames):
+            all_resized_frames.append(
+                dask.delayed(cv2.resize)(
+                    frames[:, :, i],
+                    (height, width),
+                    INTERPOLATION_METHODS[interpolation_method],
+                ),
             )
+        resized_frames = da.stack(*da.compute(all_resized_frames), axis=-1)
     else:
         resized_frames = frames.copy()
 

@@ -176,8 +176,11 @@ class OpticalFlow:
                 u *= scaled_data.info.get("um_per_pixel", 1.0)
                 dx *= scaled_data.info.get("um_per_pixel", 1.0)
 
-            U = da.from_array(np.swapaxes(u, 2, 3))
-            self._displacement = fs.VectorFrameSequence(U, dx=dx, scale=scale)
+            if not isinstance(u, da.Array):
+                u = da.from_array(u)
+
+            u = da.swapaxes(u, 2, 3)
+            self._displacement = fs.VectorFrameSequence(u, dx=dx, scale=scale)
 
         return self._displacement
 

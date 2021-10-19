@@ -1,11 +1,16 @@
+import logging
 from pathlib import Path
+from typing import Union
 
 import cv2
 import numpy as np
 import tqdm
 
+from . import frame_sequence as fs
 from . import scaling
 from . import utils
+
+logger = logging.getLogger(__name__)
 
 
 def _draw_flow(image, x, y, fx, fy):
@@ -159,9 +164,48 @@ def hsv_video(
     cv2.destroyAllWindows()
 
     if convert:
-        import imageio
+        convert_imageio(p, fps)
 
-        tmp_path = p.parent.joinpath(p.stem + "_tmp").with_suffix(".mp4")
-        p.rename(tmp_path)
-        video = imageio.read(tmp_path)
-        imageio.mimwrite(p, video.iter_data(), fps=fps)
+
+def convert_imageio(path, fps):
+    import imageio
+
+    tmp_path = path.parent.joinpath(path.stem + "_tmp").with_suffix(".mp4")
+    path.rename(tmp_path)
+    video = imageio.read(tmp_path)
+    imageio.mimwrite(path, video.iter_data(), fps=fps)
+
+
+def heatmap(
+    path: utils.PathLike,
+    data: Union[np.array, fs.FrameSequence],
+    fps: int = 50,
+    axis: int = 2,
+    convert: bool = False,
+):
+
+    if isinstance(data, fs.FrameSequence):
+        data_np: np.array = data.array_np
+    else:
+        data_np = data
+
+    assert len(data_np.shape) == 3
+    num_frames = data_np.shape[axis]
+
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+
+    width = data_np.shape[1]
+    height = data_np.shape[0]
+
+    p = Path(path).with_suffix(".mp4")
+
+    out = cv2.VideoWriter(p.as_posix(), fourcc, fps, (width, height))
+    for i in tqdm.tqdm(range(num_frames), desc=f"Create heatmap movie at {p}"):
+        heat = np.take(data_np, i, axis=axis)
+        out.write(cv2.applyColorMap(utils.to_uint8(heat), cv2.COLORMAP_HOT))
+
+    out.release()
+    cv2.destroyAllWindows()
+
+    if convert:
+        convert_imageio(p, fps)

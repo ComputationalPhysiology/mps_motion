@@ -1,8 +1,12 @@
+import logging
 from pathlib import Path
-from typing import Union
 
 import dask.array as da
 import numpy as np
+
+from .utils import Array
+from .utils import median_filter
+from .utils import PathLike
 
 try:
     import h5py
@@ -11,8 +15,7 @@ try:
 except ImportError:
     has_h5py = False
 
-Array = Union[da.core.Array, np.ndarray]
-PathStr = Union[Path, str]
+logger = logging.getLogger(__name__)
 
 
 class FrameSequence:
@@ -62,7 +65,16 @@ class FrameSequence:
         if self._h5file is not None:
             self._h5file.close()
 
-    def save(self, path: PathStr) -> None:
+    def filter(self, size: int = 3) -> "FrameSequence":
+        """Apply a median filter"""
+
+        return FrameSequence(
+            array=median_filter(self._array, size),
+            dx=self.dx,
+            scale=self.scale,
+        )
+
+    def save(self, path: PathLike) -> None:
         path = Path(path)
 
         if path.is_file():
@@ -229,6 +241,15 @@ class VectorFrameSequence(FrameSequence):
         super().__init__(array, dx, scale)
         assert len(array.shape) == 4
         assert array.shape[3] == 2
+
+    def filter(self, size: int = 5) -> "FrameSequence":
+        """Apply a median filter"""
+
+        arr0 = median_filter(self._array[:, :, :, 0], size=size)
+        arr1 = median_filter(self._array[:, :, :, 1], size=size)
+        array = self._ns.stack([arr0, arr1], axis=-1)
+
+        return VectorFrameSequence(array=array, dx=self.dx, scale=self.scale)
 
     def norm(self) -> FrameSequence:
         return FrameSequence(

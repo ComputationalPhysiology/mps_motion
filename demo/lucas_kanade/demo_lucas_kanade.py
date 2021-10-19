@@ -167,15 +167,20 @@ def postprocess_displacement():
 def create_flow_field():
 
     data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
-    # disp = lucas_kanade.get_displacements(
-    #     data.frames,
-    #     data.frames[:, :, 0],
-    #     step=48,
-    # )
+    disp = lucas_kanade.get_displacements(
+        data.frames,
+        data.frames[:, :, 0],
+        step=48,
+    )
     # np.save("disp.npy", disp)
     disp = np.load("disp.npy", mmap_mode="r")
+    u = fs.VectorFrameSequence(da.from_array(np.swapaxes(disp, 2, 3)))
+    mech = mechanics.Mechancis(u=u, t=data.time_stamps)
+    Exx = mech.u.filter().norm()
+    visu.heatmap("heatmap_Exx.mp4", data=Exx, fps=data.framerate)
 
-    visu.quiver_video(data, disp, "flow.mp4", step=48, vector_scale=10)
+    # visu.quiver_video(data, disp, "flow.mp4", step=48, vector_scale=10)
+    # breakpoint()
     # visu.hsv_video(data, disp, "hsv.mp4")
 
 
@@ -243,6 +248,6 @@ if __name__ == "__main__":
     # main()
     # postprocess_displacement()
     # plot_saved_displacement()
-    # create_flow_field()
+    create_flow_field()
     # plot_velocity()
-    create_velocity_flow_field()
+    # create_velocity_flow_field()
