@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Optional
 
 import dask.array as da
 import numpy as np
@@ -164,6 +165,12 @@ class FrameSequence:
             background_correction=background_correction,
             N=N,
         )
+
+    def threshold(self, vmin: Optional[float] = None, vmax: Optional[float] = None):
+        array = self.array.copy()
+        array[array > vmax] = vmax
+        array[array < vmin] = vmin
+        return self.__class__(array, self.dx, self.scale)
 
     @property
     def array(self) -> Array:

@@ -141,4 +141,4 @@ class MPSData:
 
 
 def to_uint8(img):
-    return (256 * (img.astype(float) / max(img.max(), 1))).astype(np.uint8)
+    return (256 * (img.astype(float) / max(img.max(), 1e-8))).astype(np.uint8)
