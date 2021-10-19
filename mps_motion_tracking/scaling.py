@@ -1,7 +1,6 @@
 import logging
 from typing import Optional
 from typing import Tuple
-from typing import TypeVar
 
 import cv2
 import dask
@@ -14,7 +13,6 @@ from dask.diagnostics import ProgressBar
 from .utils import Array
 from .utils import MPSData
 
-T = TypeVar("T", bound=Array)
 logger = logging.getLogger(__name__)
 
 INTERPOLATION_METHODS = {
@@ -56,7 +54,7 @@ def resize_data(data: MPSData, scale: float) -> MPSData:
     return MPSData(new_frames, data.time_stamps, info)
 
 
-def reshape_lk(reference_points: np.ndarray, flows: T) -> T:
+def reshape_lk(reference_points: np.ndarray, flows: Array) -> Array:
     x, y = reference_points.reshape(-1, 2).astype(int).T
     xu = np.sort(np.unique(x))
     yu = np.sort(np.unique(y))

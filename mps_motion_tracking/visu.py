@@ -179,7 +179,7 @@ def convert_imageio(path, fps):
 
 def heatmap(
     path: utils.PathLike,
-    data: Union[np.array, fs.FrameSequence],
+    data: Union[np.ndarray, fs.FrameSequence],
     fps: int = 50,
     axis: int = 2,
     convert: bool = False,
@@ -187,7 +187,7 @@ def heatmap(
 
     logger.info("Create heatmap video")
     if isinstance(data, fs.FrameSequence):
-        data_np: np.array = data.array_np
+        data_np: np.ndarray = data.array_np
     else:
         data_np = data
 
