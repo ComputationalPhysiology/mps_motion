@@ -35,6 +35,7 @@ def resize_vectors(vectors, new_shape):
             new_shape=new_shape,
         )
     else:
+        assert len(vectors.shape) == 3
         vec1 = resize_frames(
             vectors[:, :, 0],
             new_shape=new_shape,
