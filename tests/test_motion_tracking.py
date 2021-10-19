@@ -76,7 +76,7 @@ def test_reference_frame_invalid(
 @pytest.mark.parametrize("flow_algorithm", ["", "dslkgm"])
 def test_invalid_algoritm(
     test_data: utils.MPSData,
-    flow_algorithm: str,
+    flow_algorithm: _FLOW_ALGORITHMS,
 ):
     with pytest.raises(ValueError):
         OpticalFlow(test_data, flow_algorithm=flow_algorithm)
@@ -85,7 +85,7 @@ def test_invalid_algoritm(
 @pytest.mark.parametrize("flow_algorithm", FLOW_ALGORITHMS)
 def test_get_displacement_lazy(
     test_data: utils.MPSData,
-    flow_algorithm: str,
+    flow_algorithm: _FLOW_ALGORITHMS,
 ):
     np.random.seed(1)
     arr = np.random.random((4, 5, 3, 2))  # (width, heighth, num_time_points)
@@ -99,7 +99,7 @@ def test_get_displacement_lazy(
 
 
 @pytest.mark.parametrize("flow_algorithm", FLOW_ALGORITHMS)
-def test_get_displacement(test_data: utils.MPSData, flow_algorithm: str):
+def test_get_displacement(test_data: utils.MPSData, flow_algorithm: _FLOW_ALGORITHMS):
     m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
     disp = m.get_displacements()
     assert disp.shape == (test_data.size_x, test_data.size_y, test_data.num_frames, 2)
@@ -132,7 +132,7 @@ def test_get_displacement_unit(test_data: utils.MPSData):
 )
 def test_get_displacement_scale_algs(
     test_data: utils.MPSData,
-    flow_algorithm: str,
+    flow_algorithm: _FLOW_ALGORITHMS,
     unit: str,
 ):
     """Test that there are now exceptions raised"""
@@ -143,5 +143,5 @@ def test_get_displacement_scale_algs(
 def test_OpticalFlow_options(test_data: utils.MPSData):
 
     step = 4
-    m = OpticalFlow(test_data, flow_algorithm="lucas_kanade", step=step)
+    m = OpticalFlow(test_data, flow_algorithm=_FLOW_ALGORITHMS.lucas_kanade, step=step)
     assert m.options["step"] == step

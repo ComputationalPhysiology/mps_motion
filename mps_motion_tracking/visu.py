@@ -125,6 +125,12 @@ def quiver_video(
 ) -> None:
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    if isinstance(vectors, fs.VectorFrameSequence):
+        vectors_np: np.ndarray = vectors.array_np
+    else:
+        vectors_np = vectors
+
+    assert len(vectors_np.shape) == 4
 
     if frame_scale < 1.0:
         data = scaling.resize_data(data, frame_scale)
@@ -137,21 +143,25 @@ def quiver_video(
 
     # Check shapes
     try:
-        time_axis = vectors.shape.index(num_frames)
+        time_axis = vectors_np.shape.index(num_frames)
     except ValueError as ex:
         msg = (
             "Time axis for frames and vetors does not match. "
             f"Got frames of shape {data.frames.shape}, and "
-            f"vector of shape {vectors.shape}."
+            f"vector of shape {vectors_np.shape}."
         )
         raise ValueError(msg) from ex
 
-    vector_shape = (vectors.shape[0], vectors.shape[1], vectors.shape[time_axis])
+    vector_shape = (
+        vectors_np.shape[0],
+        vectors_np.shape[1],
+        vectors_np.shape[time_axis],
+    )
     if not data.frames.shape == vector_shape:
         msg = (
             "Shape of frames and vector does not match. "
             f"Got frames of shape {data.frames.shape}, and "
-            f"vector of shape {vectors.shape}."
+            f"vector of shape {vectors_np.shape}."
             f"Extected frames to have shape {vector_shape}."
         )
         raise ValueError(msg)
@@ -163,7 +173,7 @@ def quiver_video(
     out = cv2.VideoWriter(p.as_posix(), fourcc, fps, (width, height))
     for i in tqdm.tqdm(range(num_frames), desc=f"Create quiver video at {p}"):
         im = frames[:, :, i]
-        flow = np.take(vectors, i, axis=time_axis)
+        flow = np.take(vectors_np, i, axis=time_axis)
         out.write(draw_flow(im, flow, step=step, scale=vector_scale))
 
     out.release()
