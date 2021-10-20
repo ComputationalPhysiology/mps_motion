@@ -172,5 +172,83 @@ def test_norm(ns):
     # breakpoint()
 
 
+@pytest.mark.parametrize(
+    "ns, limits",
+    product([np, da], [(0.4, 0.6), (None, 0.6), (0.4, None), (0.5, 0.5), (None, None)]),
+)
+def test_threshold(ns, limits):
+    vmin, vmax = limits
+
+    width = 10
+    height = 15
+    num_time_steps = 14
+
+    np.random.seed(1)
+    values = ns.random.random((width, height, num_time_steps))
+
+    # This value should remain the same
+    special_value = 0.5
+    # Norm of this is about 0.56
+    values[0, 0, 0] = special_value
+
+    arr = fs.FrameSequence(values)
+    th_arr = arr.threshold(vmin, vmax)
+    if vmin is None:
+        vmin = values.min()
+    if vmax is None:
+        vmax = values.max()
+
+    assert ns.isclose(th_arr.max().max(), vmax)
+    assert ns.isclose(th_arr.min().min(), vmin)
+    assert ns.isclose(th_arr.array[0, 0, 0], special_value)
+
+
+@pytest.mark.parametrize("ns", [np, da])
+def test_invalid_threshold_raises(ns):
+
+    width = 10
+    height = 15
+    num_time_steps = 14
+
+    values = ns.random.random((width, height, num_time_steps))
+    arr = fs.FrameSequence(values)
+
+    with pytest.raises(fs.InvalidThresholdError):
+        arr.threshold(0.7, 0.2)
+
+
+@pytest.mark.parametrize(
+    "ns, limits",
+    product([np, da], [(0.4, 0.6), (None, 0.6), (0.4, None), (0.5, 0.5), (None, None)]),
+)
+def test_threshold_norm(ns, limits):
+    vmin, vmax = limits
+
+    width = 10
+    height = 15
+    num_time_steps = 14
+
+    np.random.seed(1)
+    values = ns.random.random((width, height, num_time_steps, 2))
+
+    # This value should remain the same
+    special_value = np.sqrt(0.125)
+    # sqrt(0.125 + 0.125) = sqrt(0.25) = 0.5
+    values[0, 0, 0, 0] = special_value
+    values[0, 0, 0, 1] = special_value
+
+    arr = fs.VectorFrameSequence(values)
+    th_arr = arr.threshold_norm(vmin, vmax)
+    if vmin is None:
+        vmin = arr.norm().min().min()
+    if vmax is None:
+        vmax = arr.norm().max().max()
+
+    assert ns.isclose(th_arr.norm().max().max(), vmax)
+    assert ns.isclose(th_arr.norm().min().min(), vmin)
+    assert ns.isclose(th_arr.array[0, 0, 0, 0], special_value)
+    assert ns.isclose(th_arr.array[0, 0, 0, 1], special_value)
+
+
 if __name__ == "__main__":
-    test_save_load(np, ".h5")
+    test_threshold_norm(da, (0.4, 0.6))

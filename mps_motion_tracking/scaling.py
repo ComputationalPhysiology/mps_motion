@@ -121,7 +121,6 @@ def resize_frames(
         if len(frames.shape) == 2:
             return cv2.resize(frames, (height, width))
 
-        resized_frames = np.zeros((width, height, num_frames))
         all_resized_frames = []
         for i in range(num_frames):
             all_resized_frames.append(
@@ -132,7 +131,8 @@ def resize_frames(
                 ),
             )
         with ProgressBar():
-            resized_frames = da.stack(*da.compute(all_resized_frames), axis=-1)
+            resized_frames = np.stack(*da.compute(all_resized_frames), axis=-1)
+
     else:
         resized_frames = frames.copy()
     logger.info("Done resizing")

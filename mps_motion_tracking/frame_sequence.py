@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from typing import Optional
+from typing import TypeVar
 
 import dask.array as da
 import numpy as np
@@ -18,6 +19,80 @@ except ImportError:
     has_h5py = False
 
 logger = logging.getLogger(__name__)
+
+NameSpace = TypeVar("NameSpace", bound=np)
+
+
+class InvalidThresholdError(ValueError):
+    pass
+
+
+def check_threshold(
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+):
+    if (vmax and vmin) and vmax < vmin:
+        raise InvalidThresholdError(f"Cannot have vmax < vmin, got {vmax=} and {vmin=}")
+
+
+def threshold(
+    array: Array,
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+    copy: bool = True,
+) -> Array:
+    assert len(array.shape) == 3
+    check_threshold(vmin, vmax)
+    if copy:
+        array = array.copy()
+
+    if vmax is not None:
+        array[array > vmax] = vmax
+    if vmin is not None:
+        array[array < vmin] = vmin
+    return array
+
+
+def threshold_norm(
+    array: Array,
+    ns: NameSpace,
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+    copy: bool = True,
+):
+    assert len(array.shape) == 4
+    assert array.shape[3] == 2
+    assert ns in [da, np]
+    check_threshold(vmin, vmax)
+    if copy:
+        array = array.copy()
+    shape = array.shape
+    norm_array = ns.linalg.norm(array, axis=3).flatten()
+    array = array.flatten()
+
+    if vmax is not None:
+        norm_inds = norm_array > vmax
+        if ns == da:
+            norm_inds = norm_inds.compute()
+        inds = np.stack([norm_inds, norm_inds], -1).flatten()
+
+        values = (
+            vmax
+            / ns.stack([norm_array[norm_inds], norm_array[norm_inds]], -1).flatten()
+        )
+        array[inds] *= values
+    if vmin is not None:
+        norm_inds = norm_array < vmin
+        if ns == da:
+            norm_inds = norm_inds.compute()
+        inds = np.stack([norm_inds, norm_inds], -1).flatten()
+
+        values = (
+            vmin
+            / ns.stack([norm_array[norm_inds], norm_array[norm_inds]], -1).flatten()
+        )
+        array[inds] *= values
+    return array.reshape(shape)
 
 
 class FrameSequence:
@@ -167,9 +242,7 @@ class FrameSequence:
         )
 
     def threshold(self, vmin: Optional[float] = None, vmax: Optional[float] = None):
-        array = self.array.copy()
-        array[array > vmax] = vmax
-        array[array < vmin] = vmin
+        array = threshold(self.array, vmin, vmax)
         return self.__class__(array, self.dx, self.scale)
 
     @property
@@ -216,6 +289,9 @@ class FrameSequence:
     def max(self) -> Array:
         return self.array.max(2)
 
+    def min(self) -> Array:
+        return self.array.min(2)
+
     def compute(self) -> Array:
         return self.array_np
 
@@ -256,6 +332,14 @@ class VectorFrameSequence(FrameSequence):
         array = filter_vectors_par(self._array, size=size)
 
         return VectorFrameSequence(array=array, dx=self.dx, scale=self.scale)
+
+    def threshold_norm(
+        self,
+        vmin: Optional[float] = None,
+        vmax: Optional[float] = None,
+    ) -> "VectorFrameSequence":
+        array = threshold_norm(self.array, self._ns, vmin, vmax)
+        return VectorFrameSequence(array, self.dx, self.scale)
 
     def norm(self) -> FrameSequence:
         return FrameSequence(

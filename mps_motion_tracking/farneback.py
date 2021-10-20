@@ -11,7 +11,7 @@ import dask.array as da
 import numpy as np
 from dask.diagnostics import ProgressBar
 
-from .utils import to_uint8
+from . import utils
 
 logger = logging.getLogger(__name__)
 
@@ -87,9 +87,9 @@ def flow(
         The motion vectors
     """
     if image.dtype != "uint8":
-        image = to_uint8(image)
+        image = utils.to_uint8(image)
     if reference_image.dtype != "uint8":
-        reference_image = to_uint8(reference_image)
+        reference_image = utils.to_uint8(reference_image)
 
     return cv2.calcOpticalFlowFarneback(
         reference_image,
@@ -115,6 +115,7 @@ def get_displacements(
     poly_n: int = 5,
     poly_sigma: float = 1.2,
     flags: int = 0,
+    filter_kernel_size: int = 0,
 ):
     """Compute the optical flow using the Farneback method from
     the reference frame to all other frames
@@ -157,6 +158,9 @@ def get_displacements(
             usually, this option gives z more accurate flow than with a box filter,
             at the cost of lower speed; normally, winsize for a Gaussian window should
             be set to a larger value to achieve the same level of robustness.
+    filter_kernel_size : int
+        Kernel in median filter that is applied after algorithm. To turn of filtering
+        you can set this value to zero, by default 3.
 
     Returns
     -------
@@ -186,6 +190,7 @@ def get_displacements(
     with ProgressBar():
         flows = da.stack(*da.compute(all_flows), axis=2)
 
+    flows = utils.filter_vectors_par(flows, size=filter_kernel_size)
     logger.info("Done running Farneback's algorithm")
 
     return flows

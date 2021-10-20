@@ -24,12 +24,12 @@
 # SIMULA RESEARCH LABORATORY MAKES NO REPRESENTATIONS AND EXTENDS NO
 # WARRANTIES OF ANY KIND, EITHER IMPLIED OR EXPRESSED, INCLUDING, BUT
 # NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS
+import concurrent.futures
 import logging
 from typing import Tuple
 
-import dask
-import dask.array as da
 import numpy as np
+import tqdm
 
 from . import scaling
 from .utils import check_frame_dimensions
@@ -209,6 +209,13 @@ def _flow(
     return vectors
 
 
+def flow_map(args):
+    """
+    Helper function for running block maching algorithm in paralell
+    """
+    return _flow(*args)
+
+
 def get_displacements(
     frames,
     reference_image: np.ndarray,
@@ -220,21 +227,25 @@ def get_displacements(
     frames = check_frame_dimensions(frames, reference_image)
 
     logger.info("Get displacements using block mathching")
+    args = (
+        (im, reference_image, block_size, max_block_movement)
+        for im in np.rollaxis(frames, 2)
+    )
     num_frames = frames.shape[-1]
+
+    y_size, x_size = reference_image.shape
     block_size = max(block_size, 1)
+    shape = (max(y_size // block_size, 1), max(x_size // block_size, 1))
+    flows = np.zeros((shape[0], shape[1], num_frames, 2))
 
-    all_flows = []
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        for i, uv in tqdm.tqdm(
+            enumerate(executor.map(flow_map, args)),
+            desc="Compute displacement",
+            total=num_frames,
+        ):
+            flows[:, :, i, :] = uv
 
-    for i in range(num_frames):
-        all_flows.append(
-            dask.delayed(flow)(
-                frames[:, :, i],
-                reference_image,
-                block_size,
-                max_block_movement,
-            ),
-        )
-    flows = da.stack(*da.compute(all_flows), axis=2)
     if filter_kernel_size:
         flows = filter_vectors_par(flows, filter_kernel_size)
 

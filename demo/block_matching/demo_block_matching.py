@@ -1,114 +1,197 @@
 from pathlib import Path
 
+import ap_features as apf
+import dask.array as da
 import matplotlib.pyplot as plt
+import mps
 import numpy as np
 
+import mps_motion_tracking as mmt
 from mps_motion_tracking import block_matching
-from mps_motion_tracking import utils
-
-# from mps_motion_tracking import motion_tracking as mt
+from mps_motion_tracking import frame_sequence as fs
+from mps_motion_tracking import mechanics
+from mps_motion_tracking import visu
 
 here = Path(__file__).absolute().parent
 
 
-def main():
+def plot_displacement():
 
-    data = utils.MPSData(
-        **np.load(
-            here.joinpath("../../datasets/mps_data.npy"),
-            allow_pickle=True,
-        ).item()
+    data = mmt.scaling.resize_data(
+        mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2"),
+        scale=0.3,
     )
+    path = Path("u_norm.npy")
+    if not path.is_file():
+        disp = block_matching.get_displacements(
+            data.frames,
+            data.frames[:, :, 0],
+            filter_kernel_size=5,
+        )
+        u = fs.VectorFrameSequence(disp)
+        u_norm = u.norm().threshold(0, 10).mean().compute()
+        np.save(path, u_norm)
+    u_norm = np.load(path)
+
+    print("Plot")
+    trace = apf.Beats(
+        u_norm,
+        data.time_stamps,
+        pacing=data.pacing,
+        background_correction_method="subtract",
+        chopping_options={"ignore_pacing": True},
+    )
+    beats = trace.beats
+    fig, ax = plt.subplots(3, 2)
+    ax[0, 0].plot(trace.t, trace.y)
+
+    for beat in beats:
+        ax[0, 1].plot(beat.t, beat.y)
+
+    for beat in beats:
+        ax[1, 0].plot(beat.t - beat.t[0], beat.y)
+
+    avg_beat = trace.average_beat()
+    ax[1, 1].plot(avg_beat.t, avg_beat.y)
+    ax[2, 0].plot(trace.t, trace.original_y)
+    ax[2, 0].plot(trace.t, trace.background.background)
+    fig.savefig("displacement_norm.png")
+
+
+def plot_velocity():
+
+    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    path = Path("v_norm.npy")
+    if not path.is_file():
+        disp = block_matching.get_displacements(data.frames, data.frames[:, :, 0])
+        V = mechanics.compute_velocity(disp, data.time_stamps)
+
+        v = fs.VectorFrameSequence(V)
+        # print("Compute norm")
+        v_norm = v.norm().mean().compute()
+        np.save(path, v_norm)
+    v_norm = np.load(path)
+    trace = apf.Beats(
+        v_norm,
+        data.time_stamps[:-1],
+        pacing=data.pacing[:-1],
+        background_correction_method="subtract",
+        chopping_options={"ignore_pacing": True},
+    )
+
+    beats = trace.beats
+    fig, ax = plt.subplots(3, 2)
+    ax[0, 0].plot(trace.t, trace.y)
+
+    for beat in beats:
+        ax[0, 1].plot(beat.t, beat.y)
+
+    for beat in beats:
+        ax[1, 0].plot(beat.t - beat.t[0], beat.y)
+
+    avg_beat = trace.average_beat()
+    ax[1, 1].plot(avg_beat.t, avg_beat.y)
+    ax[2, 0].plot(trace.t, trace.original_y)
+    ax[2, 0].plot(trace.t, trace.background.background)
+    fig.savefig("velocity_norm.png")
+
+
+def create_heatmap():
+
+    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    path = Path("disp.npy")
+    if not path.is_file():
+        disp = block_matching.get_displacements(
+            data.frames,
+            data.frames[:, :, 0],
+            step=16,
+            filter_kernel_size=3,
+        )
+        np.save(path, disp.compute())
+    disp = da.from_array(np.load(path, mmap_mode="r"))
+    u = fs.VectorFrameSequence(disp)
+
+    # mech = mechanics.Mechancis(u=u, t=data.time_stamps)
+    # Exx = mech.E.x.threshold(-0.2, 0.2)
+    # visu.heatmap("heatmap_Exx.mp4", data=Exx, fps=data.framerate)
+
+    visu.heatmap(
+        "heatmap_u_norm.mp4",
+        data=u.norm().threshold(0, 10),
+        fps=data.framerate,
+        cmap="inferno",
+        transpose=True,
+    )
+
+
+def create_flow_field():
+
+    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
     disp = block_matching.get_displacements(
         data.frames,
         data.frames[:, :, 0],
-        block_size=3,
-        max_block_movement=10,
+        step=16,
+        filter_kernel_size=3,
     )
-
-    np.save("bm_disp.npy", disp)
-
-
-# def main2():
-#     data = utils.MPSData(
-#         **np.load(
-#             here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
-#         ).item()
-#     )
-#     motion = mt.SparseOpticalFlow(data, flow_algorithm="block_matching")
-#     disp = motion.get_displacements(scale=0.5)
-#     from IPython import embed
-
-#     embed()
-#     exit()
+    np.save("disp.npy", disp)
+    visu.quiver_video(data, disp, "flow.mp4", step=48, vector_scale=10)
 
 
-def plot_displacements():
+def create_velocity_flow_field():
 
-    data = utils.MPSData(
-        **np.load(
-            here.joinpath("../../datasets/mps_data.npy"),
-            allow_pickle=True,
-        ).item()
+    data = mmt.scaling.resize_data(
+        mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2"),
+        scale=0.4,
     )
-    disp = np.load("bm_disp.npy") * data.info["um_per_pixel"]
+    opt_flow = mmt.OpticalFlow(data, flow_algorithm="block_matching", reference_frame=0)
 
-    import dask.array as da
+    u = opt_flow.get_displacements()
+    # V = mechanics.compute_velocity(u.array, data.time_stamps)
+    # vel = fs.VectorFrameSequence(V)
+    angle = u.angle().array.compute()
+    angle *= 180 / np.pi
+    x, y = np.meshgrid(
+        np.arange(u.shape[1]),
+        np.arange(u.shape[0]),
+    )
+    index = 83
+    plt.imshow(data.frames[:, :, index], cmap="gray")
+    N = 10
+    plt.quiver(
+        x[::N, ::N],
+        y[::N, ::N],
+        u.array[::N, ::N, index, 0],
+        -u.array[::N, ::N, index, 1],
+        angle[::N, ::N, index],
+        scale_units="inches",
+        scale=10,
+        cmap="twilight",
+        clim=(-180, 180),
+    )
+    # plt.imshow(angle[:, :, 71], cmap="twilight", vmin=-180, vmax=180)
+    plt.colorbar()
+    plt.show()
+    # breakpoint()
 
-    d = da.from_array(disp)
-    disp_norm = da.linalg.norm(d, axis=2).compute()
-    u_mean_pixel = disp_norm.mean((0, 1))
-
-    u_mean_um = u_mean_pixel
-
-    fig, ax = plt.subplots()
-    ax.plot(data.time_stamps, u_mean_um)
-    ax.set_title("Mean displacement")
-    ax.set_xlabel("Time [ms]")
-    ax.set_ylabel("Magnitude of displacement [um]")
-    fig.savefig("bm_mean_displacement.png")
-
-    ux_mean_pixel = disp[:, :, 0, :].mean((0, 1))
-    ux_mean_um = ux_mean_pixel * data.info["um_per_pixel"]
-    uy_mean_pixel = disp[:, :, 1, :].mean((0, 1))
-    uy_mean_um = uy_mean_pixel * data.info["um_per_pixel"]
-    fig, ax = plt.subplots(1, 2, sharex=True, sharey=True)
-    ax[0].plot(data.time_stamps, ux_mean_um)
-    ax[0].set_title("Mean X-displacement")
-    ax[0].set_xlabel("Time [ms]")
-    ax[0].set_ylabel("Displacement [um]")
-
-    ax[1].plot(data.time_stamps, uy_mean_um)
-    ax[1].set_title("Mean y-displacement")
-    ax[1].set_xlabel("Time [ms]")
-    fig.savefig("bm_mean_displacement_comp.png")
-
-    max_disp_x = np.abs(disp[:, :, 0, :]).max(-1)
-    max_disp_y = np.abs(disp[:, :, 1, :]).max(-1)
-    max_disp = disp_norm.max(-1)
-
-    vmin = 0
-    vmax = max_disp.max()
-    fig, ax = plt.subplots(1, 3, sharex=True, sharey=True)
-    # Norm
-    ax[0].imshow(max_disp, vmin=vmin, vmax=vmax)
-    ax[0].set_title("Max displacement norm")
-    # X
-    ax[1].imshow(max_disp_x, vmin=vmin, vmax=vmax)
-    ax[1].set_title("Max displacement X")
-    # Y
-    im = ax[2].imshow(max_disp_y, vmin=vmin, vmax=vmax)
-
-    ax[2].set_title("Max displacement Y")
-
-    fig.subplots_adjust(right=0.8)
-    cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
-    cbar = fig.colorbar(im, cax=cbar_ax)
-    cbar.set_label("um")
-    fig.savefig("bm_max_displacement.png")
+    # u_norm = u.norm().mean().compute()
+    # vel_norm = vel.norm().mean().compute() * 1000
+    # fig, ax = plt.subplots()
+    # (l1,) = ax.plot(data.time_stamps, u_norm)
+    # ax2 = ax.twinx()
+    # (l2,) = ax2.plot(data.time_stamps[:-1], vel_norm, color="r")
+    # ax.legend([l1, l2], ["displacement", "velocity"], loc="best")
+    # ax.set_xlabel("Time [ms]")
+    # ax.set_ylabel("Displacement [\u00B5m")
+    # ax2.set_ylabel("Displacement [\u00B5m / s")
+    # fig.savefig("disp_velocity.png")
+    # plt.show()
 
 
 if __name__ == "__main__":
-    main()
-    plot_displacements()
-    # main2()
+    # main()
+    # postprocess_displacement()
+    plot_displacement()
+    # create_flow_field()
+    # plot_velocity()
+    # create_velocity_flow_field()
+    # create_heatmap()
