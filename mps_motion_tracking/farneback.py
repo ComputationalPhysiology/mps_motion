@@ -4,6 +4,9 @@ Farnebäck, G. (2003, June). Two-frame motion estimation based on polynomial exp
 
 """
 import logging
+from typing import Any
+from typing import Dict
+from typing import Optional
 
 import cv2
 import dask
@@ -115,8 +118,8 @@ def get_displacements(
     poly_n: int = 5,
     poly_sigma: float = 1.2,
     flags: int = 0,
-    filter_kernel_size: int = 0,
-):
+    filter_options: Optional[Dict[str, Any]] = None,
+) -> utils.Array:
     """Compute the optical flow using the Farneback method from
     the reference frame to all other frames
 
@@ -158,9 +161,9 @@ def get_displacements(
             usually, this option gives z more accurate flow than with a box filter,
             at the cost of lower speed; normally, winsize for a Gaussian window should
             be set to a larger value to achieve the same level of robustness.
-    filter_kernel_size : int
-        Kernel in median filter that is applied after algorithm. To turn of filtering
-        you can set this value to zero, by default 3.
+    filter_options : Dict[str, Any], optional
+        Options for applying filter, see `utils.apply_filter` for options, by
+        default None
 
     Returns
     -------
@@ -190,7 +193,8 @@ def get_displacements(
     with ProgressBar():
         flows = da.stack(*da.compute(all_flows), axis=2)
 
-    flows = utils.filter_vectors_par(flows, size=filter_kernel_size)
+    if filter_options:
+        flows = utils.filter_vectors_par(flows, **filter_options)
     logger.info("Done running Farneback's algorithm")
 
     return flows

@@ -7,6 +7,8 @@ http://cseweb.ucsd.edu/classes/sp02/cse252/lucaskanade81.pdf
 import concurrent.futures
 import logging
 from enum import Enum
+from typing import Any
+from typing import Dict
 from typing import Optional
 from typing import Tuple
 
@@ -204,7 +206,7 @@ def get_displacements(
     maxLevel: int = 2,
     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
     interpolation: Interpolation = Interpolation.nearest,
-    filter_kernel_size: int = 3,
+    filter_options: Optional[Dict[str, Any]] = None,
 ) -> np.ndarray:
     """Compute the optical flow using the Lucas Kanade method from
     the reference frame to all other frames
@@ -212,7 +214,8 @@ def get_displacements(
     Parameters
     ----------
     frames : np.ndarray
-        The frames with some moving objects
+        The frames with some moving objects. Input must be of shape (N, M, T, 2), where
+        N is the width, M is the height and  T is the number
     reference_image : np.ndarray
         The reference image
     step : int, optional
@@ -234,15 +237,16 @@ def get_displacements(
         Interpolate flow to original shape using radial basis function ('rbf'),
         nearest neigbour interpolation ('nearest') or do not interpolate but reshape ('reshape'),
         or use the original output from the LK algorithm ('none'), by default 'nearest'
-    filter_kernel_size : int
-        Kernel in median filter that is applied after algorithm. To turn of filtering
-        you can set this value to zero, by default 3.
+    filter_options : Dict[str, Any], optional
+        Options for applying filter, see `utils.apply_filter` for options, by
+        default None
 
     Returns
     -------
     Array
         An array of motion vectors relative to the reference image. If shape of
-        input frames are (N, M, T) then the shape of the output is (N, M, T, 2).
+        input frames are (N, M, T) then the shape of the output is (N', M', T', 2).
+        Note if `resize=True` then we have (N, M, T, 2) = (N', M', T', 2).
     """
     logger.info("Get displacements using Lucas Kanade")
 
@@ -290,7 +294,8 @@ def get_displacements(
         return int_flows
 
     flows = scaling.reshape_lk(reference_points, flows)
-    flows = utils.filter_vectors_par(flows, size=filter_kernel_size)
+    if filter_options:
+        flows = utils.filter_vectors_par(flows, **filter_options)
 
     if interpolation == Interpolation.nearest:
 

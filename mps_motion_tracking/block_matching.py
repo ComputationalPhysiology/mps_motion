@@ -26,16 +26,17 @@
 # NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS
 import concurrent.futures
 import logging
+from typing import Any
+from typing import Dict
+from typing import Optional
 from typing import Tuple
 
 import numpy as np
 import tqdm
 
 from . import scaling
-from .utils import check_frame_dimensions
-from .utils import filter_vectors
-from .utils import filter_vectors_par
-from .utils import jit
+from . import utils
+
 
 __author__ = "Henrik Finsberg (henriknf@simula.no), 2017--2020"
 __maintainer__ = "Henrik Finsberg"
@@ -46,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 
 def default_options():
-    return dict(block_size=9, max_block_movement=18, filter_kernel_size=5)
+    return dict(block_size=9, max_block_movement=18)
 
 
 def flow(
@@ -54,7 +55,7 @@ def flow(
     reference_image: np.ndarray,
     block_size: int = 9,
     max_block_movement: int = 18,
-    filter_kernel_size: int = 5,
+    filter_options: Optional[Dict[str, Any]] = None,
     resize: bool = True,
 ):
     """
@@ -74,6 +75,12 @@ def flow(
         Size of the blocks
     max_block_movement : int
         Maximum allowed movement of blocks when searching for best match.
+    filter_options : Dict[str, Any], optional
+        Options for applying filter, see `utils.apply_filter` for options, by
+        default None
+    resize: bool
+        If True, make sure to resize the output images to have the same
+        shape as the input, by default True.
 
     Note
     ----
@@ -84,8 +91,8 @@ def flow(
     """
     vectors = _flow(reference_image, image, block_size, max_block_movement)
 
-    if filter_kernel_size > 0:
-        vectors = filter_vectors(vectors, filter_kernel_size)
+    if filter_options:
+        vectors = utils.filter_vectors(vectors, **filter_options)
 
     if resize:
 
@@ -97,7 +104,7 @@ def flow(
     return vectors
 
 
-@jit(nopython=True)
+@utils.jit(nopython=True)
 def _flow(
     image: np.ndarray,
     reference_image: np.ndarray,
@@ -217,14 +224,55 @@ def flow_map(args):
 
 
 def get_displacements(
-    frames,
+    frames: np.ndarray,
     reference_image: np.ndarray,
     block_size: int = 9,
     max_block_movement: int = 18,
-    filter_kernel_size: int = 5,
+    filter_options: Optional[Dict[str, Any]] = None,
     resize=True,
-):
-    frames = check_frame_dimensions(frames, reference_image)
+) -> utils.Array:
+    """Computes the displacements from `reference_image` to all `frames`
+    using a block matching algorithm. Briefly, we subdivde the images
+    into blocks of size `block_size x block_size` and compare the two images
+    within a range of +/- max_block_movement for each block.
+
+    Arguments
+    ---------
+    frames : np.ndarray
+        The frame that you want to compute displacement for relative to
+        the referernce frame. Input must be of shape (N, M, T, 2), where
+        N is the width, M is the height and  T is the number
+        number of frames.
+    reference_image : np.ndarray
+        The frame used as reference
+    block_size : int
+        Size of the blocks, by default 9
+    max_block_movement : int
+        Maximum allowed movement of blocks when searching for best match,
+        by default 18.
+    filter_options : Dict[str, Any], optional
+        Options for applying filter, see `utils.apply_filter` for options, by
+        default None
+    resize: bool
+        If True, make sure to resize the output images to have the same
+        shape as the input, by default True.
+
+    Note
+    ----
+    Make sure to have max_block_movement big enough. If this is too small
+    then the results will be wrong. It is better to choose a too large value
+    of this. However, choosing a too large value will mean that you need to
+    compare more blocks which will increase the running time.
+
+    Returns
+    -------
+    utils.Array
+        utils.Array with displacement of shape (N', M', T', 2), where
+        N' is the width, M' is the height and  T' is the number
+        number of frames. Note if `resize=True` then we have
+        (N, M, T, 2) = (N', M', T', 2).
+    """
+    frames = utils.check_frame_dimensions(frames, reference_image)
 
     logger.info("Get displacements using block mathching")
     args = (
@@ -246,8 +294,8 @@ def get_displacements(
         ):
             flows[:, :, i, :] = uv
 
-    if filter_kernel_size:
-        flows = filter_vectors_par(flows, filter_kernel_size)
+    if filter_options:
+        flows = utils.filter_vectors_par(flows, **filter_options)
 
     if resize:
 

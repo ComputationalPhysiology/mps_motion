@@ -13,6 +13,7 @@ except ImportError:
     MPS_NOT_FOUND = True
 
 from mps_motion_tracking import frame_sequence as fs
+from mps_motion_tracking import utils
 
 array_type = {da: da.core.Array, np: np.ndarray}
 
@@ -248,6 +249,52 @@ def test_threshold_norm(ns, limits):
     assert ns.isclose(th_arr.norm().min().min(), vmin)
     assert ns.isclose(th_arr.array[0, 0, 0, 0], special_value)
     assert ns.isclose(th_arr.array[0, 0, 0, 1], special_value)
+
+
+@pytest.mark.parametrize(
+    "filter_type, size, sigma",
+    [
+        (utils.Filters.median, 3, None),
+        (utils.Filters.gaussian, None, 1),
+    ],
+)
+def test_filter_VectorFrameSequence(filter_type, size, sigma):
+
+    shape = (10, 9, 8, 2)
+    np.random.seed(1)
+    vectors = 10 * np.ones(shape) + np.random.random(shape)
+
+    u = fs.VectorFrameSequence(vectors)
+
+    u_filt = u.filter(filter_type=filter_type, size=size, sigma=sigma)
+    filtered_vectors = u_filt.array
+
+    assert filtered_vectors.shape == shape
+
+    assert 0 < np.abs(filtered_vectors - vectors).max() < 1
+
+
+@pytest.mark.parametrize(
+    "filter_type, size, sigma",
+    [
+        (utils.Filters.median, 3, None),
+        (utils.Filters.gaussian, None, 1),
+    ],
+)
+def test_filter_FrameSequence(filter_type, size, sigma):
+
+    shape = (10, 9, 8)
+    np.random.seed(1)
+    vectors = 10 * np.ones(shape) + np.random.random(shape)
+
+    u = fs.FrameSequence(vectors)
+
+    u_filt = u.filter(filter_type=filter_type, size=size, sigma=sigma)
+    filtered_vectors = u_filt.array
+
+    assert filtered_vectors.shape == shape
+
+    assert 0 < np.abs(filtered_vectors - vectors).max() < 1
 
 
 if __name__ == "__main__":

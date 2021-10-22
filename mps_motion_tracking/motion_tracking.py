@@ -1,5 +1,7 @@
 import logging
 from enum import Enum
+from typing import Any
+from typing import Dict
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -87,6 +89,8 @@ class OpticalFlow:
         data: utils.MPSData,
         flow_algorithm: FLOW_ALGORITHMS = FLOW_ALGORITHMS.farneback,
         reference_frame: Union[int, str] = 0,
+        filter_options: Optional[Dict[str, Any]] = None,
+        data_scale: float = 1.0,
         **options,
     ):
         self.data = data
@@ -100,6 +104,12 @@ class OpticalFlow:
         ) = get_referenece_image(reference_frame, data.frames, data.time_stamps)
 
         self._handle_algorithm(options)
+        options["filter_options"] = filter_options or {}
+        self._data_scale = data_scale
+
+    @property
+    def data_scale(self) -> float:
+        return self._data_scale
 
     def _handle_algorithm(self, options):
         _check_algorithm(self.flow_algorithm)
@@ -170,7 +180,7 @@ class OpticalFlow:
                 scaled_data.frames, reference_image, **self.options
             )
             dx = 1
-            u /= scale
+            u /= scale * self.data_scale
             if unit == "um":
                 u *= scaled_data.info.get("um_per_pixel", 1.0)
                 dx *= scaled_data.info.get("um_per_pixel", 1.0)

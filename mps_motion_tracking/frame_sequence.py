@@ -7,10 +7,7 @@ from typing import Protocol
 import dask.array as da
 import numpy as np
 
-from .utils import Array
-from .utils import filter_vectors_par
-from .utils import median_filter
-from .utils import PathLike
+from . import utils
 
 try:
     import h5py
@@ -24,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class _Linalg(Protocol):
     @staticmethod
-    def norm(array: Array, axis: int = 0) -> Array:
+    def norm(array: utils.Array, axis: int = 0) -> utils.Array:
         ...
 
 
@@ -34,7 +31,7 @@ class NameSpace(Protocol):
         ...
 
     @staticmethod
-    def stack(arrs: List[Array], axis: int) -> Array:
+    def stack(arrs: List[utils.Array], axis: int) -> utils.Array:
         ...
 
 
@@ -51,16 +48,16 @@ def check_threshold(
 
 
 def threshold(
-    array: Array,
+    array: utils.Array,
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
     copy: bool = True,
-) -> Array:
+) -> utils.Array:
     """Threshold an array
 
     Parameters
     ----------
-    array : Array
+    array : utils.Array
         The array
     vmin : Optional[float], optional
         Lower threshold value, by default None
@@ -71,7 +68,7 @@ def threshold(
 
     Returns
     -------
-    Array
+    utils.Array
         Inpute array with the lowest value beeing vmin and
         highest value begin vmax
     """
@@ -100,12 +97,12 @@ def _handle_threshold_norm(norm_inds, ns, factor, norm_array, array):
 
 
 def threshold_norm(
-    array: Array,
+    array: utils.Array,
     ns: NameSpace,
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
     copy: bool = True,
-) -> Array:
+) -> utils.Array:
     """Threshold an array of vectors based on the
     norm of the vectors.
 
@@ -115,7 +112,7 @@ def threshold_norm(
 
     Parameters
     ----------
-    array : Array
+    array : utils.Array
         The input array which is 4D and the last dimension is 2.
     ns : NameSpace
         Wheter to use numpy or dask
@@ -128,7 +125,7 @@ def threshold_norm(
 
     Returns
     -------
-    Array
+    utils.Array
         The thresholded array
     """
     assert len(array.shape) == 4
@@ -157,7 +154,7 @@ class FrameSequence:
 
     """
 
-    def __init__(self, array: Array, dx: float = 1.0, scale: float = 1.0):
+    def __init__(self, array: utils.Array, dx: float = 1.0, scale: float = 1.0):
         """Constructor
 
         Parameters
@@ -197,16 +194,26 @@ class FrameSequence:
         if self._h5file is not None:
             self._h5file.close()
 
-    def filter(self, size: int = 3) -> "FrameSequence":
+    def filter(
+        self,
+        filter_type: utils.Filters = utils.Filters.median,
+        size: Optional[int] = None,
+        sigma: Optional[float] = None,
+    ) -> "FrameSequence":
         """Apply a median filter"""
 
         return FrameSequence(
-            array=median_filter(self._array, size),
+            array=utils.apply_filter(
+                self._array,
+                size=size,
+                sigma=sigma,
+                filter_type=filter_type,
+            ),
             dx=self.dx,
             scale=self.scale,
         )
 
-    def save(self, path: PathLike) -> None:
+    def save(self, path: utils.PathLike) -> None:
         path = Path(path)
 
         if path.is_file():
@@ -301,7 +308,7 @@ class FrameSequence:
         return self.__class__(array, self.dx, self.scale)
 
     @property
-    def array(self) -> Array:
+    def array(self) -> utils.Array:
         return self._array
 
     @property
@@ -338,16 +345,16 @@ class FrameSequence:
     def shape(self):
         return self.array.shape
 
-    def mean(self) -> Array:
+    def mean(self) -> utils.Array:
         return self.array.mean((0, 1)) * self.scale
 
-    def max(self) -> Array:
+    def max(self) -> utils.Array:
         return self.array.max(2)
 
-    def min(self) -> Array:
+    def min(self) -> utils.Array:
         return self.array.min(2)
 
-    def compute(self) -> Array:
+    def compute(self) -> utils.Array:
         return self.array_np
 
     def __repr__(self) -> str:
@@ -360,7 +367,7 @@ class VectorFrameSequence(FrameSequence):
 
     """
 
-    def __init__(self, array: Array, dx: float = 1.0, scale: float = 1.0):
+    def __init__(self, array: utils.Array, dx: float = 1.0, scale: float = 1.0):
         """Constructor
 
         Parameters
@@ -381,10 +388,20 @@ class VectorFrameSequence(FrameSequence):
         assert len(array.shape) == 4
         assert array.shape[3] == 2
 
-    def filter(self, size: int = 5) -> "VectorFrameSequence":
-        """Apply a median filter"""
+    def filter(
+        self,
+        filter_type: utils.Filters = utils.Filters.median,
+        size: Optional[int] = None,
+        sigma: Optional[float] = None,
+    ) -> "VectorFrameSequence":
+        """Apply a filter"""
 
-        array = filter_vectors_par(self._array, size=size)
+        array = utils.filter_vectors_par(
+            self._array,
+            size=size,
+            sigma=sigma,
+            filter_type=filter_type,
+        )
 
         return VectorFrameSequence(array=array, dx=self.dx, scale=self.scale)
 
@@ -426,7 +443,7 @@ class TensorFrameSequence(FrameSequence):
 
     """
 
-    def __init__(self, array: Array, dx: float = 1.0, scale: float = 1.0):
+    def __init__(self, array: utils.Array, dx: float = 1.0, scale: float = 1.0):
         """Constructor
 
         Parameters
