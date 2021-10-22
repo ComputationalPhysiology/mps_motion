@@ -1,7 +1,8 @@
 import logging
 from pathlib import Path
+from typing import List
 from typing import Optional
-from typing import TypeVar
+from typing import Protocol
 
 import dask.array as da
 import numpy as np
@@ -20,7 +21,21 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-NameSpace = TypeVar("NameSpace", bound=np)
+
+class _Linalg(Protocol):
+    @staticmethod
+    def norm(array: Array, axis: int = 0) -> Array:
+        ...
+
+
+class NameSpace(Protocol):
+    @property
+    def linalg(self) -> _Linalg:
+        ...
+
+    @staticmethod
+    def stack(arrs: List[Array], axis: int) -> Array:
+        ...
 
 
 class InvalidThresholdError(ValueError):
@@ -41,6 +56,25 @@ def threshold(
     vmax: Optional[float] = None,
     copy: bool = True,
 ) -> Array:
+    """Threshold an array
+
+    Parameters
+    ----------
+    array : Array
+        The array
+    vmin : Optional[float], optional
+        Lower threshold value, by default None
+    vmax : Optional[float], optional
+        Upper threshold value, by default None
+    copy : bool, optional
+        Operative on the given array or use a copy, by default True
+
+    Returns
+    -------
+    Array
+        Inpute array with the lowest value beeing vmin and
+        highest value begin vmax
+    """
     assert len(array.shape) == 3
     check_threshold(vmin, vmax)
     if copy:
@@ -53,13 +87,50 @@ def threshold(
     return array
 
 
+def _handle_threshold_norm(norm_inds, ns, factor, norm_array, array):
+    if norm_inds.any():
+        if ns == da:
+            norm_inds = norm_inds.compute()
+        inds = np.stack([norm_inds, norm_inds], -1).flatten()
+        values = (
+            factor
+            / ns.stack([norm_array[norm_inds], norm_array[norm_inds]], -1).flatten()
+        )
+        array[inds] *= values
+
+
 def threshold_norm(
     array: Array,
     ns: NameSpace,
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
     copy: bool = True,
-):
+) -> Array:
+    """Threshold an array of vectors based on the
+    norm of the vectors.
+
+    For example if the vectors are displacement then
+    you can use this function to scale all vectors so
+    that the magnitudes are within `vmin` and `vmax`
+
+    Parameters
+    ----------
+    array : Array
+        The input array which is 4D and the last dimension is 2.
+    ns : NameSpace
+        Wheter to use numpy or dask
+    vmin : Optional[float], optional
+        Lower bound on the norm, by default None
+    vmax : Optional[float], optional
+        Upper bound on the norm, by default None
+    copy : bool, optional
+        Wheter to operate on the input are or use a copy, by default True
+
+    Returns
+    -------
+    Array
+        The thresholded array
+    """
     assert len(array.shape) == 4
     assert array.shape[3] == 2
     assert ns in [da, np]
@@ -72,26 +143,10 @@ def threshold_norm(
 
     if vmax is not None:
         norm_inds = norm_array > vmax
-        if ns == da:
-            norm_inds = norm_inds.compute()
-        inds = np.stack([norm_inds, norm_inds], -1).flatten()
-
-        values = (
-            vmax
-            / ns.stack([norm_array[norm_inds], norm_array[norm_inds]], -1).flatten()
-        )
-        array[inds] *= values
+        _handle_threshold_norm(norm_inds, ns, vmax, norm_array, array)
     if vmin is not None:
         norm_inds = norm_array < vmin
-        if ns == da:
-            norm_inds = norm_inds.compute()
-        inds = np.stack([norm_inds, norm_inds], -1).flatten()
-
-        values = (
-            vmin
-            / ns.stack([norm_array[norm_inds], norm_array[norm_inds]], -1).flatten()
-        )
-        array[inds] *= values
+        _handle_threshold_norm(norm_inds, ns, vmin, norm_array, array)
     return array.reshape(shape)
 
 

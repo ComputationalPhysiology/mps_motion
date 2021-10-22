@@ -131,7 +131,9 @@ def resize_frames(
                 ),
             )
         with ProgressBar():
-            resized_frames = np.stack(*da.compute(all_resized_frames), axis=-1)
+            resized_frames = da.stack(
+                *da.compute(all_resized_frames), axis=-1
+            ).compute()
 
     else:
         resized_frames = frames.copy()

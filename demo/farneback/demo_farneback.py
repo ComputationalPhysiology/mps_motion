@@ -57,12 +57,21 @@ def plot_displacement():
 
 def plot_velocity():
 
-    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    # data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = mmt.scaling.resize_data(
+        mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2"),
+        scale=0.4,
+    )
     path = Path("v_norm.npy")
     if not path.is_file():
-        disp = farneback.get_displacements(data.frames, data.frames[:, :, 0])
-        u = fs.VectorFrameSequence(disp)
-        u_th = u.threshold_norm(0, 10)
+        disp = farneback.get_displacements(
+            data.frames,
+            data.frames[:, :, 0],
+            filter_kernel_size=15,
+        )
+        u = fs.VectorFrameSequence(disp * (1 / 0.4))
+        # u_th = u.threshold_norm(0, 6)
+        u_th = u
         V = mechanics.compute_velocity(u_th.array, data.time_stamps)
 
         v = fs.VectorFrameSequence(V)
