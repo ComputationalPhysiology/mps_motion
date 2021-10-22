@@ -2,10 +2,10 @@ import logging
 from pathlib import Path
 from typing import List
 from typing import Optional
-from typing import Protocol
 
 import dask.array as da
 import numpy as np
+from typing_extensions import Protocol
 
 from . import utils
 
