@@ -429,11 +429,11 @@ class VectorFrameSequence(FrameSequence):
 
     @property
     def x(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 1], dx=self.dx, scale=self.scale)
+        return FrameSequence(self._array[:, :, :, 0], dx=self.dx, scale=self.scale)
 
     @property
     def y(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 0], dx=self.dx, scale=self.scale)
+        return FrameSequence(self._array[:, :, :, 1], dx=self.dx, scale=self.scale)
 
 
 class TensorFrameSequence(FrameSequence):
