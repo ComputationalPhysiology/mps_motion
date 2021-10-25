@@ -130,8 +130,16 @@ class Mechanics:
 
     @property
     def du(self) -> fs.TensorFrameSequence:
+
+        try:
+            du = compute_gradients(self.u.array, dx=self.dx)
+        except ValueError:
+            # We probably need to rechunk
+            self.u._array = self.u.array.rechunk()
+            du = compute_gradients(self.u.array, dx=self.dx)
+
         return fs.TensorFrameSequence(
-            compute_gradients(self.u.array, dx=self.dx),
+            du,
             dx=self.dx,
             scale=self.scale,
         )
