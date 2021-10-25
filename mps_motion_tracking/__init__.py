@@ -18,7 +18,7 @@ from . import (
     utils,
     visu,
 )
-from .mechanics import Mechancis
+from .mechanics import Mechanics
 from .motion_tracking import FLOW_ALGORITHMS, OpticalFlow
 
 
@@ -48,7 +48,7 @@ __all__ = [
     "block_matching",
     "utils",
     "mechanics",
-    "Mechancis",
+    "Mechanics",
     "motion_tracking",
     "FLOW_ALGORITHMS",
     "OpticalFlow",

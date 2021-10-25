@@ -162,7 +162,7 @@ def quiver_video(
             "Shape of frames and vector does not match. "
             f"Got frames of shape {data.frames.shape}, and "
             f"vector of shape {vectors_np.shape}."
-            f"Extected frames to have shape {vector_shape}."
+            f"Expected frames to have shape {vector_shape}."
         )
         raise ValueError(msg)
 

@@ -58,7 +58,7 @@ def compute_velocity(u: Array, t: Array):
     return da.moveaxis(da.moveaxis(du, 2, 3) / dt, 2, 3)
 
 
-class Mechancis:
+class Mechanics:
     def __init__(
         self,
         u: fs.VectorFrameSequence,
