@@ -150,16 +150,12 @@ class Mechanics:
     def F(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
             self.du.array + da.eye(2)[None, None, None, :, :],
-            dx=self.dx,
-            scale=self.scale,
         )
 
     @property
     def E(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
             compute_green_lagrange_strain_tensor(self.F.array),
-            dx=self.dx,
-            scale=self.scale,
         )
 
     @cached_property
