@@ -136,7 +136,7 @@ class Mechanics:
         except ValueError:
             # We probably need to rechunk
             if isinstance(self.u._array, da.Array):
-                self.u._array = self.u.array.rechunk()
+                self.u._array = self.u.array.rechunk()  # type:ignore
                 du = compute_gradients(self.u.array, dx=self.dx)
             else:
                 raise
