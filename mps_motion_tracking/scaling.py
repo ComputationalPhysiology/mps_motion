@@ -1,12 +1,19 @@
+import logging
 from typing import Optional
 from typing import Tuple
 
 import cv2
+import dask
+import dask.array as da
 import numpy as np
 import scipy.spatial
 import tqdm
+from dask.diagnostics import ProgressBar
 
+from .utils import Array
 from .utils import MPSData
+
+logger = logging.getLogger(__name__)
 
 INTERPOLATION_METHODS = {
     "nearest": cv2.INTER_NEAREST,
@@ -17,6 +24,29 @@ INTERPOLATION_METHODS = {
 }
 
 
+def resize_vectors(vectors, new_shape):
+    if len(vectors.shape) == 4:
+        vec1 = resize_frames(
+            vectors[:, :, :, 0],
+            new_shape=new_shape,
+        )
+        vec2 = resize_frames(
+            vectors[:, :, :, 1],
+            new_shape=new_shape,
+        )
+    else:
+        assert len(vectors.shape) == 3
+        vec1 = resize_frames(
+            vectors[:, :, 0],
+            new_shape=new_shape,
+        )
+        vec2 = resize_frames(
+            vectors[:, :, 1],
+            new_shape=new_shape,
+        )
+    return da.stack([vec1, vec2], axis=-1)
+
+
 def resize_data(data: MPSData, scale: float) -> MPSData:
     new_frames = resize_frames(data.frames, scale)
     info = data.info.copy()
@@ -25,10 +55,14 @@ def resize_data(data: MPSData, scale: float) -> MPSData:
     return MPSData(new_frames, data.time_stamps, info)
 
 
-def reshape_lk(reference_points: np.ndarray, flows: np.ndarray) -> np.ndarray:
+def reshape_lk(reference_points: np.ndarray, flows: Array) -> Array:
     x, y = reference_points.reshape(-1, 2).astype(int).T
     xu = np.sort(np.unique(x))
     yu = np.sort(np.unique(y))
+
+    is_dask = False
+    if isinstance(flows, da.Array):
+        is_dask = True
 
     dx = xu[0]
     dxs = np.diff(xu)
@@ -48,9 +82,13 @@ def reshape_lk(reference_points: np.ndarray, flows: np.ndarray) -> np.ndarray:
         num_frames = flows.shape[-1]
         out = np.zeros((yp.max() + 1, xp.max() + 1, 2, num_frames))
         out[yp, xp, :, :] = flows
+        out = np.swapaxes(out, 2, 3)
     else:
         out = np.zeros((yp.max() + 1, xp.max() + 1, 2))
         out[yp, xp, :] = flows
+
+    if is_dask:
+        out = da.from_array(out)
     return out
 
 
@@ -60,7 +98,7 @@ def resize_frames(
     new_shape: Optional[Tuple[int, int]] = None,
     interpolation_method="nearest",
 ) -> np.ndarray:
-
+    logger.info("Resize frames")
     msg = f"Expected interpolation method to be one of {INTERPOLATION_METHODS.keys()}, got {interpolation_method}"
     assert interpolation_method in INTERPOLATION_METHODS, msg
     if scale != 1.0 or new_shape is not None:
@@ -83,19 +121,23 @@ def resize_frames(
         if len(frames.shape) == 2:
             return cv2.resize(frames, (height, width))
 
-        resized_frames = np.zeros((width, height, num_frames))
-        for i in tqdm.tqdm(
-            range(num_frames),
-            desc=f"Resize frames from {(w, h)} to {(width, height)}",
-        ):
-            resized_frames[:, :, i] = cv2.resize(
-                frames[:, :, i],
-                (height, width),
-                INTERPOLATION_METHODS[interpolation_method],
+        all_resized_frames = []
+        for i in range(num_frames):
+            all_resized_frames.append(
+                dask.delayed(cv2.resize)(
+                    frames[:, :, i],
+                    (height, width),
+                    INTERPOLATION_METHODS[interpolation_method],
+                ),
             )
+        with ProgressBar():
+            resized_frames = da.stack(
+                *da.compute(all_resized_frames), axis=-1
+            ).compute()
+
     else:
         resized_frames = frames.copy()
-
+    logger.info("Done resizing")
     return resized_frames
 
 

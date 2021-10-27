@@ -1,6 +1,7 @@
 import itertools as it
 from unittest import mock
 
+import dask.array as da
 import numpy as np
 import pytest
 
@@ -75,7 +76,7 @@ def test_reference_frame_invalid(
 @pytest.mark.parametrize("flow_algorithm", ["", "dslkgm"])
 def test_invalid_algoritm(
     test_data: utils.MPSData,
-    flow_algorithm: str,
+    flow_algorithm: _FLOW_ALGORITHMS,
 ):
     with pytest.raises(ValueError):
         OpticalFlow(test_data, flow_algorithm=flow_algorithm)
@@ -84,21 +85,21 @@ def test_invalid_algoritm(
 @pytest.mark.parametrize("flow_algorithm", FLOW_ALGORITHMS)
 def test_get_displacement_lazy(
     test_data: utils.MPSData,
-    flow_algorithm: str,
+    flow_algorithm: _FLOW_ALGORITHMS,
 ):
     np.random.seed(1)
-    arr = np.random.random((4, 5, 2, 3))  # (width, heighth, 2, num_time_points)
+    arr = np.random.random((4, 5, 3, 2))  # (width, heighth, num_time_points)
     with mock.patch(f"mps_motion_tracking.{flow_algorithm}.get_displacements") as _mock:
         _mock.return_value = arr
         m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
         U = m.get_displacements()
-        assert (U[:, :, 0, :] == arr[:, :, :, 0]).all().compute()
+        assert (U[:, :, 0, :] == arr[:, :, 0, :]).all().compute()
 
     _mock.assert_called_once()
 
 
 @pytest.mark.parametrize("flow_algorithm", FLOW_ALGORITHMS)
-def test_get_displacement(test_data: utils.MPSData, flow_algorithm: str):
+def test_get_displacement(test_data: utils.MPSData, flow_algorithm: _FLOW_ALGORITHMS):
     m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
     disp = m.get_displacements()
     assert disp.shape == (test_data.size_x, test_data.size_y, test_data.num_frames, 2)
@@ -110,28 +111,18 @@ def test_get_displacement_unit(test_data: utils.MPSData):
     disp_px = m.get_displacements(unit="pixels")
     disp_um = m.get_displacements(unit="um", recompute=True)
 
-    assert (
-        abs(
-            disp_um.x.mean().max().compute()  # type: ignore
-            - disp_px.x.mean().max().compute() * test_data.info["um_per_pixel"],  # type: ignore
-        )
-        < 1e-12
+    assert da.isclose(
+        disp_um.x.mean().max(),
+        disp_px.x.mean().max() * test_data.info["um_per_pixel"],
     )
 
-    assert (
-        abs(
-            disp_um.max().max().compute()  # type: ignore
-            - disp_px.max().max().compute() * test_data.info["um_per_pixel"],  # type: ignore
-        )
-        < 1e-12
+    assert da.isclose(
+        disp_um.max().max(),
+        disp_px.max().max() * test_data.info["um_per_pixel"],
     )
-
-    assert (
-        abs(
-            disp_um.norm().max().max().compute()  # type: ignore
-            - disp_px.norm().max().max().compute() * test_data.info["um_per_pixel"],  # type: ignore
-        )
-        < 1e-12
+    assert da.isclose(
+        disp_um.norm().max().max(),
+        disp_px.norm().max().max() * test_data.info["um_per_pixel"],
     )
 
 
@@ -141,7 +132,7 @@ def test_get_displacement_unit(test_data: utils.MPSData):
 )
 def test_get_displacement_scale_algs(
     test_data: utils.MPSData,
-    flow_algorithm: str,
+    flow_algorithm: _FLOW_ALGORITHMS,
     unit: str,
 ):
     """Test that there are now exceptions raised"""
@@ -152,5 +143,5 @@ def test_get_displacement_scale_algs(
 def test_OpticalFlow_options(test_data: utils.MPSData):
 
     step = 4
-    m = OpticalFlow(test_data, flow_algorithm="lucas_kanade", step=step)
+    m = OpticalFlow(test_data, flow_algorithm=_FLOW_ALGORITHMS.lucas_kanade, step=step)
     assert m.options["step"] == step

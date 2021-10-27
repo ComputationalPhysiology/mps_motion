@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from mps_motion_tracking import frame_sequence as fs
-from mps_motion_tracking import Mechancis
+from mps_motion_tracking import Mechanics
 
 
 def test_E_symmetry(mech_obj):
@@ -54,7 +54,7 @@ def test_dx(dx):
     )
 
     U = fs.VectorFrameSequence(u, dx=dx)
-    m = Mechancis(U)
+    m = Mechanics(U)
 
     assert da.isclose(m.du[:, :, :, 0, 0], a11 / dx).all().compute()
     assert da.isclose(m.du[:, :, :, 0, 1], a12 / dx).all().compute()
@@ -108,7 +108,7 @@ def mech_obj():
     u[:, :, 2, 0] = u[:, :, 1, 0]
     u[:, :, 3, 1] = u[:, :, 2, 1]
 
-    return Mechancis(fs.VectorFrameSequence(u))
+    return Mechanics(fs.VectorFrameSequence(u))
 
 
 def test_shapes():
@@ -118,7 +118,7 @@ def test_shapes():
     num_time_steps = 14
 
     u = np.random.random((width, height, num_time_steps, 2))
-    m = Mechancis(fs.VectorFrameSequence(u))
+    m = Mechanics(fs.VectorFrameSequence(u))
 
     assert m.u.shape == (width, height, num_time_steps, 2)
     assert m.du.shape == (width, height, num_time_steps, 2, 2)

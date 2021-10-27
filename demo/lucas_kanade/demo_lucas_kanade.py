@@ -1,65 +1,34 @@
 from pathlib import Path
 
 import ap_features as apf
-import cv2
 import dask.array as da
 import matplotlib.pyplot as plt
 import mps
 import numpy as np
-import tqdm
 
 import mps_motion_tracking as mmt
 from mps_motion_tracking import frame_sequence as fs
 from mps_motion_tracking import lucas_kanade
 from mps_motion_tracking import mechanics
-from mps_motion_tracking import utils
 from mps_motion_tracking import visu
 
 here = Path(__file__).absolute().parent
 
 
-def main():
-
-    data = utils.MPSData(
-        **np.load(
-            here.joinpath("../../datasets/mps_data.npy"),
-            allow_pickle=True,
-        ).item()
-    )
-    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
-
-    # m = lucas_kanade.flow(data.frames[:, :, 0], data.frames[:, :, 1])
-
-    # disp, ref_points = lucas_kanade.get_displacements(
-    #     data.frames, data.frames[:, :, 0], step=8
-    # )
-    disp = lucas_kanade.get_displacements(
-        data.frames,
-        data.frames[:, :, 0],
-        step=48,
-    )
-
-    print("Convert to dask array")
-    U = da.from_array(np.swapaxes(disp, 2, 3))
-
-    u = fs.VectorFrameSequence(U)
-    print("Compute norm")
-    u_norm = u.norm().mean().compute()
-    print("Plot")
-    plt.plot(data.time_stamps, u_norm)
-    plt.show()
-
-
-def plot_saved_displacement():
+def plot_displacement():
 
     data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
-    disp = np.load("disp.npy", mmap_mode="r")
-
-    U = da.from_array(np.swapaxes(disp, 2, 3))
-
-    u = fs.VectorFrameSequence(U)
-    print("Compute norm")
-    u_norm = u.norm().mean().compute()
+    path = Path("u_norm.npy")
+    if not path.is_file():
+        disp = lucas_kanade.get_displacements(
+            data.frames,
+            data.frames[:, :, 0],
+            filter_kernel_size=5,
+        )
+        u = fs.VectorFrameSequence(disp)
+        u_norm = u.norm().threshold(0, 10).mean().compute()
+        np.save(path, u_norm)
+    u_norm = np.load(path)
 
     print("Plot")
     trace = apf.Beats(
@@ -67,9 +36,9 @@ def plot_saved_displacement():
         data.time_stamps,
         pacing=data.pacing,
         background_correction_method="subtract",
-        zero_index=60,
+        chopping_options={"ignore_pacing": True},
     )
-    beats = trace.chop(ignore_pacing=True)
+    beats = trace.beats
     fig, ax = plt.subplots(3, 2)
     ax[0, 0].plot(trace.t, trace.y)
 
@@ -89,22 +58,25 @@ def plot_saved_displacement():
 def plot_velocity():
 
     data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
-    disp = np.load("disp.npy", mmap_mode="r")
+    path = Path("v_norm.npy")
+    if not path.is_file():
+        disp = lucas_kanade.get_displacements(data.frames, data.frames[:, :, 0])
+        V = mechanics.compute_velocity(disp, data.time_stamps)
 
-    U = da.from_array(np.swapaxes(disp, 2, 3))
-    V = mechanics.compute_velocity(U, data.time_stamps)
-
-    v = fs.VectorFrameSequence(V)
-    # print("Compute norm")
-    v_norm = v.norm().mean().compute()
+        v = fs.VectorFrameSequence(V)
+        # print("Compute norm")
+        v_norm = v.norm().mean().compute()
+        np.save(path, v_norm)
+    v_norm = np.load(path)
     trace = apf.Beats(
         v_norm,
         data.time_stamps[:-1],
-        pacing=data.pacing,
+        pacing=data.pacing[:-1],
         background_correction_method="subtract",
-        # zero_index=60,
+        chopping_options={"ignore_pacing": True},
     )
-    beats = trace.chop(ignore_pacing=True)
+
+    beats = trace.beats
     fig, ax = plt.subplots(3, 2)
     ax[0, 0].plot(trace.t, trace.y)
 
@@ -121,79 +93,55 @@ def plot_velocity():
     fig.savefig("velocity_norm.png")
 
 
-def postprocess_displacement():
-    # data = utils.MPSData(
-    #     **np.load(
-    #         here.joinpath("../../datasets/mps_data.npy"), allow_pickle=True
-    #     ).item()
-    # )
+def create_heatmap():
+
     data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
-    disp = lucas_kanade.get_displacements(
-        data.frames,
-        data.frames[:, :, 0],
-        step=48,
+    path = Path("disp.npy")
+    if not path.is_file():
+        disp = lucas_kanade.get_displacements(
+            data.frames,
+            data.frames[:, :, 0],
+            step=16,
+            filter_kernel_size=3,
+        )
+        np.save(path, disp.compute())
+    disp = da.from_array(np.load(path, mmap_mode="r"))
+    u = fs.VectorFrameSequence(disp)
+
+    # mech = mechanics.Mechancis(u=u, t=data.time_stamps)
+    # Exx = mech.E.x.threshold(-0.2, 0.2)
+    # visu.heatmap("heatmap_Exx.mp4", data=Exx, fps=data.framerate)
+
+    visu.heatmap(
+        "heatmap_u_norm.mp4",
+        data=u.norm().threshold(0, 10),
+        fps=data.framerate,
+        cmap="inferno",
+        transpose=True,
     )
-
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-
-    width = data.size_y
-    height = data.size_x
-    fps = data.framerate
-
-    out_flow = cv2.VideoWriter(
-        "lukas_kanade_displacement_flow.mp4",
-        fourcc,
-        fps,
-        (width, height),
-    )
-    out_hsv = cv2.VideoWriter(
-        "lukas_kanade_displacement_hsv.mp4",
-        fourcc,
-        fps,
-        (width, height),
-    )
-
-    for i in tqdm.tqdm(range(data.num_frames)):
-        im = utils.to_uint8(data.frames[:, :, i])
-        flow = disp[:, :, :, i]
-        out_flow.write(utils.draw_flow(im, flow))
-        out_hsv.write(utils.draw_hsv(flow))
-
-    out_flow.release()
-    out_hsv.release()
-    cv2.destroyAllWindows()
 
 
 def create_flow_field():
 
     data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
-    # disp = lucas_kanade.get_displacements(
-    #     data.frames,
-    #     data.frames[:, :, 0],
-    #     step=48,
-    # )
-    # np.save("disp.npy", disp)
-    disp = np.load("disp.npy", mmap_mode="r")
-
+    disp = lucas_kanade.get_displacements(
+        data.frames,
+        data.frames[:, :, 0],
+        step=16,
+        filter_kernel_size=3,
+    )
+    np.save("disp.npy", disp)
     visu.quiver_video(data, disp, "flow.mp4", step=48, vector_scale=10)
-    # visu.hsv_video(data, disp, "hsv.mp4")
 
 
 def create_velocity_flow_field():
 
-    # data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
-    # disp = lucas_kanade.get_displacements(
-    #     data.frames,
-    #     data.frames[:, :, 0],
-    #     sca
-    # )
     data = mmt.scaling.resize_data(
         mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2"),
         scale=0.4,
     )
-    # disp = np.load("disp.npy", mmap_mode="r")
-    opt_flow = mmt.OpticalFlow(data, flow_algorithm="farneback", reference_frame=0)
-    # disp = da.from_array(np.swapaxes(disp, 2, 3))
+    opt_flow = mmt.OpticalFlow(data, flow_algorithm="lucas_kanade", reference_frame=0)
+
     u = opt_flow.get_displacements()
     # V = mechanics.compute_velocity(u.array, data.time_stamps)
     # vel = fs.VectorFrameSequence(V)
@@ -235,14 +183,12 @@ def create_velocity_flow_field():
     # fig.savefig("disp_velocity.png")
     # plt.show()
 
-    # breakpoint()
-    # visu.quiver_video(data, V, "velocity_flow.mp4", step=48, scale=500, velocity=True)
-
 
 if __name__ == "__main__":
     # main()
     # postprocess_displacement()
-    # plot_saved_displacement()
+    plot_displacement()
     # create_flow_field()
     # plot_velocity()
-    create_velocity_flow_field()
+    # create_velocity_flow_field()
+    # create_heatmap()

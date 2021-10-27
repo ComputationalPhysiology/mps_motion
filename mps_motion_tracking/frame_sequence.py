@@ -1,8 +1,13 @@
+import logging
 from pathlib import Path
-from typing import Union
+from typing import List
+from typing import Optional
 
 import dask.array as da
 import numpy as np
+from typing_extensions import Protocol
+
+from . import utils
 
 try:
     import h5py
@@ -11,8 +16,135 @@ try:
 except ImportError:
     has_h5py = False
 
-Array = Union[da.core.Array, np.ndarray]
-PathStr = Union[Path, str]
+logger = logging.getLogger(__name__)
+
+
+class _Linalg(Protocol):
+    @staticmethod
+    def norm(array: utils.Array, axis: int = 0) -> utils.Array:
+        ...
+
+
+class NameSpace(Protocol):
+    @property
+    def linalg(self) -> _Linalg:
+        ...
+
+    @staticmethod
+    def stack(arrs: List[utils.Array], axis: int) -> utils.Array:
+        ...
+
+
+class InvalidThresholdError(ValueError):
+    pass
+
+
+def check_threshold(
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+):
+    if (vmax and vmin) and vmax < vmin:
+        raise InvalidThresholdError(f"Cannot have vmax < vmin, got {vmax=} and {vmin=}")
+
+
+def threshold(
+    array: utils.Array,
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+    copy: bool = True,
+) -> utils.Array:
+    """Threshold an array
+
+    Parameters
+    ----------
+    array : utils.Array
+        The array
+    vmin : Optional[float], optional
+        Lower threshold value, by default None
+    vmax : Optional[float], optional
+        Upper threshold value, by default None
+    copy : bool, optional
+        Operative on the given array or use a copy, by default True
+
+    Returns
+    -------
+    utils.Array
+        Inpute array with the lowest value beeing vmin and
+        highest value begin vmax
+    """
+    assert len(array.shape) == 3
+    check_threshold(vmin, vmax)
+    if copy:
+        array = array.copy()
+
+    if vmax is not None:
+        array[array > vmax] = vmax
+    if vmin is not None:
+        array[array < vmin] = vmin
+    return array
+
+
+def _handle_threshold_norm(norm_inds, ns, factor, norm_array, array):
+    if norm_inds.any():
+        if ns == da:
+            norm_inds = norm_inds.compute()
+        inds = np.stack([norm_inds, norm_inds], -1).flatten()
+        values = (
+            factor
+            / ns.stack([norm_array[norm_inds], norm_array[norm_inds]], -1).flatten()
+        )
+        array[inds] *= values
+
+
+def threshold_norm(
+    array: utils.Array,
+    ns: NameSpace,
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+    copy: bool = True,
+) -> utils.Array:
+    """Threshold an array of vectors based on the
+    norm of the vectors.
+
+    For example if the vectors are displacement then
+    you can use this function to scale all vectors so
+    that the magnitudes are within `vmin` and `vmax`
+
+    Parameters
+    ----------
+    array : utils.Array
+        The input array which is 4D and the last dimension is 2.
+    ns : NameSpace
+        Wheter to use numpy or dask
+    vmin : Optional[float], optional
+        Lower bound on the norm, by default None
+    vmax : Optional[float], optional
+        Upper bound on the norm, by default None
+    copy : bool, optional
+        Wheter to operate on the input are or use a copy, by default True
+
+    Returns
+    -------
+    utils.Array
+        The thresholded array
+    """
+    assert len(array.shape) == 4
+    assert array.shape[3] == 2
+    assert ns in [da, np]
+    check_threshold(vmin, vmax)
+    if copy:
+        array = array.copy()
+    shape = array.shape
+    norm_array = ns.linalg.norm(array, axis=3).flatten()
+    array = array.flatten()
+
+    if vmax is not None:
+        norm_inds = norm_array > vmax
+        _handle_threshold_norm(norm_inds, ns, vmax, norm_array, array)
+    if vmin is not None:
+        norm_inds = norm_array < vmin
+        _handle_threshold_norm(norm_inds, ns, vmin, norm_array, array)
+    return array.reshape(shape)
 
 
 class FrameSequence:
@@ -22,7 +154,7 @@ class FrameSequence:
 
     """
 
-    def __init__(self, array: Array, dx: float = 1.0, scale: float = 1.0):
+    def __init__(self, array: utils.Array, dx: float = 1.0, scale: float = 1.0):
         """Constructor
 
         Parameters
@@ -62,7 +194,26 @@ class FrameSequence:
         if self._h5file is not None:
             self._h5file.close()
 
-    def save(self, path: PathStr) -> None:
+    def filter(
+        self,
+        filter_type: utils.Filters = utils.Filters.median,
+        size: Optional[int] = None,
+        sigma: Optional[float] = None,
+    ) -> "FrameSequence":
+        """Apply a median filter"""
+
+        return FrameSequence(
+            array=utils.apply_filter(
+                self._array,
+                size=size,
+                sigma=sigma,
+                filter_type=filter_type,
+            ),
+            dx=self.dx,
+            scale=self.scale,
+        )
+
+    def save(self, path: utils.PathLike) -> None:
         path = Path(path)
 
         if path.is_file():
@@ -110,6 +261,8 @@ class FrameSequence:
                         ),
                     ),
                 )
+                data["dx"] = float(h5file["array"].attrs.get("dx", 1))
+                data["scale"] = float(h5file["array"].attrs.get("scale", 1))
         else:
             data.update(np.load(path, allow_pickle=True).item())
 
@@ -152,8 +305,12 @@ class FrameSequence:
             N=N,
         )
 
+    def threshold(self, vmin: Optional[float] = None, vmax: Optional[float] = None):
+        array = threshold(self.array, vmin, vmax)
+        return self.__class__(array, self.dx, self.scale)
+
     @property
-    def array(self) -> Array:
+    def array(self) -> utils.Array:
         return self._array
 
     @property
@@ -190,13 +347,16 @@ class FrameSequence:
     def shape(self):
         return self.array.shape
 
-    def mean(self) -> Array:
+    def mean(self) -> utils.Array:
         return self.array.mean((0, 1)) * self.scale
 
-    def max(self) -> Array:
+    def max(self) -> utils.Array:
         return self.array.max(2)
 
-    def compute(self) -> Array:
+    def min(self) -> utils.Array:
+        return self.array.min(2)
+
+    def compute(self) -> utils.Array:
         return self.array_np
 
     def __repr__(self) -> str:
@@ -209,7 +369,7 @@ class VectorFrameSequence(FrameSequence):
 
     """
 
-    def __init__(self, array: Array, dx: float = 1.0, scale: float = 1.0):
+    def __init__(self, array: utils.Array, dx: float = 1.0, scale: float = 1.0):
         """Constructor
 
         Parameters
@@ -230,6 +390,31 @@ class VectorFrameSequence(FrameSequence):
         assert len(array.shape) == 4
         assert array.shape[3] == 2
 
+    def filter(
+        self,
+        filter_type: utils.Filters = utils.Filters.median,
+        size: Optional[int] = None,
+        sigma: Optional[float] = None,
+    ) -> "VectorFrameSequence":
+        """Apply a filter"""
+
+        array = utils.filter_vectors_par(
+            self._array,
+            size=size,
+            sigma=sigma,
+            filter_type=filter_type,
+        )
+
+        return VectorFrameSequence(array=array, dx=self.dx, scale=self.scale)
+
+    def threshold_norm(
+        self,
+        vmin: Optional[float] = None,
+        vmax: Optional[float] = None,
+    ) -> "VectorFrameSequence":
+        array = threshold_norm(self.array, self._ns, vmin, vmax)
+        return VectorFrameSequence(array, self.dx, self.scale)
+
     def norm(self) -> FrameSequence:
         return FrameSequence(
             self._ns.linalg.norm(self._array, axis=3),
@@ -246,11 +431,11 @@ class VectorFrameSequence(FrameSequence):
 
     @property
     def x(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 1], dx=self.dx, scale=self.scale)
+        return FrameSequence(self._array[:, :, :, 0], dx=self.dx, scale=self.scale)
 
     @property
     def y(self) -> FrameSequence:
-        return FrameSequence(self._array[:, :, :, 0], dx=self.dx, scale=self.scale)
+        return FrameSequence(self._array[:, :, :, 1], dx=self.dx, scale=self.scale)
 
 
 class TensorFrameSequence(FrameSequence):
@@ -260,7 +445,7 @@ class TensorFrameSequence(FrameSequence):
 
     """
 
-    def __init__(self, array: Array, dx: float = 1.0, scale: float = 1.0):
+    def __init__(self, array: utils.Array, dx: float = 1.0, scale: float = 1.0):
         """Constructor
 
         Parameters

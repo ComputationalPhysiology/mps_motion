@@ -36,16 +36,4 @@ def test_get_displacements():
         frames=np.array(frames).T,
         reference_image=reference_image,
     )
-    assert u.shape == (size[0], size[1], 2, len(frames))
-
-
-def test_flow_map():
-
-    size = (64, 64)
-    block_size = 9
-    reference_image = 255 * np.random.randint(0, 255, size=size, dtype=np.uint8)
-    image = 255 * np.random.randint(0, 255, size=size, dtype=np.uint8)
-
-    flow = bm.flow_map((image, reference_image, block_size))
-    assert flow.shape == (size[0] // block_size, size[0] // block_size, 2)
-    assert flow.dtype == np.float64
+    assert u.shape == (size[0], size[1], len(frames), 2)

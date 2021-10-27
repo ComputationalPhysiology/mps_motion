@@ -1,11 +1,55 @@
+import logging
 from pathlib import Path
+from typing import Optional
+from typing import Union
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 
+from . import frame_sequence as fs
 from . import scaling
 from . import utils
+
+logger = logging.getLogger(__name__)
+
+
+def apply_custom_colormap(image_gray, cmap=plt.get_cmap("seismic")):
+
+    assert image_gray.dtype == np.uint8, "must be np.uint8 image"
+    if image_gray.ndim == 3:
+        image_gray = image_gray.squeeze(-1)
+
+    # Initialize the matplotlib color map
+    sm = plt.cm.ScalarMappable(cmap=cmap)
+
+    # Obtain linear color range
+    color_range = sm.to_rgba(np.linspace(0, 1, 256))[:, 0:3]  # color range RGBA => RGB
+    color_range = (color_range * 255.0).astype(np.uint8)  # [0,1] => [0,255]
+    color_range = np.squeeze(
+        np.dstack([color_range[:, 2], color_range[:, 1], color_range[:, 0]]),
+        0,
+    )  # RGB => BGR
+
+    # Apply colormap for each channel individually
+    channels = [cv2.LUT(image_gray, color_range[:, i]) for i in range(3)]
+    return np.dstack(channels)
+
+
+def colorize(img, vmin=None, vmax=None, factor=1, cmap="bwr"):
+    img = img.astype(float)
+    vmin = np.min(img) if vmin is None else vmin
+    vmax = np.max(img) if vmax is None else vmax
+    img = (img - vmin) / (vmax - vmin)
+    img = (img * 255).astype(np.uint8)
+    img = apply_custom_colormap(img, cmap=plt.get_cmap(cmap))
+
+    # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    if factor != 1:
+        x, y, _ = img.shape
+        img = cv2.resize(img, (y * factor, x * factor))
+    return img
 
 
 def _draw_flow(image, x, y, fx, fy):
@@ -71,7 +115,7 @@ def draw_hsv(flow):
 
 def quiver_video(
     data: utils.MPSData,
-    vectors: np.ndarray,
+    vectors: Union[np.ndarray, fs.VectorFrameSequence],
     path: utils.PathLike,
     step: int = 16,
     vector_scale: float = 1.0,
@@ -81,6 +125,12 @@ def quiver_video(
 ) -> None:
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    if isinstance(vectors, fs.VectorFrameSequence):
+        vectors_np: np.ndarray = vectors.array_np
+    else:
+        vectors_np = vectors
+
+    assert len(vectors_np.shape) == 4
 
     if frame_scale < 1.0:
         data = scaling.resize_data(data, frame_scale)
@@ -93,32 +143,37 @@ def quiver_video(
 
     # Check shapes
     try:
-        time_axis = vectors.shape.index(num_frames)
+        time_axis = vectors_np.shape.index(num_frames)
     except ValueError as ex:
         msg = (
             "Time axis for frames and vetors does not match. "
             f"Got frames of shape {data.frames.shape}, and "
-            f"vector of shape {vectors.shape}."
+            f"vector of shape {vectors_np.shape}."
         )
         raise ValueError(msg) from ex
 
-    vector_shape = (vectors.shape[0], vectors.shape[1], vectors.shape[time_axis])
+    vector_shape = (
+        vectors_np.shape[0],
+        vectors_np.shape[1],
+        vectors_np.shape[time_axis],
+    )
     if not data.frames.shape == vector_shape:
         msg = (
             "Shape of frames and vector does not match. "
             f"Got frames of shape {data.frames.shape}, and "
-            f"vector of shape {vectors.shape}."
-            f"Extected frames to have shape {vector_shape}."
+            f"vector of shape {vectors_np.shape}."
+            f"Expected frames to have shape {vector_shape}."
         )
         raise ValueError(msg)
 
     p = Path(path).with_suffix(".mp4")
     if p.is_file():
         p.unlink()
+    frames = utils.to_uint8(data.frames)
     out = cv2.VideoWriter(p.as_posix(), fourcc, fps, (width, height))
     for i in tqdm.tqdm(range(num_frames), desc=f"Create quiver video at {p}"):
-        im = utils.to_uint8(data.frames[:, :, i])
-        flow = np.take(vectors, i, axis=time_axis)
+        im = frames[:, :, i]
+        flow = np.take(vectors_np, i, axis=time_axis)
         out.write(draw_flow(im, flow, step=step, scale=vector_scale))
 
     out.release()
@@ -135,33 +190,94 @@ def quiver_video(
 
 
 def hsv_video(
-    data: utils.MPSData,
-    vectors: np.ndarray,
     path: utils.PathLike,
+    vectors: Union[np.ndarray, fs.VectorFrameSequence],
+    fps: int = 50,
+    axis: int = 2,
     convert: bool = False,
 ) -> None:
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    if isinstance(vectors, fs.VectorFrameSequence):
+        vectors_np: np.ndarray = vectors.array_np
+    else:
+        vectors_np = vectors
 
-    width = data.size_y
-    height = data.size_x
-    fps = data.framerate
+    assert len(vectors_np.shape) == 4
+
+    width = vectors_np.shape[1]
+    height = vectors_np.shape[0]
+    assert len(vectors_np.shape) == 3
+    num_frames = vectors_np.shape[axis]
 
     p = Path(path).with_suffix(".mp4")
 
     out = cv2.VideoWriter(p.as_posix(), fourcc, fps, (width, height))
-    time_axis = vectors.shape.index(data.num_frames)
-    for i in tqdm.tqdm(range(data.num_frames), desc=f"Create HSV movie at {p}"):
-        flow = np.take(vectors, i, axis=time_axis)
+
+    for i in tqdm.tqdm(range(num_frames), desc=f"Create HSV movie at {p}"):
+        flow = np.take(vectors_np, i, axis=axis)
         out.write(draw_hsv(flow))
 
     out.release()
     cv2.destroyAllWindows()
 
     if convert:
-        import imageio
+        convert_imageio(p, fps)
 
-        tmp_path = p.parent.joinpath(p.stem + "_tmp").with_suffix(".mp4")
-        p.rename(tmp_path)
-        video = imageio.read(tmp_path)
-        imageio.mimwrite(p, video.iter_data(), fps=fps)
+
+def convert_imageio(path, fps):
+    logger.info("Convert video using imageio")
+    import imageio
+
+    tmp_path = path.parent.joinpath(path.stem + "_tmp").with_suffix(".mp4")
+    path.rename(tmp_path)
+    video = imageio.read(tmp_path)
+    imageio.mimwrite(path, video.iter_data(), fps=fps)
+
+
+def heatmap(
+    path: utils.PathLike,
+    data: Union[np.ndarray, fs.FrameSequence],
+    fps: int = 50,
+    axis: int = 2,
+    convert: bool = False,
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
+    cmap="bwr",
+    transpose: bool = False,
+):
+
+    logger.info("Create heatmap video")
+    if isinstance(data, fs.FrameSequence):
+        data_np: np.ndarray = data.array_np
+    else:
+        data_np = data
+
+    vmin = vmin if vmin is not None else data_np.min()
+    vmax = vmax if vmax is not None else data_np.max()
+
+    assert len(data_np.shape) == 3
+    num_frames = data_np.shape[axis]
+
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+
+    width = data_np.shape[1]
+    height = data_np.shape[0]
+    if transpose:
+        width = data_np.shape[0]
+        height = data_np.shape[1]
+
+    p = Path(path).with_suffix(".mp4")
+
+    out = cv2.VideoWriter(p.as_posix(), fourcc, fps, (width, height))
+    for i in tqdm.tqdm(range(num_frames), desc=f"Create heatmap movie at {p}"):
+        heat = np.take(data_np, i, axis=axis)
+        if transpose:
+            heat = heat.T
+        out.write(colorize(heat, vmin=vmin, vmax=vmax, cmap=cmap))
+
+    out.release()
+    cv2.destroyAllWindows()
+    logger.info("Done creating heatmap video")
+    if convert:
+        convert_imageio(p, fps)

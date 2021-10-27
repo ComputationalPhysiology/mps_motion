@@ -58,7 +58,7 @@ def compute_velocity(u: Array, t: Array):
     return da.moveaxis(da.moveaxis(du, 2, 3) / dt, 2, 3)
 
 
-class Mechancis:
+class Mechanics:
     def __init__(
         self,
         u: fs.VectorFrameSequence,
@@ -130,8 +130,18 @@ class Mechancis:
 
     @property
     def du(self) -> fs.TensorFrameSequence:
+
+        try:
+            du = compute_gradients(self.u.array, dx=self.dx)
+        except ValueError:
+            # We probably need to rechunk
+            if isinstance(self.u._array, da.Array):
+                self.u._array = self.u.array.rechunk()  # type:ignore
+                du = compute_gradients(self.u.array, dx=self.dx)
+            else:
+                raise
         return fs.TensorFrameSequence(
-            compute_gradients(self.u.array, dx=self.dx),
+            du,
             dx=self.dx,
             scale=self.scale,
         )
@@ -140,16 +150,12 @@ class Mechancis:
     def F(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
             self.du.array + da.eye(2)[None, None, None, :, :],
-            dx=self.dx,
-            scale=self.scale,
         )
 
     @property
     def E(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
             compute_green_lagrange_strain_tensor(self.F.array),
-            dx=self.dx,
-            scale=self.scale,
         )
 
     @cached_property
