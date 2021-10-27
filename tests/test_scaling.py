@@ -1,6 +1,6 @@
 import numpy as np
 
-from mps_motion_tracking import Mechancis
+from mps_motion_tracking import Mechanics
 from mps_motion_tracking import OpticalFlow
 from mps_motion_tracking import scaling
 from mps_motion_tracking import utils
@@ -78,7 +78,7 @@ def _test_resize_frames_units():
         flow = OpticalFlow(data, "farneback")
         u = flow.get_displacements(scale=scale)  # , unit="pixels")
 
-        mech = Mechancis(u)
+        mech = Mechanics(u)
 
         # import dask.array as da
         U = mech.E.compute_eigenvalues()

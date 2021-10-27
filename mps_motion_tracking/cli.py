@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 
-from . import Mechancis, OpticalFlow
+from . import Mechanics, OpticalFlow
 from . import motion_tracking as mt
 from . import utils
 
@@ -194,7 +194,7 @@ def main(
     index = None
     if settings_file.is_file() and disp_file.is_file() and not overwrite:
         with open(settings_file, "r") as f:
-            settings = yaml.load(f)
+            settings = yaml.load(f, Loader=yaml.SafeLoader)
         disp = np.load(disp_file)
 
     else:
@@ -221,7 +221,7 @@ def main(
         else:
             index = opt_flow.reference_frame_index
 
-    mech = Mechancis(disp)
+    mech = Mechanics(disp)
     outdir_.mkdir(exist_ok=True, parents=True)
     # Plot
     plot_displacement(

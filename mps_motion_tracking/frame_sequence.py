@@ -267,6 +267,8 @@ class FrameSequence:
             if use_dask:
                 data["array"] = da.from_array(data["array"])
 
+        data["dx"] = float(h5file["array"].attrs.get("dx", 1))
+        data["scale"] = float(h5file["array"].attrs.get("scale", 1))
         if "array" not in data:
             raise IOError(f"Unable to load data from file {path}")
 

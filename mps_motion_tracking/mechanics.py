@@ -135,9 +135,11 @@ class Mechanics:
             du = compute_gradients(self.u.array, dx=self.dx)
         except ValueError:
             # We probably need to rechunk
-            self.u._array = self.u.array.rechunk()
-            du = compute_gradients(self.u.array, dx=self.dx)
-
+            if isinstance(self.u._array, da.Array):
+                self.u._array = self.u.array.rechunk()
+                du = compute_gradients(self.u.array, dx=self.dx)
+            else:
+                raise
         return fs.TensorFrameSequence(
             du,
             dx=self.dx,

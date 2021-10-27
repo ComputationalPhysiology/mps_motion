@@ -60,12 +60,12 @@ def test_vector_frame_sequence(ns):
     x_x = x.x
     assert isinstance(x_x, fs.FrameSequence)
     assert x_x.shape == (width, height, num_time_steps)
-    assert x_x == fs.FrameSequence(arr[:, :, :, 1])
+    assert x_x == fs.FrameSequence(arr[:, :, :, 0])
 
     x_y = x.y
     assert isinstance(x_y, fs.FrameSequence)
     assert x_y.shape == (width, height, num_time_steps)
-    assert x_y == fs.FrameSequence(arr[:, :, :, 0])
+    assert x_y == fs.FrameSequence(arr[:, :, :, 1])
 
 
 @pytest.mark.parametrize("ns", [np, da])
