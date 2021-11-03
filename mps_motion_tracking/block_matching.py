@@ -30,6 +30,7 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
 import numpy as np
 import tqdm
@@ -47,14 +48,14 @@ logger = logging.getLogger(__name__)
 
 
 def default_options():
-    return dict(block_size=9, max_block_movement=18)
+    return dict(block_size="auto", max_block_movement="auto")
 
 
 def flow(
     image: np.ndarray,
     reference_image: np.ndarray,
-    block_size: int = 9,
-    max_block_movement: int = 18,
+    block_size: Union[str, int] = "auto",
+    max_block_movement: Union[str, int] = "auto",
     filter_options: Optional[Dict[str, Any]] = None,
     resize: bool = True,
 ):
@@ -89,6 +90,10 @@ def flow(
     of this. However, choosing a too large value will mean that you need to
     compare more blocks which will increase the running time.
     """
+
+    block_size = resolve_block_size(block_size, reference_image.shape)
+    max_block_movement = resolve_max_block_movement(max_block_movement, block_size)
+
     vectors = _flow(reference_image, image, block_size, max_block_movement)
 
     if filter_options:
@@ -223,11 +228,26 @@ def flow_map(args):
     return _flow(*args)
 
 
+def resolve_block_size(block_size: Union[str, int], shape: Tuple[int, int]) -> int:
+    if isinstance(block_size, str):  # == "auto":
+        block_size = max(int(min(shape) / 128), 2)
+    return block_size
+
+
+def resolve_max_block_movement(
+    max_block_movement: Union[str, int],
+    block_size: int,
+) -> int:
+    if isinstance(max_block_movement, str):  # == "auto":
+        max_block_movement = 2 * block_size
+    return max_block_movement
+
+
 def get_displacements(
     frames: np.ndarray,
     reference_image: np.ndarray,
-    block_size: int = 9,
-    max_block_movement: int = 18,
+    block_size: Union[str, int] = "auto",
+    max_block_movement: Union[str, int] = "auto",
     filter_options: Optional[Dict[str, Any]] = None,
     resize=True,
 ) -> utils.Array:
@@ -273,6 +293,9 @@ def get_displacements(
         (N, M, T, 2) = (N', M', T', 2).
     """
     frames = utils.check_frame_dimensions(frames, reference_image)
+
+    block_size = resolve_block_size(block_size, reference_image.shape)
+    max_block_movement = resolve_max_block_movement(max_block_movement, block_size)
 
     logger.info("Get displacements using block mathching")
     args = (

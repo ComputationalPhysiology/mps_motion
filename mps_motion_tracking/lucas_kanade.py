@@ -11,6 +11,7 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
 import cv2
 import dask
@@ -38,8 +39,15 @@ def default_options():
         maxLevel=2,
         interpolation=Interpolation.nearest,
         criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
-        step=16,
+        step="auto",
     )
+
+
+def resolve_step(step: Union[str, int], shape: Tuple[int, int]) -> int:
+    if isinstance(step, str):  # == "auto":
+        step = max(int(min(shape) / 24), 1)
+
+    return step
 
 
 def flow(
@@ -49,7 +57,7 @@ def flow(
     winSize: Tuple[int, int] = (15, 15),
     maxLevel: int = 2,
     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
-    step: int = 16,
+    step: Union[str, int] = "auto",
     interpolation: Interpolation = Interpolation.nearest,
 ) -> np.ndarray:
     """Compute the optical from reference_image to image
@@ -88,6 +96,7 @@ def flow(
         Array of optical flow from reference image to image
     """
     if points is None:
+        step = resolve_step(step, reference_image.shape)
         points = get_uniform_reference_points(reference_image, step=step)
     if image.dtype != np.uint8:
         image = utils.to_uint8(image)
@@ -201,7 +210,7 @@ def get_uniform_reference_points(image: np.ndarray, step: int = 48) -> np.ndarra
 def get_displacements(
     frames,
     reference_image: np.ndarray,
-    step: int = 16,
+    step: Union[str, int] = "auto",
     winSize: Tuple[int, int] = (15, 15),
     maxLevel: int = 2,
     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
@@ -252,6 +261,7 @@ def get_displacements(
 
     frames = utils.check_frame_dimensions(frames, reference_image)
 
+    step = resolve_step(step, reference_image.shape)
     reference_points = get_uniform_reference_points(reference_image, step=step)
 
     num_frames = frames.shape[-1]
@@ -270,7 +280,7 @@ def get_displacements(
         )
 
     with ProgressBar():
-        flows = da.stack(*da.compute(all_flows), axis=-1)
+        flows = da.stack(*da.compute(all_flows), axis=2)
     logger.info("Done with Lucas-Kanade method")
 
     if interpolation == Interpolation.none:
