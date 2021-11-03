@@ -351,13 +351,13 @@ class FrameSequence:
         return self.array.mean((0, 1)) * self.scale
 
     def max(self) -> utils.Array:
-        return self.array.max(2)
+        return self.array.max(2) * self.scale
 
     def min(self) -> utils.Array:
-        return self.array.min(2)
+        return self.array.min(2) * self.scale
 
     def compute(self) -> utils.Array:
-        return self.array_np
+        return self.array_np * self.scale
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.array.shape}, dx={self.dx}, scale={self.scale})"

@@ -180,10 +180,14 @@ class OpticalFlow:
                 scaled_data.frames, reference_image, **self.options
             )
             dx = 1
-            u /= scale * self.data_scale
+
+            scale *= self.data_scale
+
             if unit == "um":
                 u *= scaled_data.info.get("um_per_pixel", 1.0)
                 dx *= scaled_data.info.get("um_per_pixel", 1.0)
+            else:
+                u /= scale
 
             if not isinstance(u, da.Array):
                 u = da.from_array(u)
