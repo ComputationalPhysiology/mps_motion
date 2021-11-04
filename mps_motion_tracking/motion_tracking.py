@@ -183,6 +183,8 @@ class OpticalFlow:
 
             scale *= self.data_scale
 
+            u /= scale
+
             if unit == "um":
                 u *= scaled_data.info.get("um_per_pixel", 1.0)
                 dx *= scaled_data.info.get("um_per_pixel", 1.0)
