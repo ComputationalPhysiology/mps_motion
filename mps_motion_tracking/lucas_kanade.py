@@ -43,7 +43,7 @@ def default_options():
     )
 
 
-def resolve_step(step: Union[str, int], shape: Tuple[int, int]) -> int:
+def resolve_step(step: Union[str, int], shape: Tuple[int, ...]) -> int:
     if isinstance(step, str):  # == "auto":
         step = max(int(min(shape) / 24), 1)
 

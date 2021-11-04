@@ -228,7 +228,7 @@ def flow_map(args):
     return _flow(*args)
 
 
-def resolve_block_size(block_size: Union[str, int], shape: Tuple[int, int]) -> int:
+def resolve_block_size(block_size: Union[str, int], shape: Tuple[int, ...]) -> int:
     if isinstance(block_size, str):  # == "auto":
         block_size = max(int(min(shape) / 128), 2)
     return block_size
