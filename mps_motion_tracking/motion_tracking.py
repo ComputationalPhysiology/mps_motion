@@ -16,7 +16,7 @@ from . import frame_sequence as fs
 from . import lucas_kanade
 from . import scaling
 from . import utils
-from .mechanics import compute_velocity
+
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,7 @@ def get_referenece_image(
     reference_frame,
     frames,
     time_stamps: Optional[np.ndarray] = None,
+    smooth_ref_transition: bool = True,
 ) -> Tuple[str, np.ndarray, int]:
 
     reference_frame_index = 0
@@ -67,18 +68,21 @@ def get_referenece_image(
 
         reference_frame_index = int(min(reference_frame_index, len(time_stamps) - 1))
         # Pick neighbouring index
-        if reference_frame_index == 0:
-            reference_image = frames[
-                :, :, reference_frame_index : reference_frame_index + 3
-            ].mean(-1)
-        elif reference_frame_index == len(time_stamps) - 1:
-            reference_image = frames[
-                :, :, reference_frame_index - 2 : reference_frame_index + 1
-            ].mean(-1)
+        if smooth_ref_transition:
+            if reference_frame_index == 0:
+                reference_image = frames[
+                    :, :, reference_frame_index : reference_frame_index + 3
+                ].mean(-1)
+            elif reference_frame_index == len(time_stamps) - 1:
+                reference_image = frames[
+                    :, :, reference_frame_index - 2 : reference_frame_index + 1
+                ].mean(-1)
+            else:
+                reference_image = frames[
+                    :, :, reference_frame_index - 1 : reference_frame_index + 2
+                ].mean(-1)
         else:
-            reference_image = frames[
-                :, :, reference_frame_index - 1 : reference_frame_index + 2
-            ].mean(-1)
+            reference_image = frames[:, :, reference_frame_index]
 
     return reference_str, reference_image, reference_frame_index
 
@@ -91,6 +95,7 @@ class OpticalFlow:
         reference_frame: Union[int, str] = 0,
         filter_options: Optional[Dict[str, Any]] = None,
         data_scale: float = 1.0,
+        smooth_ref_transition: bool = True,
         **options,
     ):
         self.data = data
@@ -101,7 +106,12 @@ class OpticalFlow:
             self._reference_frame,
             self._reference_image,
             self._reference_frame_index,
-        ) = get_referenece_image(reference_frame, data.frames, data.time_stamps)
+        ) = get_referenece_image(
+            reference_frame,
+            data.frames,
+            data.time_stamps,
+            smooth_ref_transition=smooth_ref_transition,
+        )
 
         self._handle_algorithm(options)
         options["filter_options"] = filter_options or {}
@@ -114,6 +124,7 @@ class OpticalFlow:
     def _handle_algorithm(self, options):
         _check_algorithm(self.flow_algorithm)
 
+        self._get_velocities = None
         if self.flow_algorithm == FLOW_ALGORITHMS.lucas_kanade:
             self._get_displacements = lucas_kanade.get_displacements
             self.options = lucas_kanade.default_options()
@@ -125,6 +136,7 @@ class OpticalFlow:
         elif self.flow_algorithm == FLOW_ALGORITHMS.farneback:
             self._get_displacements = farneback.get_displacements
             self.options = farneback.default_options()
+            self._get_velocities = farneback.get_velocities
 
         elif self.flow_algorithm == FLOW_ALGORITHMS.dualtvl1:
             self._get_displacements = dualtvl1.get_displacements
@@ -200,12 +212,38 @@ class OpticalFlow:
 
     def get_velocities(
         self,
-        recompute: bool = False,
         unit: str = "um",
         scale: float = 1.0,
     ):
-        u = self.get_displacements(recompute=recompute, unit=unit, scale=scale)
-        return compute_velocity(u.array, self.data.time_stamps)
+        assert unit in ["pixels", "um"]
+        data = self.data
+
+        if scale > 1.0:
+            raise ValueError("Cannot have scale larger than 1.0")
+
+        scaled_data = data
+        if scale < 1.0:
+            scaled_data = scaling.resize_data(data, scale)
+
+        v = self._get_velocities(scaled_data.frames, **self.options)
+        dx = 1
+
+        scale *= self.data_scale
+
+        v /= scale
+
+        if unit == "um":
+            v *= scaled_data.info.get("um_per_pixel", 1.0)
+            dx *= scaled_data.info.get("um_per_pixel", 1.0)
+        else:
+            v /= scale
+
+        if not isinstance(v, da.Array):
+            v = da.from_array(v)
+
+        self._velocity = fs.VectorFrameSequence(v, dx=dx, scale=scale)
+
+        return self._velocity
 
     @property
     def reference_frame(self) -> str:

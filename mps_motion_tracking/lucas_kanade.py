@@ -7,8 +7,6 @@ http://cseweb.ucsd.edu/classes/sp02/cse252/lucaskanade81.pdf
 import concurrent.futures
 import logging
 from enum import Enum
-from typing import Any
-from typing import Dict
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -215,7 +213,6 @@ def get_displacements(
     maxLevel: int = 2,
     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
     interpolation: Interpolation = Interpolation.nearest,
-    filter_options: Optional[Dict[str, Any]] = None,
 ) -> np.ndarray:
     """Compute the optical flow using the Lucas Kanade method from
     the reference frame to all other frames
@@ -246,9 +243,6 @@ def get_displacements(
         Interpolate flow to original shape using radial basis function ('rbf'),
         nearest neigbour interpolation ('nearest') or do not interpolate but reshape ('reshape'),
         or use the original output from the LK algorithm ('none'), by default 'nearest'
-    filter_options : Dict[str, Any], optional
-        Options for applying filter, see `utils.apply_filter` for options, by
-        default None
 
     Returns
     -------
@@ -304,8 +298,6 @@ def get_displacements(
         return int_flows
 
     flows = scaling.reshape_lk(reference_points, flows)
-    if filter_options:
-        flows = utils.filter_vectors_par(flows, **filter_options)
 
     if interpolation == Interpolation.nearest:
 

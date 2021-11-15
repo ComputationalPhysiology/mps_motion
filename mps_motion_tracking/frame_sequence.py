@@ -1,12 +1,11 @@
 import logging
 from pathlib import Path
-from typing import List
 from typing import Optional
 
 import dask.array as da
 import numpy as np
-from typing_extensions import Protocol
 
+from . import filters
 from . import utils
 
 try:
@@ -17,134 +16,6 @@ except ImportError:
     has_h5py = False
 
 logger = logging.getLogger(__name__)
-
-
-class _Linalg(Protocol):
-    @staticmethod
-    def norm(array: utils.Array, axis: int = 0) -> utils.Array:
-        ...
-
-
-class NameSpace(Protocol):
-    @property
-    def linalg(self) -> _Linalg:
-        ...
-
-    @staticmethod
-    def stack(arrs: List[utils.Array], axis: int) -> utils.Array:
-        ...
-
-
-class InvalidThresholdError(ValueError):
-    pass
-
-
-def check_threshold(
-    vmin: Optional[float] = None,
-    vmax: Optional[float] = None,
-):
-    if (vmax and vmin) and vmax < vmin:
-        raise InvalidThresholdError(f"Cannot have vmax < vmin, got {vmax=} and {vmin=}")
-
-
-def threshold(
-    array: utils.Array,
-    vmin: Optional[float] = None,
-    vmax: Optional[float] = None,
-    copy: bool = True,
-) -> utils.Array:
-    """Threshold an array
-
-    Parameters
-    ----------
-    array : utils.Array
-        The array
-    vmin : Optional[float], optional
-        Lower threshold value, by default None
-    vmax : Optional[float], optional
-        Upper threshold value, by default None
-    copy : bool, optional
-        Operative on the given array or use a copy, by default True
-
-    Returns
-    -------
-    utils.Array
-        Inpute array with the lowest value beeing vmin and
-        highest value begin vmax
-    """
-    assert len(array.shape) == 3
-    check_threshold(vmin, vmax)
-    if copy:
-        array = array.copy()
-
-    if vmax is not None:
-        array[array > vmax] = vmax
-    if vmin is not None:
-        array[array < vmin] = vmin
-    return array
-
-
-def _handle_threshold_norm(norm_inds, ns, factor, norm_array, array):
-    if norm_inds.any():
-        if ns == da:
-            norm_inds = norm_inds.compute()
-        inds = np.stack([norm_inds, norm_inds], -1).flatten()
-        values = (
-            factor
-            / ns.stack([norm_array[norm_inds], norm_array[norm_inds]], -1).flatten()
-        )
-        array[inds] *= values
-
-
-def threshold_norm(
-    array: utils.Array,
-    ns: NameSpace,
-    vmin: Optional[float] = None,
-    vmax: Optional[float] = None,
-    copy: bool = True,
-) -> utils.Array:
-    """Threshold an array of vectors based on the
-    norm of the vectors.
-
-    For example if the vectors are displacement then
-    you can use this function to scale all vectors so
-    that the magnitudes are within `vmin` and `vmax`
-
-    Parameters
-    ----------
-    array : utils.Array
-        The input array which is 4D and the last dimension is 2.
-    ns : NameSpace
-        Wheter to use numpy or dask
-    vmin : Optional[float], optional
-        Lower bound on the norm, by default None
-    vmax : Optional[float], optional
-        Upper bound on the norm, by default None
-    copy : bool, optional
-        Wheter to operate on the input are or use a copy, by default True
-
-    Returns
-    -------
-    utils.Array
-        The thresholded array
-    """
-    assert len(array.shape) == 4
-    assert array.shape[3] == 2
-    assert ns in [da, np]
-    check_threshold(vmin, vmax)
-    if copy:
-        array = array.copy()
-    shape = array.shape
-    norm_array = ns.linalg.norm(array, axis=3).flatten()
-    array = array.flatten()
-
-    if vmax is not None:
-        norm_inds = norm_array > vmax
-        _handle_threshold_norm(norm_inds, ns, vmax, norm_array, array)
-    if vmin is not None:
-        norm_inds = norm_array < vmin
-        _handle_threshold_norm(norm_inds, ns, vmin, norm_array, array)
-    return array.reshape(shape)
 
 
 class FrameSequence:
@@ -190,20 +61,48 @@ class FrameSequence:
             return False
         return self._ns.isclose(self.array, other.array).all()
 
+    def _check_other(self, other):
+        if isinstance(other, FrameSequence):
+            other = other.array
+
+        if not isinstance(other, (da.core.Array, np.ndarray)):
+            raise TypeError(
+                f"Invald type {type(other)}, exepcted FrameSequence or array",
+            )
+        if self.shape != other.shape:
+            raise ValueError(
+                f"Incompatible shape, got {other.shape}, expected {self.shape}",
+            )
+        return other
+
+    def __add__(self, other):
+        other = self._check_other(other)
+        return self.__class__(self.array + other, dx=self.dx, scale=self.scale)
+
+    def __sub__(self, other):
+        other = self._check_other(other)
+        return self.__class__(self.array - other, dx=self.dx, scale=self.scale)
+
+    def __rmul__(self, other):
+        if not np.isscalar(other):
+            raise TypeError(f"Can only multiply with a scalar value, got {type(other)}")
+
+        return self.__class__(other * self.array, dx=self.dx, scale=self.scale)
+
     def __del__(self):
         if self._h5file is not None:
             self._h5file.close()
 
     def filter(
         self,
-        filter_type: utils.Filters = utils.Filters.median,
-        size: Optional[int] = None,
-        sigma: Optional[float] = None,
+        filter_type: filters.Filters = filters.Filters.median,
+        size: int = 3,
+        sigma: float = 1.0,
     ) -> "FrameSequence":
         """Apply a median filter"""
 
         return FrameSequence(
-            array=utils.apply_filter(
+            array=filters.apply_filter(
                 self._array,
                 size=size,
                 sigma=sigma,
@@ -306,7 +205,7 @@ class FrameSequence:
         )
 
     def threshold(self, vmin: Optional[float] = None, vmax: Optional[float] = None):
-        array = threshold(self.array, vmin, vmax)
+        array = filters.threshold(self.array, vmin, vmax)
         return self.__class__(array, self.dx, self.scale)
 
     @property
@@ -392,13 +291,13 @@ class VectorFrameSequence(FrameSequence):
 
     def filter(
         self,
-        filter_type: utils.Filters = utils.Filters.median,
-        size: Optional[int] = None,
-        sigma: Optional[float] = None,
+        filter_type: filters.Filters = filters.Filters.median,
+        size: int = 3,
+        sigma: float = 1.0,
     ) -> "VectorFrameSequence":
         """Apply a filter"""
 
-        array = utils.filter_vectors_par(
+        array = filters.filter_vectors_par(
             self._array,
             size=size,
             sigma=sigma,
@@ -407,12 +306,20 @@ class VectorFrameSequence(FrameSequence):
 
         return VectorFrameSequence(array=array, dx=self.dx, scale=self.scale)
 
+    def spline_smooth(self):
+        arr = filters.spline_smooth(self.array)
+        return VectorFrameSequence(da.from_array(arr), scale=self.scale, dx=self.dx)
+
+    # def cartToPolar(self):
+
+    #     mag, ang = cv2.cartToPolar(flow[...,0], flow[...,1], angleInDegrees=True)
+
     def threshold_norm(
         self,
         vmin: Optional[float] = None,
         vmax: Optional[float] = None,
     ) -> "VectorFrameSequence":
-        array = threshold_norm(self.array, self._ns, vmin, vmax)
+        array = filters.threshold_norm(self.array, self._ns, vmin, vmax)
         return VectorFrameSequence(array, self.dx, self.scale)
 
     def norm(self) -> FrameSequence:

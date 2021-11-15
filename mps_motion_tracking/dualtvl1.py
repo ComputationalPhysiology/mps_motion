@@ -6,9 +6,6 @@ http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.709.4597&rep=rep1&type=
 
 """
 import logging
-from typing import Any
-from typing import Dict
-from typing import Optional
 
 import cv2
 import dask
@@ -69,7 +66,6 @@ def get_displacements(
     theta: float = 0.37,
     nscales: int = 6,
     warps: int = 5,
-    filter_options: Optional[Dict[str, Any]] = None,
 ) -> utils.Array:
     """Compute the optical flow using the Dual TV-L1 method from
     the reference frame to all other frames
@@ -102,9 +98,6 @@ def get_displacements(
         and grad( I1(x+u0) ) are computed per scale. This is a parameter that assures
         the stability of the method. It also affects the running time, so it is a
         compromise between speed and accuracy., by default 5
-    filter_options : Dict[str, Any], optional
-        Options for applying filter, see `utils.apply_filter` for options, by
-        default None
 
     Returns
     -------
@@ -125,8 +118,6 @@ def get_displacements(
         arr = da.compute(all_flows)
     flows = np.stack(arr, axis=2)
 
-    if filter_options:
-        flows = utils.filter_vectors_par(flows, **filter_options)
     logger.info("Done running Dual TV-L 1 algorithm")
 
     return da.from_array(flows)

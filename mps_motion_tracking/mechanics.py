@@ -40,7 +40,7 @@ def compute_gradients(displacement: Array, dx=1):
 def compute_green_lagrange_strain_tensor(F: Array):
     logger.debug("Compute Green Lagrange strain")
     F_t = da.transpose(F, (0, 1, 2, 4, 3))
-    C = da.matmul(F, F_t)
+    C = da.matmul(F_t, F)
     E = 0.5 * (C - da.eye(2)[None, None, None, :, :])
 
     return E
@@ -63,6 +63,7 @@ class Mechanics:
         self,
         u: fs.VectorFrameSequence,
         t: Optional[Array] = None,
+        du: Optional[fs.TensorFrameSequence] = None,
     ):
         """Craete a mechanics object
 
@@ -75,10 +76,13 @@ class Mechanics:
             If not provided `t` will be an evenly spaced
             array with a step of 1.0. Note that `t` is only
             relevant when computing time derivaties such as velocity.
+        du : Optional[fs.TensorFrameSequence], optional
+            The gradient of the displacement
         """
         assert isinstance(u, fs.VectorFrameSequence)
         self.u = u
         self.t = t
+        self._du = du
 
     @property
     def t(self) -> Array:
@@ -130,21 +134,22 @@ class Mechanics:
 
     @property
     def du(self) -> fs.TensorFrameSequence:
-
-        try:
-            du = compute_gradients(self.u.array, dx=self.dx)
-        except ValueError:
-            # We probably need to rechunk
-            if isinstance(self.u._array, da.Array):
-                self.u._array = self.u.array.rechunk()  # type:ignore
+        if self._du is None:
+            try:
                 du = compute_gradients(self.u.array, dx=self.dx)
-            else:
-                raise
-        return fs.TensorFrameSequence(
-            du,
-            dx=self.dx,
-            scale=self.scale,
-        )
+            except ValueError:
+                # We probably need to rechunk
+                if isinstance(self.u._array, da.Array):
+                    self.u._array = self.u.array.rechunk()  # type:ignore
+                    du = compute_gradients(self.u.array, dx=self.dx)
+                else:
+                    raise
+            self._du = fs.TensorFrameSequence(
+                du,
+                dx=self.dx,
+                scale=self.scale,
+            )
+        return self._du
 
     @property
     def F(self) -> fs.TensorFrameSequence:

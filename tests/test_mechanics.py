@@ -6,12 +6,73 @@ from mps_motion_tracking import frame_sequence as fs
 from mps_motion_tracking import Mechanics
 
 
-def test_E_symmetry(mech_obj):
+def test_deformation_gradient():
 
-    E = mech_obj.E
-    e12 = E[:, :, :, 0, 1]
-    e21 = E[:, :, :, 1, 0]
-    assert da.allclose(e12, e21).compute()
+    width = 10
+    height = 15
+
+    a11 = 1 / width
+    a12 = -1 / height
+    a21 = -1 / width
+    a22 = 1 / height
+
+    u = np.zeros((width, height, 1, 2))
+    u[:, :, 0, 0] = np.fromfunction(
+        lambda x, y: a11 * x + a12 * y,
+        shape=(width, height),
+        dtype=float,
+    )
+    u[:, :, 0, 1] = np.fromfunction(
+        lambda x, y: a21 * x + a22 * y,
+        shape=(width, height),
+        dtype=float,
+    )
+    dx = 1
+    U = fs.VectorFrameSequence(u, dx=dx)
+    m = Mechanics(U)
+
+    du = np.array([[a11 / dx, a12 / dx], [a21 / dx, a22 / dx]])
+    F = du + np.eye(2)
+
+    assert da.isclose(m.F[:, :, :, 0, 0], F[0, 0]).all().compute()
+    assert da.isclose(m.F[:, :, :, 0, 1], F[0, 1]).all().compute()
+    assert da.isclose(m.F[:, :, :, 1, 0], F[1, 0]).all().compute()
+    assert da.isclose(m.F[:, :, :, 1, 1], F[1, 1]).all().compute()
+
+
+def test_strain():
+
+    width = 10
+    height = 15
+
+    a11 = 1 / width
+    a12 = -1 / height
+    a21 = -1 / width
+    a22 = 1 / height
+
+    u = np.zeros((width, height, 1, 2))
+    u[:, :, 0, 0] = np.fromfunction(
+        lambda x, y: a11 * x + a12 * y,
+        shape=(width, height),
+        dtype=float,
+    )
+    u[:, :, 0, 1] = np.fromfunction(
+        lambda x, y: a21 * x + a22 * y,
+        shape=(width, height),
+        dtype=float,
+    )
+    dx = 1
+    U = fs.VectorFrameSequence(u, dx=dx)
+    m = Mechanics(U)
+
+    du = np.array([[a11 / dx, a12 / dx], [a21 / dx, a22 / dx]])
+    F = du + np.eye(2)
+    E = 0.5 * (F.T.dot(F) - np.eye(2))
+
+    assert da.isclose(m.E[:, :, :, 0, 0], E[0, 0]).all().compute()
+    assert da.isclose(m.E[:, :, :, 0, 1], E[0, 1]).all().compute()
+    assert da.isclose(m.E[:, :, :, 1, 0], E[1, 0]).all().compute()
+    assert da.isclose(m.E[:, :, :, 1, 1], E[1, 1]).all().compute()
 
 
 def test_principal_strain(mech_obj):
@@ -34,7 +95,7 @@ def test_dx(dx):
     height = 15
 
     # f(x, y) = (x / width - y / height & y / height - x / width)
-    # Df = (1/width & -1/height \\ -1/width & 1/height)
+    # Df = (1/width & -1/height // -1/width & 1/height)
 
     a11 = 1 / width
     a12 = -1 / height

@@ -18,7 +18,10 @@ from . import (
     scaling,
     utils,
     visu,
+    frame_sequence,
+    filters,
 )
+from .frame_sequence import FrameSequence, VectorFrameSequence, TensorFrameSequence
 from .mechanics import Mechanics
 from .motion_tracking import FLOW_ALGORITHMS, OpticalFlow
 from .frame_sequence import FrameSequence, VectorFrameSequence, TensorFrameSequence
@@ -38,6 +41,7 @@ def set_log_level(level):
         "utils.logger",
         "visu.logger",
         "frame_sequence.logger",
+        "filters.logger",
     ]
     set_default_log_levels((logger, level) for logger in loggers)
 
@@ -57,7 +61,9 @@ __all__ = [
     "FLOW_ALGORITHMS",
     "OpticalFlow",
     "scaling",
+    "frame_sequence",
     "visu",
+    "filters",
     "FrameSequence",
     "VectorFrameSequence",
     "TensorFrameSequence",
