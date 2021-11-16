@@ -214,7 +214,7 @@ def test_invalid_threshold_raises(ns):
     values = ns.random.random((width, height, num_time_steps))
     arr = fs.FrameSequence(values)
 
-    with pytest.raises(fs.InvalidThresholdError):
+    with pytest.raises(filters.InvalidThresholdError):
         arr.threshold(0.7, 0.2)
 
 

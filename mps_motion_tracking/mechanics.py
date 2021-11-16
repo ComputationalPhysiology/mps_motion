@@ -63,7 +63,6 @@ class Mechanics:
         self,
         u: fs.VectorFrameSequence,
         t: Optional[Array] = None,
-        du: Optional[fs.TensorFrameSequence] = None,
     ):
         """Craete a mechanics object
 
@@ -76,13 +75,10 @@ class Mechanics:
             If not provided `t` will be an evenly spaced
             array with a step of 1.0. Note that `t` is only
             relevant when computing time derivaties such as velocity.
-        du : Optional[fs.TensorFrameSequence], optional
-            The gradient of the displacement
         """
         assert isinstance(u, fs.VectorFrameSequence)
         self.u = u
         self.t = t
-        self._du = du
 
     @property
     def t(self) -> Array:
@@ -134,22 +130,21 @@ class Mechanics:
 
     @property
     def du(self) -> fs.TensorFrameSequence:
-        if self._du is None:
-            try:
+
+        try:
+            du = compute_gradients(self.u.array, dx=self.dx)
+        except ValueError:
+            # We probably need to rechunk
+            if isinstance(self.u._array, da.Array):
+                self.u._array = self.u.array.rechunk()  # type:ignore
                 du = compute_gradients(self.u.array, dx=self.dx)
-            except ValueError:
-                # We probably need to rechunk
-                if isinstance(self.u._array, da.Array):
-                    self.u._array = self.u.array.rechunk()  # type:ignore
-                    du = compute_gradients(self.u.array, dx=self.dx)
-                else:
-                    raise
-            self._du = fs.TensorFrameSequence(
-                du,
-                dx=self.dx,
-                scale=self.scale,
-            )
-        return self._du
+            else:
+                raise
+        return fs.TensorFrameSequence(
+            du,
+            dx=self.dx,
+            scale=self.scale,
+        )
 
     @property
     def F(self) -> fs.TensorFrameSequence:
