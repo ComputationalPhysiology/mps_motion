@@ -12,6 +12,7 @@ from . import (
     dualtvl1,
     farneback,
     lucas_kanade,
+    frame_sequence,
     mechanics,
     motion_tracking,
     scaling,
@@ -20,6 +21,7 @@ from . import (
 )
 from .mechanics import Mechanics
 from .motion_tracking import FLOW_ALGORITHMS, OpticalFlow
+from .frame_sequence import FrameSequence, VectorFrameSequence, TensorFrameSequence
 
 
 def set_log_level(level):
@@ -35,6 +37,7 @@ def set_log_level(level):
         "scaling.logger",
         "utils.logger",
         "visu.logger",
+        "frame_sequence.logger",
     ]
     set_default_log_levels((logger, level) for logger in loggers)
 
@@ -48,10 +51,14 @@ __all__ = [
     "block_matching",
     "utils",
     "mechanics",
+    "frame_sequence",
     "Mechanics",
     "motion_tracking",
     "FLOW_ALGORITHMS",
     "OpticalFlow",
     "scaling",
     "visu",
+    "FrameSequence",
+    "VectorFrameSequence",
+    "TensorFrameSequence",
 ]
