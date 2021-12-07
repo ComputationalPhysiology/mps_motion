@@ -122,10 +122,10 @@ def get_displacements(
         )
 
     with ProgressBar():
-        flows = da.stack(*da.compute(all_flows), axis=2)
+        flows = np.stack(*da.compute(all_flows), axis=2)
 
     if filter_options:
         flows = utils.filter_vectors_par(flows, **filter_options)
     logger.info("Done running Dual TV-L 1 algorithm")
 
-    return flows
+    return da.from_array(flows)
