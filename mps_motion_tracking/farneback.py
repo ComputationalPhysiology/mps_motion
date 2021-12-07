@@ -273,8 +273,8 @@ def get_velocities(
         )
 
     with ProgressBar():
-        flows = da.stack(*da.compute(all_flows), axis=2)
+        flows = np.stack(*da.compute(all_flows), axis=2)
 
     logger.info("Done running Farneback's algorithm")
 
-    return flows
+    return da.from_array(flows)
