@@ -184,12 +184,8 @@ def get_displacements(
         )
 
     with ProgressBar():
-<<<<<<< HEAD
         arr = da.compute(all_flows)
     flows = np.stack(arr, axis=2)
-=======
-        flows = np.stack(*da.compute(all_flows), axis=2)
->>>>>>> 23091af (Numpy.stack + dask.from_array instead of dask.stack - it seems to run faster?)
 
     logger.info("Done running Farneback's algorithm")
     return da.from_array(flows)
