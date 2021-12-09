@@ -188,7 +188,7 @@ def get_displacements(
     flows = np.stack(*arr, axis=2)  # type:ignore
 
     logger.info("Done running Farneback's algorithm")
-    return da.from_array(*flows)
+    return da.from_array(flows)
 
 
 def get_velocities(

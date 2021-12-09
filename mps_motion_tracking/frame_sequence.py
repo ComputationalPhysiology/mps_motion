@@ -83,6 +83,12 @@ class FrameSequence:
         other = self._check_other(other)
         return self.__class__(self.array - other, dx=self.dx, scale=self.scale)
 
+    def __mul__(self, other):
+        if not np.isscalar(other):
+            raise TypeError(f"Can only multiply with a scalar value, got {type(other)}")
+
+        return self.__class__(other * self.array, dx=self.dx, scale=self.scale)
+
     def __rmul__(self, other):
         if not np.isscalar(other):
             raise TypeError(f"Can only multiply with a scalar value, got {type(other)}")

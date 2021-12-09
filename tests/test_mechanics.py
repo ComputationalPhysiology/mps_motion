@@ -12,18 +12,18 @@ def test_deformation_gradient():
     height = 15
 
     a11 = 1 / width
-    a12 = -1 / height
-    a21 = -1 / width
+    a21 = -1 / height
+    a12 = -1 / width
     a22 = 1 / height
 
     u = np.zeros((width, height, 1, 2))
     u[:, :, 0, 0] = np.fromfunction(
-        lambda x, y: a11 * x + a12 * y,
+        lambda x, y: a11 * x + a21 * y,
         shape=(width, height),
         dtype=float,
     )
     u[:, :, 0, 1] = np.fromfunction(
-        lambda x, y: a21 * x + a22 * y,
+        lambda x, y: a12 * x + a22 * y,
         shape=(width, height),
         dtype=float,
     )
@@ -46,18 +46,18 @@ def test_strain():
     height = 15
 
     a11 = 1 / width
-    a12 = -1 / height
-    a21 = -1 / width
+    a21 = -1 / height
+    a12 = -1 / width
     a22 = 1 / height
 
     u = np.zeros((width, height, 1, 2))
     u[:, :, 0, 0] = np.fromfunction(
-        lambda x, y: a11 * x + a12 * y,
+        lambda x, y: a11 * x + a21 * y,
         shape=(width, height),
         dtype=float,
     )
     u[:, :, 0, 1] = np.fromfunction(
-        lambda x, y: a21 * x + a22 * y,
+        lambda x, y: a12 * x + a22 * y,
         shape=(width, height),
         dtype=float,
     )
@@ -91,29 +91,29 @@ def test_principal_strain(mech_obj):
 
 @pytest.mark.parametrize("dx", [1.0, 0.5, 2.0])
 def test_dx(dx):
-    width = 10
-    height = 15
-
     # f(x, y) = (x / width - y / height & y / height - x / width)
     # Df = (1/width & -1/height // -1/width & 1/height)
 
+    width = 10
+    height = 15
+
     a11 = 1 / width
-    a12 = -1 / height
-    a21 = -1 / width
+    a21 = -1 / height
+    a12 = -1 / width
     a22 = 1 / height
 
     u = np.zeros((width, height, 1, 2))
     u[:, :, 0, 0] = np.fromfunction(
-        lambda x, y: a11 * x + a12 * y,
+        lambda x, y: a11 * x + a21 * y,
         shape=(width, height),
         dtype=float,
     )
     u[:, :, 0, 1] = np.fromfunction(
-        lambda x, y: a21 * x + a22 * y,
+        lambda x, y: a12 * x + a22 * y,
         shape=(width, height),
         dtype=float,
     )
-
+    dx = 1
     U = fs.VectorFrameSequence(u, dx=dx)
     m = Mechanics(U)
 

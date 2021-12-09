@@ -13,9 +13,11 @@ except ImportError:
             "Please install cached_property - pip install cached_property",
         ) from e
 
-
+from dask.diagnostics import ProgressBar
 import dask.array as da
 import numpy as np
+import dask
+from scipy import interpolate
 
 from . import frame_sequence as fs
 
@@ -24,17 +26,58 @@ logger = logging.getLogger(__name__)
 
 
 def compute_gradients(displacement: Array, dx=1):
-    logger.debug("Compute gradient")
-    dudx = da.gradient(displacement[:, :, :, 0], axis=0)
-    dudy = da.gradient(displacement[:, :, :, 0], axis=1)
-    dvdx = da.gradient(displacement[:, :, :, 1], axis=0)
-    dvdy = da.gradient(displacement[:, :, :, 1], axis=1)
+    logger.info("Compute gradient using spline interpolation")
+    shape = displacement.shape
+    x = dx * np.arange(shape[0])
+    y = dx * np.arange(shape[1])
 
-    return (1 / dx) * da.moveaxis(
-        da.moveaxis(da.stack([[dudx, dudy], [dvdx, dvdy]]), 0, -1),
-        0,
-        -1,
-    )
+    Uxs = []
+    Uys = []
+    for t in range(shape[2]):
+        ux = displacement[:, :, t, 0]
+        Uxs.append(dask.delayed(interpolate.RectBivariateSpline)(x, y, ux))
+        uy = displacement[:, :, t, 1]
+        Uys.append(dask.delayed(interpolate.RectBivariateSpline)(x, y, uy))
+
+    dudxs = []
+    dudys = []
+    dvdxs = []
+    dvdys = []
+
+    logger.info("Compute interpolant Ux")
+    with ProgressBar():
+        Uxs = dask.compute(*Uxs)
+
+    logger.info("Compute interpolant Uy")
+    with ProgressBar():
+        Uys = dask.compute(*Uys)
+
+    for (
+        Ux,
+        Uy,
+    ) in zip(Uxs, Uys):
+        dudxs.append(dask.delayed(Ux)(x, y, dx=1).T)
+        dudys.append(dask.delayed(Ux)(x, y, dy=1).T)
+        dvdxs.append(dask.delayed(Uy)(x, y, dx=1).T)
+        dvdys.append(dask.delayed(Uy)(x, y, dy=1).T)
+
+    logger.info("Compute dudx")
+    with ProgressBar():
+        Dudx = da.stack(*dask.compute(dudxs))
+    logger.info("Compute dudy")
+    with ProgressBar():
+        Dudy = da.stack(*dask.compute(dudys))
+    logger.info("Compute dvdx")
+    with ProgressBar():
+        Dvdx = da.stack(*dask.compute(dvdxs))
+    logger.info("Compute dvdy")
+    with ProgressBar():
+        Dvdy = da.stack(*dask.compute(dvdys))
+
+    logger.info("Stack arrays")
+    Du = da.stack([[Dudx, Dudy], [Dvdx, Dvdy]]).T
+    logger.info("Done computing gradient")
+    return Du
 
 
 def compute_green_lagrange_strain_tensor(F: Array):
@@ -128,7 +171,7 @@ class Mechanics:
             f"{self.__class__.__name__}(u={self.u}, dx={self.dx}, scale={self.scale})"
         )
 
-    @property
+    @cached_property
     def du(self) -> fs.TensorFrameSequence:
 
         try:
@@ -136,6 +179,7 @@ class Mechanics:
         except ValueError:
             # We probably need to rechunk
             if isinstance(self.u._array, da.Array):
+                logger.warning("Problems with computing gradient - try rechunking")
                 self.u._array = self.u.array.rechunk()  # type:ignore
                 du = compute_gradients(self.u.array, dx=self.dx)
             else:
