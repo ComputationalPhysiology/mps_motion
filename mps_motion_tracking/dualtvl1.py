@@ -122,7 +122,8 @@ def get_displacements(
         )
 
     with ProgressBar():
-        flows = np.stack(*da.compute(all_flows), axis=2)
+        arr = da.compute(all_flows)
+    flows = np.stack(arr, axis=2)
 
     if filter_options:
         flows = utils.filter_vectors_par(flows, **filter_options)

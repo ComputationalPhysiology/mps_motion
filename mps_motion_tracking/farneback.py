@@ -191,7 +191,8 @@ def get_displacements(
         )
 
     with ProgressBar():
-        flows = np.stack(*da.compute(all_flows), axis=2)
+        arr = da.compute(all_flows)
+    flows = np.stack(arr, axis=2)
 
     logger.info("Done running Farneback's algorithm")
     return da.from_array(flows)
@@ -273,7 +274,8 @@ def get_velocities(
         )
 
     with ProgressBar():
-        flows = np.stack(*da.compute(all_flows), axis=2)
+        arr = da.compute(all_flows)
+    flows = np.stack(arr, axis=2)
 
     logger.info("Done running Farneback's algorithm")
 
