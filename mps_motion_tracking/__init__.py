@@ -18,13 +18,11 @@ from . import (
     scaling,
     utils,
     visu,
-    frame_sequence,
     filters,
 )
 from .frame_sequence import FrameSequence, VectorFrameSequence, TensorFrameSequence
 from .mechanics import Mechanics
 from .motion_tracking import FLOW_ALGORITHMS, OpticalFlow
-from .frame_sequence import FrameSequence, VectorFrameSequence, TensorFrameSequence
 
 
 def set_log_level(level):
