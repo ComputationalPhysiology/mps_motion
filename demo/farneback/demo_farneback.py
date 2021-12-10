@@ -23,7 +23,6 @@ def plot_displacement():
         disp = farneback.get_displacements(
             data.frames,
             data.frames[:, :, 0],
-            filter_kernel_size=5,
         )
         u = fs.VectorFrameSequence(disp)
         u_norm = u.norm().threshold(0, 10).mean().compute()
@@ -106,25 +105,117 @@ def plot_velocity():
 
 def create_heatmap():
 
-    data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    # data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
+    data = mmt.scaling.resize_data(
+        mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2"),
+        scale=0.4,
+    )
     path = Path("disp.npy")
     if not path.is_file():
         disp = farneback.get_displacements(
             data.frames,
             data.frames[:, :, 0],
-            filter_kernel_size=3,
         )
         np.save(path, disp.compute())
     disp = da.from_array(np.load(path, mmap_mode="r"))
     u = fs.VectorFrameSequence(disp)
 
-    # mech = mechanics.Mechancis(u=u, t=data.time_stamps)
+    # mech = mechanics.Mechanics(u=u, t=data.time_stamps)
     # Exx = mech.E.x.threshold(-0.2, 0.2)
     # visu.heatmap("heatmap_Exx.mp4", data=Exx, fps=data.framerate)
 
     visu.heatmap(
-        "heatmap_u_norm.mp4",
-        data=u.norm().threshold(0, 10),
+        "heatmap_Exx_spline.mp4",
+        data=u.norm(),
+        fps=data.framerate,
+        cmap="inferno",
+        transpose=True,
+    )
+
+
+def compute_strain():
+
+    scale = 1.0
+    data = mmt.scaling.resize_data(
+        mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2"),
+        scale=scale,
+    )
+    path = Path("disp.npy")
+    if not path.is_file():
+        disp = farneback.get_displacements(
+            data.frames,
+            data.frames[:, :, 0],
+        )
+        np.save(path, disp.compute())
+
+    disp = da.from_array(np.load(path, mmap_mode="r"))
+    u = fs.VectorFrameSequence(disp, scale=scale)
+    m = mmt.Mechanics(u)
+    E = m.E
+
+    exx = E.x.mean().compute()
+    eyy = E.y.mean().compute()
+    exy = E.xy.mean().compute()
+    u_norm = u.norm().mean().compute()
+
+    fig, ax = plt.subplots(2, 2, sharex=True)
+    ax[0, 0].plot(data.time_stamps, u_norm)
+    ax[0, 0].set_title("displcacement norm")
+    ax[0, 1].plot(data.time_stamps, exx)
+    ax[0, 1].set_title("Exx")
+    ax[1, 0].plot(data.time_stamps, exy)
+    ax[1, 0].set_title("Exy")
+    ax[1, 1].plot(data.time_stamps, eyy)
+    ax[1, 1].set_title("Eyy")
+    fig.savefig("strain_traces.png")
+
+    fig, ax = plt.subplots(3, 5)
+    for i, index in enumerate([0, 56, 71, 83, 99]):
+        Exx = E.x[:, :, index].compute()
+        Exy = E.xy[:, :, index].compute()
+        Eyy = E.y[:, :, index].compute()
+
+        imExx = ax[0, i].imshow(Exx, vmin=-0.1, vmax=0.1, cmap="plasma")
+        imExy = ax[1, i].imshow(Exy, vmin=-0.1, vmax=0.1, cmap="plasma")
+        imEyy = ax[2, i].imshow(Eyy, vmin=-0.1, vmax=0.1, cmap="plasma")
+
+        ax[0, i].set_title(f"{data.time_stamps[index]:.0f} ms")
+
+    for axi in ax.flatten():
+        axi.set_xticks([])
+        axi.set_yticks([])
+
+    cbar = fig.colorbar(imExx, ax=ax[0, :])
+    cbar.set_label("Exx")
+    cbar = fig.colorbar(imExy, ax=ax[1, :])
+    cbar.set_label("Exy")
+    cbar = fig.colorbar(imEyy, ax=ax[2, :])
+    cbar.set_label("Eyy")
+    fig.savefig("strain_heatmaps.png")
+
+    mmt.visu.heatmap(
+        "heatmap_Exx.mp4",
+        data=E.x,
+        vmin=-0.1,
+        vmax=0.1,
+        fps=data.framerate,
+        cmap="inferno",
+        transpose=True,
+    )
+    mmt.visu.heatmap(
+        "heatmap_Exy.mp4",
+        data=E.xy,
+        vmin=-0.1,
+        vmax=0.1,
+        fps=data.framerate,
+        cmap="inferno",
+        transpose=True,
+    )
+    mmt.visu.heatmap(
+        "heatmap_Eyy.mp4",
+        data=E.y,
+        vmin=-0.1,
+        vmax=0.1,
         fps=data.framerate,
         cmap="inferno",
         transpose=True,
@@ -211,7 +302,8 @@ if __name__ == "__main__":
     # postprocess_displacement()
     # plot_displacement()
     # create_flow_field()
-    plot_velocity()
+    # plot_velocity()
     # create_velocity_flow_field()
     # create_heatmap()
     # main()
+    compute_strain()

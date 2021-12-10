@@ -2,14 +2,14 @@ import dask.array as da
 import numpy as np
 import pytest
 
-from mps_motion_tracking import utils
+from mps_motion_tracking import filters
 
 
 @pytest.mark.parametrize(
     "filter_type, size, sigma",
     [
-        (utils.Filters.median, 3, None),
-        (utils.Filters.gaussian, None, 1),
+        (filters.Filters.median, 3, None),
+        (filters.Filters.gaussian, None, 1),
     ],
 )
 def test_filter_vectors_numpy(filter_type, size, sigma):
@@ -18,7 +18,7 @@ def test_filter_vectors_numpy(filter_type, size, sigma):
     np.random.seed(1)
     vectors = 10 * np.ones(shape) + np.random.random(shape)
 
-    filtered_vectors = utils.filter_vectors(
+    filtered_vectors = filters.filter_vectors(
         vectors,
         filter_type=filter_type,
         size=size,
@@ -32,12 +32,12 @@ def test_filter_vectors_numpy(filter_type, size, sigma):
 @pytest.mark.parametrize(
     "filter_type, size, sigma",
     [
-        (utils.Filters.median, None, None),
-        (utils.Filters.gaussian, None, None),
-        (utils.Filters.median, 0, None),
-        (utils.Filters.gaussian, None, 0),
-        (utils.Filters.median, None, 3),
-        (utils.Filters.gaussian, 1, None),
+        (filters.Filters.median, None, None),
+        (filters.Filters.gaussian, None, None),
+        (filters.Filters.median, 0, None),
+        (filters.Filters.gaussian, None, 0),
+        (filters.Filters.median, None, 3),
+        (filters.Filters.gaussian, 1, None),
         ("somefilter", None, None),
     ],
 )
@@ -46,7 +46,7 @@ def test_filter_with_0_do_nothing(filter_type, size, sigma):
     np.random.seed(1)
     vectors = 10 * np.ones(shape) + np.random.random(shape)
 
-    filtered_vectors = utils.filter_vectors(
+    filtered_vectors = filters.filter_vectors(
         vectors,
         filter_type=filter_type,
         size=size,
@@ -60,8 +60,8 @@ def test_filter_with_0_do_nothing(filter_type, size, sigma):
 @pytest.mark.parametrize(
     "filter_type, size, sigma",
     [
-        (utils.Filters.median, 3, None),
-        (utils.Filters.gaussian, None, 1),
+        (filters.Filters.median, 3, None),
+        (filters.Filters.gaussian, None, 1),
     ],
 )
 def test_filter_vectors_dask(filter_type, size, sigma):
@@ -70,7 +70,7 @@ def test_filter_vectors_dask(filter_type, size, sigma):
     np.random.seed(1)
     vectors = 10 * da.ones(shape) + da.random.random(shape)
 
-    filtered_vectors = utils.filter_vectors(
+    filtered_vectors = filters.filter_vectors(
         vectors,
         filter_type=filter_type,
         size=size,
@@ -83,8 +83,8 @@ def test_filter_vectors_dask(filter_type, size, sigma):
 @pytest.mark.parametrize(
     "filter_type, size, sigma",
     [
-        (utils.Filters.median, 3, None),
-        (utils.Filters.gaussian, None, 1),
+        (filters.Filters.median, 3, None),
+        (filters.Filters.gaussian, None, 1),
     ],
 )
 def test_filter_vectors_par_numpy(filter_type, size, sigma):
@@ -93,7 +93,7 @@ def test_filter_vectors_par_numpy(filter_type, size, sigma):
     np.random.seed(1)
     vectors = 10 * np.ones(shape) + np.random.random(shape)
 
-    filtered_vectors = utils.filter_vectors_par(
+    filtered_vectors = filters.filter_vectors_par(
         vectors,
         filter_type=filter_type,
         size=size,

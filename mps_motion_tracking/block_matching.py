@@ -26,9 +26,6 @@
 # NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS
 import concurrent.futures
 import logging
-from typing import Any
-from typing import Dict
-from typing import Optional
 from typing import Tuple
 from typing import Union
 
@@ -56,7 +53,6 @@ def flow(
     reference_image: np.ndarray,
     block_size: Union[str, int] = "auto",
     max_block_movement: Union[str, int] = "auto",
-    filter_options: Optional[Dict[str, Any]] = None,
     resize: bool = True,
 ):
     """
@@ -76,9 +72,6 @@ def flow(
         Size of the blocks
     max_block_movement : int
         Maximum allowed movement of blocks when searching for best match.
-    filter_options : Dict[str, Any], optional
-        Options for applying filter, see `utils.apply_filter` for options, by
-        default None
     resize: bool
         If True, make sure to resize the output images to have the same
         shape as the input, by default True.
@@ -96,11 +89,7 @@ def flow(
 
     vectors = _flow(reference_image, image, block_size, max_block_movement)
 
-    if filter_options:
-        vectors = utils.filter_vectors(vectors, **filter_options)
-
     if resize:
-
         new_shape: Tuple[int, int] = (
             reference_image.shape[0],
             reference_image.shape[1],
@@ -248,7 +237,6 @@ def get_displacements(
     reference_image: np.ndarray,
     block_size: Union[str, int] = "auto",
     max_block_movement: Union[str, int] = "auto",
-    filter_options: Optional[Dict[str, Any]] = None,
     resize=True,
 ) -> utils.Array:
     """Computes the displacements from `reference_image` to all `frames`
@@ -270,9 +258,6 @@ def get_displacements(
     max_block_movement : int
         Maximum allowed movement of blocks when searching for best match,
         by default 18.
-    filter_options : Dict[str, Any], optional
-        Options for applying filter, see `utils.apply_filter` for options, by
-        default None
     resize: bool
         If True, make sure to resize the output images to have the same
         shape as the input, by default True.
@@ -316,9 +301,6 @@ def get_displacements(
             total=num_frames,
         ):
             flows[:, :, i, :] = uv
-
-    if filter_options:
-        flows = utils.filter_vectors_par(flows, **filter_options)
 
     if resize:
 

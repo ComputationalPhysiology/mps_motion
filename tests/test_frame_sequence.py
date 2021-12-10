@@ -13,7 +13,7 @@ except ImportError:
     MPS_NOT_FOUND = True
 
 from mps_motion_tracking import frame_sequence as fs
-from mps_motion_tracking import utils
+from mps_motion_tracking import filters
 
 array_type = {da: da.core.Array, np: np.ndarray}
 
@@ -214,7 +214,7 @@ def test_invalid_threshold_raises(ns):
     values = ns.random.random((width, height, num_time_steps))
     arr = fs.FrameSequence(values)
 
-    with pytest.raises(fs.InvalidThresholdError):
+    with pytest.raises(filters.InvalidThresholdError):
         arr.threshold(0.7, 0.2)
 
 
@@ -254,8 +254,8 @@ def test_threshold_norm(ns, limits):
 @pytest.mark.parametrize(
     "filter_type, size, sigma",
     [
-        (utils.Filters.median, 3, None),
-        (utils.Filters.gaussian, None, 1),
+        (filters.Filters.median, 3, None),
+        (filters.Filters.gaussian, None, 1),
     ],
 )
 def test_filter_VectorFrameSequence(filter_type, size, sigma):
@@ -277,8 +277,8 @@ def test_filter_VectorFrameSequence(filter_type, size, sigma):
 @pytest.mark.parametrize(
     "filter_type, size, sigma",
     [
-        (utils.Filters.median, 3, None),
-        (utils.Filters.gaussian, None, 1),
+        (filters.Filters.median, 3, None),
+        (filters.Filters.gaussian, None, 1),
     ],
 )
 def test_filter_FrameSequence(filter_type, size, sigma):
@@ -295,6 +295,20 @@ def test_filter_FrameSequence(filter_type, size, sigma):
     assert filtered_vectors.shape == shape
 
     assert 0 < np.abs(filtered_vectors - vectors).max() < 1
+
+
+def test_cartToPolar():
+
+    # a = 0.01
+    # b = 0.01
+    # def func(x):
+    #     return (x[0] * (1 - a), x[1] * (1 - b))
+
+    # frame1 = np.random.randint(size=(12, 12))
+    # from scipy.ndimage import geometric_transform
+    # frame2 = geometric_transform(frame1.T, func).T
+    # np.fromfunction
+    pass
 
 
 if __name__ == "__main__":
