@@ -194,17 +194,25 @@ class Mechanics:
     def F(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
             self.du.array + da.eye(2)[None, None, None, :, :],
+            dx=self.dx,
+            scale=self.scale,
         )
 
     @property
     def E(self) -> fs.TensorFrameSequence:
         return fs.TensorFrameSequence(
             compute_green_lagrange_strain_tensor(self.F.array),
+            dx=self.dx,
+            scale=self.scale,
         )
 
     @cached_property
     def velocity(self):
-        return fs.VectorFrameSequence(compute_velocity(self.u.array, self.t))
+        return fs.VectorFrameSequence(
+            compute_velocity(self.u.array, self.t),
+            dx=self.dx,
+            scale=self.scale,
+        )
 
     @cached_property
     def principal_strain(self) -> fs.VectorFrameSequence:
