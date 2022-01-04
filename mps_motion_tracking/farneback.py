@@ -38,6 +38,7 @@ def flow(
     poly_n: int = 5,
     poly_sigma: float = 1.2,
     flags: int = 0,
+    factor: float = 1.0,
 ):
     """Compute the optical flow using the Farneback method from
     the reference frame to another image
@@ -80,6 +81,8 @@ def flow(
             usually, this option gives z more accurate flow than with a box filter,
             at the cost of lower speed; normally, winsize for a Gaussian window should
             be set to a larger value to achieve the same level of robustness.
+    factor: float
+        Factor to multiply the result
 
     Returns
     -------
@@ -91,7 +94,7 @@ def flow(
     if reference_image.dtype != "uint8":
         reference_image = utils.to_uint8(reference_image)
 
-    return cv2.calcOpticalFlowFarneback(
+    return factor * cv2.calcOpticalFlowFarneback(
         reference_image,
         image,
         None,
@@ -192,7 +195,8 @@ def get_displacements(
 
 
 def get_velocities(
-    frames,
+    frames: np.ndarray,
+    time_stamps: np.ndarray,
     pyr_scale: float = 0.5,
     levels: int = 3,
     winsize: int = 15,
@@ -249,7 +253,7 @@ def get_velocities(
     """
 
     logger.info("Get velocities using Farneback's algorithm")
-
+    dts = np.diff(time_stamps)
     all_flows = []
     for index in range(frames.shape[-1] - 1):
         all_flows.append(
@@ -263,11 +267,13 @@ def get_velocities(
                 poly_n,
                 poly_sigma,
                 flags,
+                (1000 / dts[index]),
             ),
         )
 
     with ProgressBar():
         arr = da.compute(all_flows)
+
     flows = np.stack(*arr, axis=2)  # type:ignore
 
     logger.info("Done running Farneback's algorithm")

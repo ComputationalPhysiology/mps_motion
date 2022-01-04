@@ -90,7 +90,7 @@ def compute_green_lagrange_strain_tensor(F: Array):
 
 
 def compute_velocity(u: Array, t: Array):
-
+    """Compute velocity from displacement"""
     time_axis = u.shape.index(len(t))
     assert time_axis == 2, "Time axis should be the third axis"
     assert u.shape[-1] == 2, "Final axis should be ux and uy"
@@ -98,7 +98,28 @@ def compute_velocity(u: Array, t: Array):
     dt = da.diff(t)
 
     # Need to have time axis
-    return da.moveaxis(da.moveaxis(du, 2, 3) / dt, 2, 3)
+    return da.moveaxis(da.moveaxis(du, 2, 3) * 1000 / dt, 2, 3)
+
+
+def compute_displacement(v: Array, t: Array, ref_index=0):
+    """Compute displacement from velocity"""
+
+    zero = da.zeros((v.shape[0], v.shape[1], 1, v.shape[3]))
+    dt = np.diff(t) / 1000
+    vdt = da.apply_along_axis(lambda x: x * dt, axis=2, arr=v)
+
+    vdt_low = vdt[:, :, :ref_index, :]
+    vdt_high = vdt[:, :, ref_index:, :]
+    U = da.concatenate(
+        (
+            da.flip(da.cumsum(-da.flip(vdt_low), axis=2)),
+            zero,
+            da.cumsum(vdt_high, axis=2),
+        ),
+        axis=2,
+    )
+
+    return U
 
 
 class Mechanics:

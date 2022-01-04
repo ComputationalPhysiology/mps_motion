@@ -225,7 +225,9 @@ class OpticalFlow:
         if scale < 1.0:
             scaled_data = scaling.resize_data(data, scale)
 
-        v = self._get_velocities(scaled_data.frames, **self.options)
+        v = self._get_velocities(
+            scaled_data.frames, scaled_data.time_stamps, **self.options
+        )
         dx = 1
 
         scale *= self.data_scale

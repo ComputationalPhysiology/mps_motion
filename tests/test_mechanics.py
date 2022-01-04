@@ -4,6 +4,7 @@ import pytest
 
 from mps_motion_tracking import frame_sequence as fs
 from mps_motion_tracking import Mechanics
+from mps_motion_tracking import mechanics
 
 
 def test_deformation_gradient():
@@ -144,6 +145,12 @@ def test_velocity(mech_obj):
     ).all()
 
 
+def test_compute_displacement(mech_obj):
+    v = mech_obj.velocity
+    u = mechanics.compute_displacement(v.array, mech_obj.t, ref_index=0)
+    assert da.isclose(u, mech_obj.u.array).all().compute()
+
+
 @pytest.fixture
 def mech_obj():
 
@@ -169,7 +176,7 @@ def mech_obj():
     u[:, :, 2, 0] = u[:, :, 1, 0]
     u[:, :, 3, 1] = u[:, :, 2, 1]
 
-    return Mechanics(fs.VectorFrameSequence(u))
+    return Mechanics(fs.VectorFrameSequence(u), t=1000 * np.arange(4))
 
 
 def test_shapes():
