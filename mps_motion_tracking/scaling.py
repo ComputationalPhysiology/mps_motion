@@ -211,10 +211,12 @@ def rbfinterp2d(  # noqa:C901
     k=50,
     nchunks=5,
 ):
-    """Fast 2-D grid interpolation of a sparse (multivariate) array using a
+    """
+    Fast 2-D grid interpolation of a sparse (multivariate) array using a
     radial basis function.
-    .. _ndarray:\
+
     https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html
+
     Parameters
     ----------
     coord: array_like
@@ -241,22 +243,29 @@ def rbfinterp2d(  # noqa:C901
     nchunks: int, optional
         The number of chunks in which the grid points are split to limit the
         memory usage during the interpolation.
+
     Returns
     -------
-    output_array: ndarray_
+    output_array: ndarray
         The interpolated field(s) having shape (*m*, ``ygrid.size``, ``xgrid.size``).
+
     Notes
     -----
     The coordinates are normalized before computing the Euclidean norms:
-        x = (x - min(x)) / max[max(x) - min(x), max(y) - min(y)],\n
+
+    .. math::
+        x = (x - min(x)) / max[max(x) - min(x), max(y) - min(y)],
         y = (y - min(y)) / max[max(x) - min(x), max(y) - min(y)],
+
     where the min and max values are taken as the 2nd and 98th percentiles.
+
     References
     ----------
     Wikipedia contributors, "Radial basis function,"
     Wikipedia, The Free Encyclopedia,
     https://en.wikipedia.org/w/index.php?title=Radial_basis_function&oldid=906155047
     (accessed August 19, 2019).
+
     """
 
     _rbfunctions = [

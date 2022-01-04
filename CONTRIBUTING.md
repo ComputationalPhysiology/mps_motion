@@ -9,7 +9,7 @@ You can contribute in many ways:
 
 ### Report Bugs
 
-Report bugs at <https://github.com/finsberg/mps_motion_tracking/issues>.
+Report bugs at <https://github.com/ComputationalPhysiology/mps_motion_tracking/issues>.
 
 If you are reporting a bug, please include:
 
@@ -38,7 +38,7 @@ docstrings, or even on the web in blog posts, articles, and such.
 ### Submit Feedback
 
 The best way to send feedback is to file an issue at
-<https://github.com/finsberg/mps_motion_tracking/issues>.
+<https://github.com/ComputationalPhysiology/mps_motion_tracking/issues>.
 
 If you are proposing a feature:
 
@@ -57,13 +57,13 @@ Ready to contribute? Here's how to set up mps_motion_tracking for local developm
 
 2.  Clone your fork locally:
 
-    ``` {.shell}
+    ```
     $ git clone git@github.com:your_name_here/mps_motion_tracking.git
     ```
 
 3.  Install your local copy into a virtual environment.
 
-    ``` {.shell}
+    ```
     $ cd mps_motion_tracking/
     $ python -m venv venv
     $ source venv/bin/activate
@@ -72,7 +72,7 @@ Ready to contribute? Here's how to set up mps_motion_tracking for local developm
 
 4.  Create a branch for local development:
 
-    ``` {.shell}
+    ```
     $ git checkout -b name-of-your-bugfix-or-feature
     ```
 
@@ -82,7 +82,7 @@ Ready to contribute? Here's how to set up mps_motion_tracking for local developm
     flake8, static type checking and the tests, including testing other Python versions with
     tox:
 
-    ``` {.shell}
+    ```
     $ make lint
     $ make type
     $ make test
@@ -92,7 +92,7 @@ Ready to contribute? Here's how to set up mps_motion_tracking for local developm
 
 6.  Commit your changes and push your branch to GitHub:
 
-    ``` {.shell}
+    ```
     $ git add .
     $ git commit -m "Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
@@ -108,14 +108,14 @@ Before you submit a pull request, check that it meets these guidelines:
 2.  If the pull request adds functionality, the docs should be updated.
     Put your new functionality into a function with a docstring, and add
     the feature to the list in README.rst.
-3.  The pull request should work for Python 3.7 and 3.8. Check https://github.com/finsberg/mps_motion_tracking/actions to make sure all tests are passing.
+3.  The pull request should work for Python 3.7 and 3.8. Check https://github.com/ComputationalPhysiology/mps_motion_tracking/actions to make sure all tests are passing.
     Python versions.
 
 ## Tips
 
 To run a subset of tests starting with `test_something` do:
 
-``` {.shell}
+```
 $ python -m pytest -k test_something
 ```
 
@@ -126,7 +126,7 @@ $ python -m pytest -k test_something
 A reminder for the maintainers on how to deploy. Make sure all your
 changes are committed (including an entry in HISTORY.md). Then run:
 
-``` {.shell}
+```
 $ bump2version patch # possible: major / minor / patch
 $ git push
 $ git push --tags

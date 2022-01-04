@@ -1,7 +1,5 @@
 """
 Farnebäck, G. (2003, June). Two-frame motion estimation based on polynomial expansion. In Scandinavian conference on Image analysis (pp. 363-370). Springer, Berlin, Heidelberg.
-
-
 """
 import logging
 
@@ -40,7 +38,8 @@ def flow(
     flags: int = 0,
     factor: float = 1.0,
 ):
-    """Compute the optical flow using the Farneback method from
+    """
+    Compute the optical flow using the Farneback method from
     the reference frame to another image
 
     Parameters
@@ -74,13 +73,13 @@ def flow(
         basis for the polynomial expansion; for poly_n=5, you can set poly_sigma=1.1,
         for poly_n=7, a good value would be poly_sigma=1.5, by default 1.2
     flags : int, optional
-         By default 0. operation flags that can be a combination of the following:
-         - OPTFLOW_USE_INITIAL_FLOW uses the input flow as an initial flow approximation.
-         - OPTFLOW_FARNEBACK_GAUSSIAN uses the Gaussian winsize x winsize filter
-            instead of a box filter of the same size for optical flow estimation;
-            usually, this option gives z more accurate flow than with a box filter,
-            at the cost of lower speed; normally, winsize for a Gaussian window should
-            be set to a larger value to achieve the same level of robustness.
+        By default 0. operation flags that can be a combination of the following:
+        - OPTFLOW_USE_INITIAL_FLOW uses the input flow as an initial flow approximation.
+        - OPTFLOW_FARNEBACK_GAUSSIAN uses the Gaussian winsize x winsize filter
+        instead of a box filter of the same size for optical flow estimation;
+        usually, this option gives z more accurate flow than with a box filter,
+        at the cost of lower speed; normally, winsize for a Gaussian window should
+        be set to a larger value to achieve the same level of robustness.
     factor: float
         Factor to multiply the result
 
@@ -153,13 +152,13 @@ def get_displacements(
         basis for the polynomial expansion; for poly_n=5, you can set poly_sigma=1.1,
         for poly_n=7, a good value would be poly_sigma=1.5, by default 1.2
     flags : int, optional
-         By default 0. operation flags that can be a combination of the following:
-         - OPTFLOW_USE_INITIAL_FLOW uses the input flow as an initial flow approximation.
-         - OPTFLOW_FARNEBACK_GAUSSIAN uses the Gaussian winsize x winsize filter
-            instead of a box filter of the same size for optical flow estimation;
-            usually, this option gives z more accurate flow than with a box filter,
-            at the cost of lower speed; normally, winsize for a Gaussian window should
-            be set to a larger value to achieve the same level of robustness.
+        By default 0. operation flags that can be a combination of the following:
+        - OPTFLOW_USE_INITIAL_FLOW uses the input flow as an initial flow approximation.
+        - OPTFLOW_FARNEBACK_GAUSSIAN uses the Gaussian winsize x winsize filter
+        instead of a box filter of the same size for optical flow estimation;
+        usually, this option gives z more accurate flow than with a box filter,
+        at the cost of lower speed; normally, winsize for a Gaussian window should
+        be set to a larger value to achieve the same level of robustness.
 
     Returns
     -------
@@ -237,13 +236,13 @@ def get_velocities(
         basis for the polynomial expansion; for poly_n=5, you can set poly_sigma=1.1,
         for poly_n=7, a good value would be poly_sigma=1.5, by default 1.2
     flags : int, optional
-         By default 0. operation flags that can be a combination of the following:
-         - OPTFLOW_USE_INITIAL_FLOW uses the input flow as an initial flow approximation.
-         - OPTFLOW_FARNEBACK_GAUSSIAN uses the Gaussian winsize x winsize filter
-            instead of a box filter of the same size for optical flow estimation;
-            usually, this option gives z more accurate flow than with a box filter,
-            at the cost of lower speed; normally, winsize for a Gaussian window should
-            be set to a larger value to achieve the same level of robustness.
+        By default 0. operation flags that can be a combination of the following:
+        - OPTFLOW_USE_INITIAL_FLOW uses the input flow as an initial flow approximation.
+        - OPTFLOW_FARNEBACK_GAUSSIAN uses the Gaussian winsize x winsize filter
+        instead of a box filter of the same size for optical flow estimation;
+        usually, this option gives z more accurate flow than with a box filter,
+        at the cost of lower speed; normally, winsize for a Gaussian window should
+        be set to a larger value to achieve the same level of robustness.
 
     Returns
     -------

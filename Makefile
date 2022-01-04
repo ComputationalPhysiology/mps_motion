@@ -59,10 +59,7 @@ test: ## run tests on every Python version with tox
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/mps_motion_tracking.rst
 	rm -f docs/modules.rst
-	pandoc README.md -o docs/readme.rst
-	pandoc HISTORY.md -o docs/history.rst
-	pandoc CONTRIBUTING.md -o docs/contributing.rst
-	pandoc AUTHORS.md -o docs/authors.rst
+	cp README.md docs/.
 	sphinx-apidoc -o docs/ mps_motion_tracking
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html

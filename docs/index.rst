@@ -5,12 +5,7 @@ Welcome to MPS Motion Tracking's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   readme
-   installation
-   usage
-   contributing
-   authors
-   history
+   README
 
 Programmers reference
 =====================

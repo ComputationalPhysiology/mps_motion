@@ -1,7 +1,6 @@
-__doc__ = """Motion tracking of MPS data
-
+__doc__ = """
+Motion tracking of MPS data
 This is software to estimate motion in Brightfield images.
-
 """
 import datetime
 import logging
@@ -134,7 +133,6 @@ def main(
     """
     Estimate motion in stack of images
 
-    \b
     Parameters
     ----------
     filename : str
@@ -154,7 +152,6 @@ def main(
         If `outdir` allready exist an contains the relevant files then set this to false to
         use that data, by default True
 
-    \b
     Raises
     ------
     IOError
