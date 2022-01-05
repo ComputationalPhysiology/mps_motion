@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-import yaml
+import json
 
 from . import Mechanics, OpticalFlow
 from . import motion_tracking as mt
@@ -120,6 +120,16 @@ def load_data(filename_):
     return data
 
 
+class JSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Path):
+            return obj.as_posix()
+        elif isinstance(mt.FLOW_ALGORITHMS):
+            return str(obj)
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
+
+
 def main(
     filename: str,
     algorithm: mt.FLOW_ALGORITHMS = mt.FLOW_ALGORITHMS.farneback,
@@ -184,14 +194,14 @@ def main(
     }
     logger.debug("\nSettings : \n{}".format(print_dict(settings)))
 
-    settings_file = outdir_.joinpath("settings.yaml")
+    settings_file = outdir_.joinpath("settings.json")
     disp_file = outdir_.joinpath("displacement.npy")
     # Check if file is allready analyzed
     opt_flow = None
     index = None
     if settings_file.is_file() and disp_file.is_file() and not overwrite:
         with open(settings_file, "r") as f:
-            settings = yaml.load(f, Loader=yaml.SafeLoader)
+            settings = json.load(f)
         disp = np.load(disp_file)
 
     else:
@@ -235,8 +245,7 @@ def main(
         normalize_baseline=normalize_baseline,
         index=index,
     )
-
     with open(settings_file, "w") as f:
-        yaml.dump(settings, f)
+        json.dump(settings, f, cls=JSONEncoder)
 
     np.save(disp_file, disp.array.compute())
