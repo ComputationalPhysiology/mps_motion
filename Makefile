@@ -81,7 +81,7 @@ install: clean ## install the package to the active Python's site-packages
 	python3 -m pip install .
 
 dev: clean ## Just need to make sure that libfiles remains
-	python3 -m pip install -e ".[dev,docs,benchmark,legacy,test]"
+	python3 -m pip install -e ".[dev,docs,benchmark,test]"
 	pre-commit install
 
 bump:

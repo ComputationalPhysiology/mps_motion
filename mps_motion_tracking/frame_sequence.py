@@ -137,7 +137,10 @@ class FrameSequence:
                 attr_manager.create("scale", str(self.scale))
                 attr_manager.create("dx", str(self.dx))
         else:
-            np.save(path, {"array": self.array_np, "scale": self.scale, "dx": self.dx})
+            np.save(
+                path,
+                {"array": self.array_np, "scale": self.scale, "dx": self.dx},
+            )  # type:ignore
 
     @classmethod
     def from_file(cls, path, use_dask=True):
