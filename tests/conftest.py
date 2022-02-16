@@ -1,10 +1,13 @@
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 import pytest
 from scipy.ndimage import geometric_transform
 
-from mps_motion_tracking.utils import MPSData
+from mps_motion_tracking import frame_sequence as fs
+from mps_motion_tracking import Mechanics
+from mps_motion_tracking import MPSData
 
 here = Path(__file__).absolute().parent
 
@@ -46,6 +49,45 @@ def test_data():
     }
 
     return MPSData(frames=frames, time_stamps=times, info=info)
+
+
+@pytest.fixture
+def mech_obj():
+
+    width = 10
+    height = 15
+    num_time_points = 4
+
+    u = np.zeros((height, width, num_time_points, 2))
+    # First time point is zero
+    # Second time point has a linar displacement in x
+    u[:, :, 1, 0] = np.fromfunction(
+        lambda y, x: x / width,
+        shape=(height, width),
+        dtype=float,
+    )
+    # Third points have linear displacement in y
+    u[:, :, 2, 1] = np.fromfunction(
+        lambda y, x: y / height,
+        shape=(height, width),
+        dtype=float,
+    )
+    # Forth is linear in both
+    u[:, :, 2, 0] = u[:, :, 1, 0]
+    u[:, :, 3, 1] = u[:, :, 2, 1]
+
+    return Mechanics(fs.VectorFrameSequence(u), t=1000 * np.arange(4))
+
+
+@pytest.fixture
+def mech_trace_obj():
+    traces = np.load(here.joinpath("example_traces.npy"), allow_pickle=True).item()
+
+    mechanics_mock = mock.Mock(spec=Mechanics)
+    mechanics_mock.u.norm().mean.return_value = traces["u_norm"]
+    mechanics_mock.velocity.norm().mean.return_value = traces["v_norm"]
+    mechanics_mock.t = traces["time"]
+    return mechanics_mock
 
 
 # @pytest.fixture

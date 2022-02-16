@@ -19,10 +19,12 @@ from . import (
     utils,
     visu,
     filters,
+    stats,
 )
 from .frame_sequence import FrameSequence, VectorFrameSequence, TensorFrameSequence
 from .mechanics import Mechanics
 from .motion_tracking import FLOW_ALGORITHMS, OpticalFlow
+from .utils import MPSData
 
 
 def set_log_level(level):
@@ -55,6 +57,7 @@ __all__ = [
     "mechanics",
     "frame_sequence",
     "Mechanics",
+    "MPSData",
     "motion_tracking",
     "FLOW_ALGORITHMS",
     "OpticalFlow",
@@ -65,4 +68,5 @@ __all__ = [
     "FrameSequence",
     "VectorFrameSequence",
     "TensorFrameSequence",
+    "stats",
 ]

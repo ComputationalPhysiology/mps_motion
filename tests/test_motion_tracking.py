@@ -1,4 +1,3 @@
-import itertools as it
 from unittest import mock
 
 import dask.array as da
@@ -6,6 +5,7 @@ import numpy as np
 import pytest
 
 from mps_motion_tracking import FLOW_ALGORITHMS as _FLOW_ALGORITHMS
+from mps_motion_tracking import Mechanics
 from mps_motion_tracking import OpticalFlow
 from mps_motion_tracking import utils
 
@@ -127,17 +127,52 @@ def test_get_displacement_unit(test_data: utils.MPSData):
 
 
 @pytest.mark.parametrize(
-    "flow_algorithm, unit",
-    it.product(FLOW_ALGORITHMS, ["um", "pixels"]),
+    "unit",
+    ["um", "pixels"],
 )
-def test_get_displacement_scale_algs(
+def test_get_displacement_scale(
     test_data: utils.MPSData,
-    flow_algorithm: _FLOW_ALGORITHMS,
     unit: str,
 ):
     """Test that there are now exceptions raised"""
-    m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
-    m.get_displacements(unit=unit, scale=0.5)
+    m = OpticalFlow(test_data)
+    u_full = m.get_displacements(unit=unit)
+    u = m.get_displacements(unit=unit, scale=0.5)
+    assert np.isclose(u.mean().max().compute(), u_full.mean().max().compute())
+
+
+@pytest.mark.parametrize(
+    "unit",
+    ["um", "pixels"],
+)
+def test_get_velocity_scale(
+    test_data: utils.MPSData,
+    unit: str,
+):
+    """Test that there are now exceptions raised"""
+    m = OpticalFlow(test_data)
+    v_full = m.get_velocities(unit=unit)
+    v = m.get_velocities(unit=unit, scale=0.5)
+    u_full = m.get_displacements(unit=unit, scale=0.5)
+    v_full_from_u = Mechanics(u_full, t=test_data.time_stamps).velocity
+
+    u = m.get_displacements(unit=unit)
+    v_from_u = Mechanics(u, t=test_data.time_stamps).velocity
+
+    # We cannot expected these to be all equal, but they should be
+    # of the save order, so a 5-10% difference is OK
+    assert np.isclose(v.mean().max().compute(), v_full.mean().max().compute(), rtol=0.1)
+
+    assert np.isclose(
+        v_from_u.mean().max().compute(),
+        v_full_from_u.mean().max().compute(),
+        rtol=0.1,
+    )
+    assert np.isclose(
+        v_from_u.mean().max().compute(),
+        v.mean().max().compute(),
+        rtol=0.1,
+    )
 
 
 def test_OpticalFlow_options(test_data: utils.MPSData):

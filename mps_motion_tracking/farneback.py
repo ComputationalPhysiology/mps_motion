@@ -266,7 +266,7 @@ def get_velocities(
                 poly_n,
                 poly_sigma,
                 flags,
-                (1000 / dts[index]),
+                (1.0 / dts[index]),
             ),
         )
 

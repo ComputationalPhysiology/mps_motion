@@ -98,14 +98,14 @@ def compute_velocity(u: Array, t: Array):
     dt = da.diff(t)
 
     # Need to have time axis
-    return da.moveaxis(da.moveaxis(du, 2, 3) * 1000 / dt, 2, 3)
+    return da.moveaxis(da.moveaxis(du, 2, 3) / dt, 2, 3)
 
 
 def compute_displacement(v: Array, t: Array, ref_index=0):
     """Compute displacement from velocity"""
 
     zero = da.zeros((v.shape[0], v.shape[1], 1, v.shape[3]))
-    dt = np.diff(t) / 1000
+    dt = np.diff(t)
     vdt = da.apply_along_axis(lambda x: x * dt, axis=2, arr=v)
 
     vdt_low = vdt[:, :, :ref_index, :]
@@ -141,8 +141,12 @@ class Mechanics:
             relevant when computing time derivaties such as velocity.
         """
         assert isinstance(u, fs.VectorFrameSequence)
-        self.u = u
+        self._u = u
         self.t = t
+
+    @property
+    def u(self) -> fs.VectorFrameSequence:
+        return self._u
 
     @property
     def t(self) -> Array:

@@ -18,7 +18,7 @@ def test_resize_data():
     assert np.isclose(scaled_data.time_stamps, times).all()
 
 
-def test_resize_frames():
+def test_resize_frames_displacement():
     width = 10
     height = 15
     num_time_points = 4

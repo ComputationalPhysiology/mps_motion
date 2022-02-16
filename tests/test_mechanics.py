@@ -125,8 +125,7 @@ def test_dx(dx):
 
 
 def test_velocity(mech_obj):
-    v = mech_obj.velocity
-
+    v = mech_obj.velocity * 1000
     assert np.isclose(
         v[:, :, 0, 0],
         mech_obj.u[:, :, 1, 0] - mech_obj.u[:, :, 0, 0],
@@ -149,34 +148,6 @@ def test_compute_displacement(mech_obj):
     v = mech_obj.velocity
     u = mechanics.compute_displacement(v.array, mech_obj.t, ref_index=0)
     assert da.isclose(u, mech_obj.u.array).all().compute()
-
-
-@pytest.fixture
-def mech_obj():
-
-    width = 10
-    height = 15
-    num_time_points = 4
-
-    u = np.zeros((height, width, num_time_points, 2))
-    # First time point is zero
-    # Second time point has a linar displacement in x
-    u[:, :, 1, 0] = np.fromfunction(
-        lambda y, x: x / width,
-        shape=(height, width),
-        dtype=float,
-    )
-    # Third points have linear displacement in y
-    u[:, :, 2, 1] = np.fromfunction(
-        lambda y, x: y / height,
-        shape=(height, width),
-        dtype=float,
-    )
-    # Forth is linear in both
-    u[:, :, 2, 0] = u[:, :, 1, 0]
-    u[:, :, 3, 1] = u[:, :, 2, 1]
-
-    return Mechanics(fs.VectorFrameSequence(u), t=1000 * np.arange(4))
 
 
 def test_shapes():
