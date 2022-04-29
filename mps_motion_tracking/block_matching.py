@@ -186,12 +186,9 @@ def _flow(
                                 x_image_ref : x_image_ref + block_size,
                             ]
                             # Could improve this cost function / template matching
-                            costs[i, j] = (
-                                np.sum(
-                                    np.abs(np.subtract(block, ref_block)),
-                                )
-                                / (block_size ** 2)
-                            )
+                            costs[i, j] = np.sum(
+                                np.abs(np.subtract(block, ref_block)),
+                            ) / (block_size**2)
 
                 # Find minimum cost vector and store it
                 dy, dx = np.where(costs == np.nanmin(costs))

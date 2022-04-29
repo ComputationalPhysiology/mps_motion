@@ -6,7 +6,7 @@ def to_image(A):
     B = np.array(A).astype(float)
     if ~np.any(B - B.max()):
         return B.astype(np.uint16)
-    return (B / B.max()).astype(np.uint16) * (2 ** 16 - 1)
+    return (B / B.max()).astype(np.uint16) * (2**16 - 1)
 
 
 def add_noise(A, noise_level):

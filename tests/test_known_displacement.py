@@ -85,10 +85,10 @@ def test_synthetic_strain(gen_data):
     assert (np.abs(F[:, :, 1, 1, 0] - c) < 1e-12).all()
     assert (np.abs(F[:, :, 1, 1, 1] - (1 + d)) < 1e-12).all()
 
-    assert (np.abs(E[:, :, 1, 0, 0] - 0.5 * ((1 + a) ** 2 + c ** 2 - 1)) < 1e-12).all()
+    assert (np.abs(E[:, :, 1, 0, 0] - 0.5 * ((1 + a) ** 2 + c**2 - 1)) < 1e-12).all()
     assert (np.abs(E[:, :, 1, 0, 1] - 0.5 * (b * (1 + a) + c * (1 + d))) < 1e-12).all()
     assert (np.abs(E[:, :, 1, 1, 0] - 0.5 * (b * (1 + a) + c * (1 + d))) < 1e-12).all()
-    assert (np.abs(E[:, :, 1, 1, 1] - 0.5 * ((1 + d) ** 2 + b ** 2 - 1)) < 1e-12).all()
+    assert (np.abs(E[:, :, 1, 1, 1] - 0.5 * ((1 + d) ** 2 + b**2 - 1)) < 1e-12).all()
 
 
 @pytest.mark.parametrize(

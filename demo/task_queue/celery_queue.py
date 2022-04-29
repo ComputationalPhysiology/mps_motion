@@ -22,7 +22,6 @@ https://flask.palletsprojects.com/en/1.0.x/patterns/celery/
 
 
 """
-
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict
@@ -30,11 +29,15 @@ from typing import Dict
 import mps
 import numpy as np
 from celery_factory import make_celery
-from flask import Flask, jsonify
+from flask import Flask
+from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import JSON, Column, Integer, String
+from sqlalchemy import Column
+from sqlalchemy import Integer
+from sqlalchemy import JSON
+from sqlalchemy import String
 
-from mps_motion_tracking import Mechancis
+from mps_motion_tracking import Mechanics
 from mps_motion_tracking import motion_tracking as mt
 
 app = Flask(__name__)
@@ -60,7 +63,7 @@ MT_FOLDER.mkdir(exist_ok=True)
 
 
 @dataclass
-class MPSModel(db.Model):
+class MPSModel(db.Model):  # type: ignore
     id: int = Column(Integer, primary_key=True)
     path: str = Column(String)
     data: Dict[str, str] = Column(JSON, nullable=True)
@@ -107,7 +110,7 @@ def get_mps_principal_strain(data_id):
         raise LookupError(f"Could not find data with id {data_id}")
     u = np.load(u_path)
 
-    m = Mechancis(u)
+    m = Mechanics(u)
     e1 = m.principal_strain()
     print("Done getting principal strain")
 

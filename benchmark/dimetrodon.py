@@ -1,7 +1,3 @@
-from pathlib import Path
-
-import flowiz
-
 """
 https://github.com/tsenst/CrowdFlow
 
@@ -11,11 +7,17 @@ https://vision.middlebury.edu/flow/data/
 https://github.com/opencv/opencv_contrib/blob/master/modules/optflow/samples/optical_flow_benchmark.py
 
 """
+from pathlib import Path
+
 import cv2
+import flowiz
 import matplotlib.pyplot as plt
 import numpy as np
 
-from mps_motion_tracking import block_matching, dualtvl10, farneback, lucas_kanade
+from mps_motion_tracking import block_matching
+from mps_motion_tracking import dualtvl1
+from mps_motion_tracking import farneback
+from mps_motion_tracking import lucas_kanade
 
 
 def rubber_whale():
@@ -52,7 +54,7 @@ def dimetrodon():
 
 def main(tf, frames):
 
-    dual_flow = dualtvl10.flow(frames[1], frames[0])
+    dual_flow = dualtvl1.flow(frames[1], frames[0])
     dual_flow_norm = np.linalg.norm(dual_flow, axis=2)
     dual_flow_norm /= np.nanmax(dual_flow_norm)
 
