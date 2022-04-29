@@ -55,6 +55,16 @@ def resize_data(data: MPSData, scale: float) -> MPSData:
     return MPSData(new_frames, data.time_stamps, info)
 
 
+def subsample_time(data: MPSData, step: int) -> MPSData:
+
+    new_frames = data.frames[:, :, ::step]
+    new_times = data.time_stamps[::step]
+    info = data.info.copy()
+    info["num_frames"] = len(new_times)
+
+    return MPSData(new_frames, new_times, info)
+
+
 def reshape_lk(reference_points: np.ndarray, flows: Array) -> Array:
     x, y = reference_points.reshape(-1, 2).astype(int).T
     xu = np.sort(np.unique(x))
@@ -368,12 +378,9 @@ def rbfinterp2d(  # noqa:C901
         if k == 0:
             # use all points
             d = scipy.spatial.distance.cdist(coord, subgrid, "euclidean").transpose()
-            inds = (
-                np.arange(npoints)[None, :]
-                * np.ones(
-                    (subgrid.shape[0], npoints),
-                ).astype(int)
-            )
+            inds = np.arange(npoints)[None, :] * np.ones(
+                (subgrid.shape[0], npoints),
+            ).astype(int)
 
         else:
             # use k-nearest neighbours
@@ -404,13 +411,10 @@ def rbfinterp2d(  # noqa:C901
 
             # interpolate
             for j in range(nvar):
-                output_array[i0 : (i0 + idelta), j] = (
-                    np.sum(
-                        w * input_array[inds, j],
-                        axis=1,
-                    )
-                    / np.sum(w, axis=1)
-                )
+                output_array[i0 : (i0 + idelta), j] = np.sum(
+                    w * input_array[inds, j],
+                    axis=1,
+                ) / np.sum(w, axis=1)
 
         i0 += idelta
 

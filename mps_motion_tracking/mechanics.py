@@ -1,3 +1,4 @@
+import functools
 import logging
 from typing import Optional
 from typing import Union
@@ -89,21 +90,28 @@ def compute_green_lagrange_strain_tensor(F: Array):
     return E
 
 
-def compute_velocity(u: Array, t: Array):
+def compute_velocity(u: Array, t: Array, spacing: int = 1):
     """Compute velocity from displacement"""
     time_axis = u.shape.index(len(t))
     assert time_axis == 2, "Time axis should be the third axis"
     assert u.shape[-1] == 2, "Final axis should be ux and uy"
-    du = da.diff(u, axis=time_axis)
-    dt = da.diff(t)
+    assert spacing > 0, "Spacing must be a positive integer"
 
-    # Need to have time axis
+    if spacing == 1:
+        dt = da.diff(t)
+        du = da.diff(u, axis=time_axis)
+    else:
+        dt = t[spacing:] - t[:-spacing]
+        du = u[:, :, spacing:, :] - u[:, :, :-spacing, :]
+
+    # # Need to have time axis
     return da.moveaxis(da.moveaxis(du, 2, 3) / dt, 2, 3)
 
 
-def compute_displacement(v: Array, t: Array, ref_index=0):
+def compute_displacement(v: Array, t: Array, ref_index=0, spacing: int = 1):
     """Compute displacement from velocity"""
-
+    if spacing != 1:
+        raise NotImplementedError("Only implemented for the case when spacing is 1")
     zero = da.zeros((v.shape[0], v.shape[1], 1, v.shape[3]))
     dt = np.diff(t)
     vdt = da.apply_along_axis(lambda x: x * dt, axis=2, arr=v)
@@ -231,10 +239,10 @@ class Mechanics:
             scale=self.scale,
         )
 
-    @cached_property
-    def velocity(self):
+    @functools.lru_cache
+    def velocity(self, spacing: int = 1) -> fs.VectorFrameSequence:
         return fs.VectorFrameSequence(
-            compute_velocity(self.u.array, self.t),
+            compute_velocity(self.u.array, self.t, spacing=spacing),
             dx=self.dx,
             scale=self.scale,
         )

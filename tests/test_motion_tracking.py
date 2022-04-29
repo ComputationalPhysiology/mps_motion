@@ -154,10 +154,10 @@ def test_get_velocity_scale(
     v_full = m.get_velocities(unit=unit)
     v = m.get_velocities(unit=unit, scale=0.5)
     u_full = m.get_displacements(unit=unit, scale=0.5)
-    v_full_from_u = Mechanics(u_full, t=test_data.time_stamps).velocity
+    v_full_from_u = Mechanics(u_full, t=test_data.time_stamps).velocity()
 
     u = m.get_displacements(unit=unit)
-    v_from_u = Mechanics(u, t=test_data.time_stamps).velocity
+    v_from_u = Mechanics(u, t=test_data.time_stamps).velocity()
 
     # We cannot expected these to be all equal, but they should be
     # of the save order, so a 5-10% difference is OK

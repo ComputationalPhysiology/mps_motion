@@ -131,7 +131,7 @@ def analysis_from_mechanics(
 
     u = compute(mech.u.norm().mean())
     t = mech.t
-    v = compute(mech.velocity.norm().mean())
+    v = compute(mech.velocity().norm().mean())
     return analysis_from_arrays(
         u,
         v,

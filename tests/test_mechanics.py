@@ -125,7 +125,7 @@ def test_dx(dx):
 
 
 def test_velocity(mech_obj):
-    v = mech_obj.velocity * 1000
+    v = mech_obj.velocity() * 1000
     assert np.isclose(
         v[:, :, 0, 0],
         mech_obj.u[:, :, 1, 0] - mech_obj.u[:, :, 0, 0],
@@ -145,8 +145,14 @@ def test_velocity(mech_obj):
 
 
 def test_compute_displacement(mech_obj):
-    v = mech_obj.velocity
-    u = mechanics.compute_displacement(v.array, mech_obj.t, ref_index=0)
+    spacing = 1  # Only implemented for spacings of 1
+    v = mech_obj.velocity(spacing=spacing)
+    u = mechanics.compute_displacement(
+        v.array,
+        mech_obj.t,
+        ref_index=0,
+        spacing=spacing,
+    )
     assert da.isclose(u, mech_obj.u.array).all().compute()
 
 

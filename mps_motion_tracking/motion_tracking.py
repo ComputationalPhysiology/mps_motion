@@ -71,15 +71,21 @@ def get_referenece_image(
         if smooth_ref_transition:
             if reference_frame_index == 0:
                 reference_image = frames[
-                    :, :, reference_frame_index : reference_frame_index + 3
+                    :,
+                    :,
+                    reference_frame_index : reference_frame_index + 3,
                 ].mean(-1)
             elif reference_frame_index == len(time_stamps) - 1:
                 reference_image = frames[
-                    :, :, reference_frame_index - 2 : reference_frame_index + 1
+                    :,
+                    :,
+                    reference_frame_index - 2 : reference_frame_index + 1,
                 ].mean(-1)
             else:
                 reference_image = frames[
-                    :, :, reference_frame_index - 1 : reference_frame_index + 2
+                    :,
+                    :,
+                    reference_frame_index - 1 : reference_frame_index + 2,
                 ].mean(-1)
         else:
             reference_image = frames[:, :, reference_frame_index]
@@ -214,6 +220,7 @@ class OpticalFlow:
         self,
         unit: str = "um",
         scale: float = 1.0,
+        spacing: int = 1,
     ):
         assert unit in ["pixels", "um"]
         data = self.data
@@ -226,7 +233,7 @@ class OpticalFlow:
             scaled_data = scaling.resize_data(data, scale)
 
         v = self._get_velocities(
-            scaled_data.frames, scaled_data.time_stamps, **self.options
+            scaled_data.frames, scaled_data.time_stamps, spacing=spacing, **self.options
         )
         dx = 1
 

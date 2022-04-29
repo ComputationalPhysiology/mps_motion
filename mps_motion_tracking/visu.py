@@ -4,6 +4,7 @@ from typing import Optional
 from typing import Union
 
 import cv2
+import dask.array as da
 import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
@@ -121,12 +122,14 @@ def quiver_video(
     vector_scale: float = 1.0,
     frame_scale: float = 1.0,
     convert: bool = True,
-    velocity: bool = False,
+    offset: int = 0,
 ) -> None:
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     if isinstance(vectors, fs.VectorFrameSequence):
         vectors_np: np.ndarray = vectors.array_np
+    elif isinstance(vectors, da.Array):
+        vectors_np = vectors.compute()
     else:
         vectors_np = vectors
 
@@ -139,7 +142,7 @@ def quiver_video(
     height = data.size_x
     fps = data.framerate
 
-    num_frames = data.num_frames - 1 if velocity else data.num_frames
+    num_frames = data.num_frames - offset
 
     # Check shapes
     try:
@@ -155,8 +158,9 @@ def quiver_video(
     vector_shape = (
         vectors_np.shape[0],
         vectors_np.shape[1],
-        vectors_np.shape[time_axis],
+        vectors_np.shape[time_axis] + offset,
     )
+
     if not data.frames.shape == vector_shape:
         msg = (
             "Shape of frames and vector does not match. "
@@ -185,7 +189,7 @@ def quiver_video(
         tmp_path = p.parent.joinpath(p.stem + "_tmp").with_suffix(".mp4")
         p.rename(tmp_path)
         video = imageio.read(tmp_path)
-        imageio.mimwrite(p, (np.swapaxes(d, 0, 1) for d in video.iter_data()), fps=fps)
+        imageio.mimwrite(p, [np.swapaxes(d, 0, 1) for d in video.iter_data()], fps=fps)
         tmp_path.unlink()
 
 

@@ -225,11 +225,7 @@ def compute_strain():
 def create_flow_field():
 
     data = mps.MPS("../PointH4A_ChannelBF_VC_Seq0018.nd2")
-    disp = farneback.get_displacements(
-        data.frames,
-        data.frames[:, :, 0],
-        filter_kernel_size=3,
-    )
+    disp = farneback.get_displacements(data.frames, data.frames[:, :, 0])
     np.save("disp.npy", disp)
     visu.quiver_video(data, disp, "flow.mp4", step=48, vector_scale=10)
 
@@ -301,9 +297,9 @@ if __name__ == "__main__":
     # main()
     # postprocess_displacement()
     # plot_displacement()
-    # create_flow_field()
+    create_flow_field()
     # plot_velocity()
     # create_velocity_flow_field()
     # create_heatmap()
     # main()
-    compute_strain()
+    # compute_strain()

@@ -196,6 +196,7 @@ def get_displacements(
 def get_velocities(
     frames: np.ndarray,
     time_stamps: np.ndarray,
+    spacing: int = 1,
     pyr_scale: float = 0.5,
     levels: int = 3,
     winsize: int = 15,
@@ -211,6 +212,10 @@ def get_velocities(
     ----------
     frames : np.ndarray
         The frames with some moving objects
+    time_stamps : np.ndarray
+        Time stamps
+    spacing : int
+        Spacing between frames used to compute velocities
     pyr_scale : float, optional
         parameter, specifying the image scale (<1) to build pyramids
         for each image; pyr_scale=0.5 means a classical pyramid,
@@ -252,12 +257,12 @@ def get_velocities(
     """
 
     logger.info("Get velocities using Farneback's algorithm")
-    dts = np.diff(time_stamps)
+    dts = np.subtract(time_stamps[spacing:], time_stamps[:-spacing])
     all_flows = []
-    for index in range(frames.shape[-1] - 1):
+    for index in range(frames.shape[-1] - spacing):
         all_flows.append(
             dask.delayed(flow)(
-                frames[:, :, index + 1],
+                frames[:, :, index + spacing],
                 frames[:, :, index],
                 pyr_scale,
                 levels,
