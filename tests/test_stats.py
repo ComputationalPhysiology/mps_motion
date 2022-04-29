@@ -29,7 +29,7 @@ def test_analysis_from_arrays(mech_trace_obj):
 
     u = mech_trace_obj.u.norm().mean()
     t = mech_trace_obj.t
-    v = mech_trace_obj.velocity.norm().mean()
+    v = mech_trace_obj.velocity().norm().mean()
 
     analysis = stats.analysis_from_arrays(u, v, t)
 

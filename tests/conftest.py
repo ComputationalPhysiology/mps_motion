@@ -85,7 +85,7 @@ def mech_trace_obj():
 
     mechanics_mock = mock.Mock(spec=Mechanics)
     mechanics_mock.u.norm().mean.return_value = traces["u_norm"]
-    mechanics_mock.velocity.norm().mean.return_value = traces["v_norm"]
+    mechanics_mock.velocity().norm().mean.return_value = traces["v_norm"]
     mechanics_mock.t = traces["time"]
     return mechanics_mock
 
