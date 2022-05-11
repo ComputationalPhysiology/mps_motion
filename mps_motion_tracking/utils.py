@@ -21,6 +21,10 @@ except ImportError:
     # Create a dummy decorator
     def jit(**params):
         def decorator(f):
+            logger.warning(
+                "You are trying to call a numba function, but numba is not installed",
+            )
+
             def wrap(*args, **kwargs):
                 return f(*args, **kwargs)
 
@@ -31,6 +35,16 @@ except ImportError:
 
 class ShapeError(RuntimeError):
     pass
+
+
+def unmask(array, fill_value=0.0):
+    """Take a mask array and fills
+    it with the given fill value and
+    return an regular numpy array
+    """
+    if isinstance(array, np.ma.MaskedArray):
+        return array.filled(fill_value)
+    return array
 
 
 PathLike = Union[str, os.PathLike]

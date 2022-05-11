@@ -18,6 +18,26 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+@utils.jit(nopython=True)
+def sum_along_time(arr, t, i, j):
+    x = 0
+    for k in range(t):
+        x += (1 / t) * np.abs(arr[i, j, k, :, :, :] - arr[i, j, k, 1, 1, 1]).sum()
+    return x
+
+
+@utils.jit(nopython=True, parallel=True)
+def reduce_sliding_window(arr):
+    n, m, t = arr.shape[:3]
+    new_arr = np.zeros((n, m))
+
+    for i in utils.prange(n):
+        for j in range(m):
+            new_arr[i, j] = sum_along_time(arr, t, i, j)
+
+    return new_arr
+
+
 class FrameSequence:
     """Object for holding a sequence of frames
     For example a component of a Tensor / Vector
@@ -25,7 +45,13 @@ class FrameSequence:
 
     """
 
-    def __init__(self, array: utils.Array, dx: float = 1.0, scale: float = 1.0):
+    def __init__(
+        self,
+        array: utils.Array,
+        dx: float = 1.0,
+        scale: float = 1.0,
+        fill_value: float = 0.0,
+    ):
         """Constructor
 
         Parameters
@@ -40,6 +66,9 @@ class FrameSequence:
             physical size.
         scale : float
             Another factor that should be reflexted and averaging
+        fill_value: float
+            Value to fill in for bad values masked arrays if used,
+            by default 0.0.
 
         """
         assert isinstance(array, (da.core.Array, np.ndarray))
@@ -48,6 +77,7 @@ class FrameSequence:
         self.dx = dx
         self.scale = scale
         self._h5file = None
+        self._fill_value = fill_value
 
     def __getitem__(self, *args, **kwargs):
         return self.array.__getitem__(*args, **kwargs)
@@ -98,6 +128,17 @@ class FrameSequence:
     def __del__(self):
         if self._h5file is not None:
             self._h5file.close()
+
+    @property
+    def fill_value(self) -> float:
+        """Value used for as a replacement for bad values
+        in masked arrays. This will only be used if you
+        apply a mask to the array"""
+        return self._fill_value
+
+    @fill_value.setter
+    def fill_value(self, value: float) -> None:
+        self._fill_value = value
 
     def filter(
         self,
@@ -217,6 +258,22 @@ class FrameSequence:
             N=N,
         )
 
+    def amplitude_mask(self, threshold: float = 30.0) -> np.ndarray:
+        logger.info("Find mask for filtering based on amplitude")
+        x = np.lib.stride_tricks.sliding_window_view(self.array_np, (3, 3, 3)).squeeze()
+        y = reduce_sliding_window(x)
+        mask = np.zeros(self.shape[:2], dtype=bool)
+        mask[1:-1, 1:-1][y > threshold] = True
+        return mask
+
+    def apply_mask(self, mask: np.ndarray) -> None:
+        logger.debug("Apply mask")
+        self._array = da.ma.masked_array(
+            self.array,
+            np.tile(mask[..., np.newaxis], self.shape[2:]),
+            fill_value=0.0,
+        )
+
     def threshold(self, vmin: Optional[float] = None, vmax: Optional[float] = None):
         array = filters.threshold(self.array, vmin, vmax)
         return self.__class__(array, self.dx, self.scale)
@@ -230,7 +287,7 @@ class FrameSequence:
         array = self.array
         if isinstance(self._array, da.core.Array):
             array = self.array.compute()  # type: ignore
-        return array
+        return utils.unmask(array, fill_value=self.fill_value)
 
     @property
     def dx(self):
@@ -326,6 +383,13 @@ class VectorFrameSequence(FrameSequence):
     # def cartToPolar(self):
 
     #     mag, ang = cv2.cartToPolar(flow[...,0], flow[...,1], angleInDegrees=True)
+
+    def apply_mask(self, mask: np.ndarray) -> None:
+        self._array = da.ma.masked_array(
+            self.array,
+            np.tile(mask[..., np.newaxis, np.newaxis], self.shape[2:]),
+            fill_value=0.0,
+        )
 
     def threshold_norm(
         self,
