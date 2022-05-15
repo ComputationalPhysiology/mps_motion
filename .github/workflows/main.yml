@@ -18,12 +18,10 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install ".[test]"
-      - name: Lint with flake8
+          pre-commit install
+      - name: Run pre-commit hooks
         run: |
-          make lint
-      - name: Type checking with mypy
-        run: |
-          make type
+          pre-commit run --all
       - name: Test with pytest
         run: |
           make test
