@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 
-from mps_motion_tracking import dualtvl10
+from mps_motion_tracking import dualtvl1
 from mps_motion_tracking import utils
 
 here = Path(__file__).absolute().parent
@@ -19,10 +19,10 @@ def main():
             allow_pickle=True,
         ).item()
     )
-    disp = dualtvl10.get_displacements(data.frames, data.frames[:, :, 0])
-    np.save("dualtvl10_disp.npy", disp)
-    vel = dualtvl10.get_velocities(data.frames, data.frames[:, :, 0])
-    np.save("dualtvl10_vel.npy", vel)
+    disp = dualtvl1.get_displacements(data.frames, data.frames[:, :, 0])
+    np.save("dualtvl1_disp.npy", disp)
+    vel = dualtvl1.get_velocities(data.frames, data.frames[:, :, 0])
+    np.save("dualtvl1_vel.npy", vel)
 
 
 def postprocess_displacement():
@@ -32,7 +32,7 @@ def postprocess_displacement():
             allow_pickle=True,
         ).item()
     )
-    disp = np.load("dualtvl10_disp.npy")
+    disp = np.load("dualtvl1_disp.npy")
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
@@ -41,13 +41,13 @@ def postprocess_displacement():
     fps = data.framerate
 
     out_flow = cv2.VideoWriter(
-        "dualtvl10_displacement_flow.mp4",
+        "dualtvl1_displacement_flow.mp4",
         fourcc,
         fps,
         (width, height),
     )
     out_hsv = cv2.VideoWriter(
-        "dualtvl10_displacement_hsv.mp4",
+        "dualtvl1_displacement_hsv.mp4",
         fourcc,
         fps,
         (width, height),
@@ -77,7 +77,7 @@ def postprocess_velocities():
             allow_pickle=True,
         ).item()
     )
-    disp = np.load("dualtvl10_vel.npy")
+    disp = np.load("dualtvl1_vel.npy")
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
@@ -86,13 +86,13 @@ def postprocess_velocities():
     fps = data.framerate
 
     out_flow = cv2.VideoWriter(
-        "dualtvl10_velocity_flow.mp4",
+        "dualtvl1_velocity_flow.mp4",
         fourcc,
         fps,
         (width, height),
     )
     out_hsv = cv2.VideoWriter(
-        "dualtvl10_velocity_hsv.mp4",
+        "dualtvl1_velocity_hsv.mp4",
         fourcc,
         fps,
         (width, height),
@@ -123,7 +123,7 @@ def plot_displacements():
             allow_pickle=True,
         ).item()
     )
-    disp = np.load("dualtvl10_disp.npy") * data.info["um_per_pixel"]
+    disp = np.load("dualtvl1_disp.npy") * data.info["um_per_pixel"]
 
     import dask.array as da
 
@@ -138,7 +138,7 @@ def plot_displacements():
     ax.set_title("Mean displacement")
     ax.set_xlabel("Time [ms]")
     ax.set_ylabel("Magnitude of displacement [um]")
-    fig.savefig("dualtvl10_mean_displacement.png")
+    fig.savefig("dualtvl1_mean_displacement.png")
 
     ux_mean_pixel = disp[:, :, 0, :].mean((0, 1))
     ux_mean_um = ux_mean_pixel * data.info["um_per_pixel"]
@@ -153,7 +153,7 @@ def plot_displacements():
     ax[1].plot(data.time_stamps, uy_mean_um)
     ax[1].set_title("Mean y-displacement")
     ax[1].set_xlabel("Time [ms]")
-    fig.savefig("dualtvl10_mean_displacement_comp.png")
+    fig.savefig("dualtvl1_mean_displacement_comp.png")
 
     max_disp_x = np.abs(disp[:, :, 0, :]).max(-1)
     max_disp_y = np.abs(disp[:, :, 1, :]).max(-1)
@@ -177,7 +177,7 @@ def plot_displacements():
     cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
     cbar = fig.colorbar(im, cax=cbar_ax)
     cbar.set_label("um")
-    fig.savefig("dualtvl10_max_displacement.png")
+    fig.savefig("dualtvl1_max_displacement.png")
 
     # plt.show()
 
