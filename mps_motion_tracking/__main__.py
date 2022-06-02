@@ -37,14 +37,55 @@ def main(
         """,
         ),
     ),
-    normalize_baseline: bool = typer.Option(
-        False,
-        "--normalize-baseline",
-        "-n",
+    scale: float = typer.Option(
+        1.0,
         help=dedent(
             """
-            If True, subtract value at time of referece frame so that
-            e.g displacement at this point becomes zero.""",
+        Rescale data before running motion track. This is useful if the spatial resoltion
+        of the images are large. Scale = 1.0 will keep the original size
+        """,
+        ),
+    ),
+    apply_filter: bool = typer.Option(
+        True,
+        help=dedent(
+            """
+            If True, set pixels with max displacement lower than the mean maximum displacement
+            to zero. This will prevent non-tissue pixels to be included, which is especially
+            error prone for velocity estimations, by default True.""",
+        ),
+    ),
+    spacing: int = typer.Option(
+        5,
+        help=dedent(
+            """Spacing between frames in velocity computations, by default 5.
+            """,
+        ),
+    ),
+    compute_xy_components: bool = typer.Option(
+        False,
+        "--xy",
+        "-xy",
+        help=dedent(
+            """
+            If True the compute x- and y components of the displacement and
+            velocity and plot them as well, by default False.""",
+        ),
+    ),
+    make_displacement_video: bool = typer.Option(
+        False,
+        "--video-disp",
+        help=dedent(
+            """
+            If True, create video of displacement vectors, by default False.""",
+        ),
+    ),
+    make_velocity_video: bool = typer.Option(
+        False,
+        "--video-vel",
+        help=dedent(
+            """
+            If True, create video of velocity vectors, by default False.""",
         ),
     ),
     outdir: Optional[str] = typer.Option(
@@ -59,39 +100,26 @@ def main(
         """,
         ),
     ),
-    scale: float = typer.Option(
-        0.3,
-        help=dedent(
-            """
-        Rescale data before running motion track. This is useful if the spatial resoltion
-        of the images are large. Scale = 1.0 will keep the original size
-        """,
-        ),
-    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="More verbose"),
-    overwrite: bool = typer.Option(
-        True,
-        help=dedent(
-            """
-        If True, overwrite existing data if outdir
-        allready exist. If False, then the olddata will
-        be copied to a subdirectory with version number
-        of the software. If version number is not found
-        it will be saved to a folder called "old".""",
-        ),
-    ),
 ):
     _main(
         filename=filename,
         algorithm=algorithm,
         reference_frame=reference_frame,
-        normalize_baseline=normalize_baseline,
         outdir=outdir,
         scale=scale,
+        apply_filter=apply_filter,
+        spacing=spacing,
+        compute_xy_components=compute_xy_components,
+        make_displacement_video=make_displacement_video,
+        make_velocity_video=make_velocity_video,
         verbose=verbose,
-        overwrite=overwrite,
     )
 
 
-if __name__ == "__main__":
+def run():
     typer.run(main)
+
+
+if __name__ == "__main__":
+    run()

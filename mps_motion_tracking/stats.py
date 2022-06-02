@@ -8,6 +8,7 @@ from typing import Tuple
 import ap_features as apf
 import dask.array as da
 import numpy as np
+from scipy.signal import find_peaks
 
 from .mechanics import Mechanics
 from .utils import Array
@@ -202,3 +203,63 @@ def analysis_from_arrays(
         max_relaxation_velocity=max_relaxation_velocity,
         time_between_contraction_and_relaxation=time_between_contraction_and_relaxation,
     )
+
+
+def find_two_peaks(y, prominence=1.0):
+    peaks, peak_ops = find_peaks(y, prominence=prominence)
+
+    if len(peaks) == 2:
+        return peaks, peak_ops, prominence
+    elif len(peaks) < 2:
+        # We need to lower the prominence
+        while len(peaks) < 2 and prominence > 0:
+            prominence -= 0.1
+            peaks, peak_ops = find_peaks(y, prominence=prominence)
+    else:
+        # We need to increase the prominence
+        while len(peaks) > 2 and prominence < 10.0:
+            prominence += 0.1
+            peaks, peak_ops = find_peaks(y, prominence=prominence)
+
+    return peaks, peak_ops, prominence
+
+
+def compute_features(u, v, t):
+    u = apf.Beats(u, t, background_correction_method="subtract")
+    u_beats = u.beats
+    v = apf.Beats(
+        v,
+        t[: len(v)],
+        intervals=u.chopped_data.intervals[:-1],
+        background_correction_method="subtract",
+    )
+
+    v_beats = v.beats
+
+    data = {
+        "Maximum rise velocity": [],
+        "Peak twitch amplitude": [],
+        "Maximum relaxation velocity": [],
+        "Beat duration": [],
+        "Time to peak twitch amplitude": [],
+        "Time to peak contraction velocity": [],
+        "Time to peak relaxation velocity": [],
+        "Width at half height": [],
+    }
+
+    for ui, vi in zip(u_beats, v_beats):
+
+        peaks, peak_ops, prom = find_two_peaks(vi.y)
+        try:
+            data["Maximum rise velocity"].append(vi.y[peaks[0]])
+            data["Peak twitch amplitude"].append(np.max(ui.y))
+            data["Maximum relaxation velocity"].append(vi.y[peaks[1]])
+            data["Beat duration"].append(ui.t[-1] - ui.t[0])
+            data["Time to peak twitch amplitude"].append(ui.ttp())
+            data["Time to peak contraction velocity"].append(vi.t[peaks[0]] - vi.t[0])
+            data["Time to peak relaxation velocity"].append(vi.t[peaks[1]] - vi.t[0])
+            data["Width at half height"].append(ui.apd(50))
+        except IndexError:
+            continue
+
+    return data
