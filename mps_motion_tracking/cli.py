@@ -50,13 +50,13 @@ def load_data(filename_):
         import mps
 
         data = mps.MPS(filename_)
-    except ImportError:
-        logger.warning(
+    except ImportError as e:
+        raise ImportError(
             (
                 "Missing `mps` pacakge. Please install it. "
                 "'python -m pip install cardiac-mps'"
             ),
-        )
+        ) from e
     return data
 
 
