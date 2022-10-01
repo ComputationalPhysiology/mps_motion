@@ -1,6 +1,6 @@
 import numpy as np
 
-from mps_motion_tracking import farneback as fb
+from mps_motion import farneback as fb
 
 
 def test_flow():

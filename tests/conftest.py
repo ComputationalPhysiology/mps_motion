@@ -5,9 +5,9 @@ import numpy as np
 import pytest
 from scipy.ndimage import geometric_transform
 
-from mps_motion_tracking import frame_sequence as fs
-from mps_motion_tracking import Mechanics
-from mps_motion_tracking import MPSData
+from mps_motion import frame_sequence as fs
+from mps_motion import Mechanics
+from mps_motion import MPSData
 
 here = Path(__file__).absolute().parent
 

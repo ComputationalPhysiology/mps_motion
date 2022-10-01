@@ -14,10 +14,17 @@ import flowiz
 import matplotlib.pyplot as plt
 import numpy as np
 
+<<<<<<< HEAD
 from mps_motion_tracking import block_matching
 from mps_motion_tracking import dualtvl1
 from mps_motion_tracking import farneback
 from mps_motion_tracking import lucas_kanade
+=======
+from mps_motion import block_matching
+from mps_motion import dualtvl1
+from mps_motion import farneback
+from mps_motion import lucas_kanade
+>>>>>>> main
 
 
 def rubber_whale():

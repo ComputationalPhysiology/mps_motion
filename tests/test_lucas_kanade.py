@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from mps_motion_tracking import lucas_kanade as lk
+from mps_motion import lucas_kanade as lk
 
 
 @pytest.mark.parametrize(

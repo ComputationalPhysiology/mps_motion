@@ -2,9 +2,9 @@ import dask.array as da
 import numpy as np
 import pytest
 
-from mps_motion_tracking import frame_sequence as fs
-from mps_motion_tracking import Mechanics
-from mps_motion_tracking import mechanics
+from mps_motion import frame_sequence as fs
+from mps_motion import Mechanics
+from mps_motion import mechanics
 
 
 def test_deformation_gradient():

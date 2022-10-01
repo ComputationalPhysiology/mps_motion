@@ -37,8 +37,8 @@ from sqlalchemy import Integer
 from sqlalchemy import JSON
 from sqlalchemy import String
 
-from mps_motion_tracking import Mechanics
-from mps_motion_tracking import motion_tracking as mt
+from mps_motion import Mechanics
+from mps_motion import motion_tracking as mt
 
 app = Flask(__name__)
 app.config.update(

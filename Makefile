@@ -48,19 +48,19 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8
-	python -m flake8 mps_motion_tracking tests
+	python -m flake8 mps_motion tests
 
 type: ## Run mypy
-	python3 -m mypy mps_motion_tracking tests
+	python3 -m mypy mps_motion tests
 
 test: ## run tests on every Python version with tox
-	python3 -m pytest -v -cov=mps_motion_tracking tests
+	python3 -m pytest -v -cov=mps_motion tests
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/mps_motion_tracking.rst
+	rm -f docs/mps_motion.rst
 	rm -f docs/modules.rst
 	cp README.md docs/.
-	sphinx-apidoc -o docs/ mps_motion_tracking
+	sphinx-apidoc -o docs/ mps_motion
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	# $(BROWSER) docs/_build/html/index.html

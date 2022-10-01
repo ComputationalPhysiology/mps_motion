@@ -9,7 +9,7 @@ You can contribute in many ways:
 
 ### Report Bugs
 
-Report bugs at <https://github.com/ComputationalPhysiology/mps_motion_tracking/issues>.
+Report bugs at <https://github.com/ComputationalPhysiology/mps_motion/issues>.
 
 If you are reporting a bug, please include:
 
@@ -38,7 +38,7 @@ docstrings, or even on the web in blog posts, articles, and such.
 ### Submit Feedback
 
 The best way to send feedback is to file an issue at
-<https://github.com/ComputationalPhysiology/mps_motion_tracking/issues>.
+<https://github.com/ComputationalPhysiology/mps_motion/issues>.
 
 If you are proposing a feature:
 
@@ -50,21 +50,21 @@ If you are proposing a feature:
 
 ## Get Started!
 
-Ready to contribute? Here's how to set up mps_motion_tracking for local development.
+Ready to contribute? Here's how to set up mps_motion for local development.
 
-1.  Fork the mps_motion_tracking repo on
+1.  Fork the mps_motion repo on
     GitHub.
 
 2.  Clone your fork locally:
 
     ```
-    $ git clone git@github.com:your_name_here/mps_motion_tracking.git
+    $ git clone git@github.com:your_name_here/mps_motion.git
     ```
 
 3.  Install your local copy into a virtual environment.
 
     ```
-    $ cd mps_motion_tracking/
+    $ cd mps_motion/
     $ python -m venv venv
     $ source venv/bin/activate
     $ python -m pip install -e .
@@ -108,7 +108,7 @@ Before you submit a pull request, check that it meets these guidelines:
 2.  If the pull request adds functionality, the docs should be updated.
     Put your new functionality into a function with a docstring, and add
     the feature to the list in README.rst.
-3.  The pull request should work for Python 3.7 and 3.8. Check https://github.com/ComputationalPhysiology/mps_motion_tracking/actions to make sure all tests are passing.
+3.  The pull request should work for Python 3.7 and 3.8. Check https://github.com/ComputationalPhysiology/mps_motion/actions to make sure all tests are passing.
     Python versions.
 
 ## Tips

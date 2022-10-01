@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 
-from mps_motion_tracking import dualtvl1
-from mps_motion_tracking import utils
+from mps_motion import dualtvl1
+from mps_motion import utils
 
 here = Path(__file__).absolute().parent
 

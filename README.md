@@ -1,11 +1,11 @@
-![CI](https://github.com/ComputationalPhysiology/mps_motion_tracking/workflows/CI/badge.svg)
+![CI](https://github.com/ComputationalPhysiology/mps_motion/workflows/CI/badge.svg)
 
 # MPS Motion Tracking
 
 Library for tracking motion in cardiac mps data
 
 
-* Source code: https://github.com/ComputationalPhysiology/mps_motion_tracking
+* Source code: https://github.com/ComputationalPhysiology/mps_motion
 
 ## Installation
 
@@ -17,7 +17,7 @@ There is also a `Makefile` in this repo, and the same instructions can be execut
 
 Alternatively you can install it directly from Github
 ```
-python3 -m pip install git+https://github.com/ComputationalPhysiology/mps_motion_tracking
+python3 -m pip install git+https://github.com/ComputationalPhysiology/mps_motion
 ```
 
 ### Development installations
@@ -37,20 +37,20 @@ Alternatively, you can use the `Makefile` and hit `make dev`.
 ### Command line interface
 You can analyse a dataset used the command line interface as follows
 ```
-python -m mps_motion_tracking PointH4A_ChannelBF_VC_Seq0018.nd2
+python -m mps_motion PointH4A_ChannelBF_VC_Seq0018.nd2
 ```
 Here `PointH4A_ChannelBF_VC_Seq0018.nd2` is an example file containing cardiac cell data.
 Note that in order to read these data you need to also install the `mps` package.
 To see all available options for the cli you can do
 ```
-python -m mps_motion_tracking --help
+python -m mps_motion --help
 ```
 
 ### Computing displacement and strain
 ```python
 import matplotlib.pyplot as plt # For plotting
 import mps # Package to load data
-import mps_motion_tracking as mmt # Package for motion analysis
+import mps_motion as mmt # Package for motion analysis
 
 # Load raw data from Nikon images
 data = mps.MPS("data.nd2")

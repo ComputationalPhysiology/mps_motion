@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 import mps
 import numpy as np
 
-import mps_motion_tracking as mmt
-from mps_motion_tracking import farneback
-from mps_motion_tracking import frame_sequence as fs
-from mps_motion_tracking import mechanics
-from mps_motion_tracking import visu
+import mps_motion as mmt
+from mps_motion import farneback
+from mps_motion import frame_sequence as fs
+from mps_motion import mechanics
+from mps_motion import visu
 
 here = Path(__file__).absolute().parent
 

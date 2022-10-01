@@ -11,7 +11,7 @@ demo/PointH4A_ChannelBF_VC_Seq0018*
 docs/README.md
 docs/martins2021.pdf
 docs/modules.rst
-docs/mps_motion_tracking.rst
+docs/mps_motion.rst
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
