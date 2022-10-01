@@ -1,7 +1,6 @@
 import dask.array as da
 import numpy as np
 import pytest
-
 from mps_motion import filters
 
 

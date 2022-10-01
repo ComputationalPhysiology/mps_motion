@@ -1,5 +1,4 @@
 import numpy as np
-
 from mps_motion import Mechanics
 from mps_motion import OpticalFlow
 from mps_motion import scaling

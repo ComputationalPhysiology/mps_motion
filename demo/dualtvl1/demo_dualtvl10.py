@@ -4,7 +4,6 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
-
 from mps_motion import dualtvl1
 from mps_motion import utils
 

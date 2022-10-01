@@ -1,7 +1,6 @@
 import dask.array as da
 import numpy as np
 import pytest
-
 from mps_motion import frame_sequence as fs
 from mps_motion import Mechanics
 from mps_motion import mechanics

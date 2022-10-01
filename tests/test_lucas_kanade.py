@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from mps_motion import lucas_kanade as lk
 
 

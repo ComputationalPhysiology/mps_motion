@@ -35,5 +35,3 @@ parts:
   - caption: Other Features
     chapters:
     - file: "part4/badges"
-
-

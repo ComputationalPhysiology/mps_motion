@@ -3,14 +3,8 @@ import matplotlib.pyplot as plt
 import mps
 import numpy as np
 import tqdm
-
-<<<<<<< HEAD
-from mps_motion_tracking import farneback
-from mps_motion_tracking import utils
-=======
 from mps_motion import farneback
 from mps_motion import utils
->>>>>>> main
 
 
 def load_test_data():

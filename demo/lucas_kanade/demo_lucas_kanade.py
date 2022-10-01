@@ -4,9 +4,8 @@ import ap_features as apf
 import dask.array as da
 import matplotlib.pyplot as plt
 import mps
-import numpy as np
-
 import mps_motion as mmt
+import numpy as np
 from mps_motion import frame_sequence as fs
 from mps_motion import lucas_kanade
 from mps_motion import mechanics

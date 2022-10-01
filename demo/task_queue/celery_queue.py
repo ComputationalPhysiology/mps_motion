@@ -32,13 +32,12 @@ from celery_factory import make_celery
 from flask import Flask
 from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
+from mps_motion import Mechanics
+from mps_motion import motion_tracking as mt
 from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import JSON
 from sqlalchemy import String
-
-from mps_motion import Mechanics
-from mps_motion import motion_tracking as mt
 
 app = Flask(__name__)
 app.config.update(
