@@ -23,7 +23,7 @@ from . import (
 )
 from .frame_sequence import FrameSequence, VectorFrameSequence, TensorFrameSequence
 from .mechanics import Mechanics
-from .motion_tracking import FLOW_ALGORITHMS, OpticalFlow
+from .motion_tracking import FLOW_ALGORITHMS, OpticalFlow, list_optical_flow_algorithm
 from .utils import MPSData
 
 
@@ -69,4 +69,5 @@ __all__ = [
     "VectorFrameSequence",
     "TensorFrameSequence",
     "stats",
+    "list_optical_flow_algorithm",
 ]

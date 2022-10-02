@@ -1,15 +1,6 @@
 .PHONY: clean clean-test clean-pyc clean-build docs help
 .DEFAULT_GOAL := help
 
-define BROWSER_PYSCRIPT
-import os, webbrowser, sys
-
-from urllib.request import pathname2url
-
-webbrowser.open("file://" + pathname2url(os.path.abspath(sys.argv[1])))
-endef
-export BROWSER_PYSCRIPT
-
 define PRINT_HELP_PYSCRIPT
 import re, sys
 
@@ -21,7 +12,8 @@ for line in sys.stdin:
 endef
 export PRINT_HELP_PYSCRIPT
 
-BROWSER := python -c "$$BROWSER_PYSCRIPT"
+
+DEMOS = demo
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
@@ -56,15 +48,15 @@ type: ## Run mypy
 test: ## run tests on every Python version with tox
 	python3 -m pytest -v -cov=mps_motion tests
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/mps_motion.rst
-	rm -f docs/modules.rst
-	cp README.md docs/.
-	sphinx-apidoc -o docs/ mps_motion
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
-	# $(BROWSER) docs/_build/html/index.html
-	# python -m http.server --directory docs/_build/html
+docs:  ## Build documentation
+	cp CONTRIBUTING.md docs/.
+	@for demo in ${DEMOS}; do \
+		jupytext --to=ipynb --set-kernel=python3 demo/$$demo.py --output=docs/$$demo.ipynb ;\
+		jupyter book build -W docs ;\
+	done
+	
+	jupyter book build -W docs
+	cp docs/motion.mp4 docs/_build/html/.
 
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .

@@ -1,7 +1,14 @@
-# Reproducible workflow for researchers
+# Cardiac MPS motion
 
-This repository is a template for how to set up a reproducible python environment with GitHub.
+Library for tracking motion in cardiac mps data
+
+* Source code: https://github.com/ComputationalPhysiology/mps_motion
 
 ## Contents
 ```{tableofcontents}
 ```
+
+
+## Authors
+
+- Henrik Finsberg henriknf@simula.no

@@ -26,7 +26,21 @@ Array = Union[da.Array, np.ndarray]
 logger = logging.getLogger(__name__)
 
 
-def compute_gradients(displacement: Array, dx=1):
+def compute_gradients(displacement: Array, dx=1) -> da.Array:
+    """Compute gradients of the displacement
+
+    Parameters
+    ----------
+    displacement : Array
+        Displacement vectors
+    dx : int, optional
+        Number of difference steps for gradient computations, by default 1
+
+    Returns
+    -------
+    da.Array
+        Gradients
+    """
     logger.info("Compute gradient using spline interpolation")
     shape = displacement.shape
     x = dx * np.arange(shape[0])
@@ -81,7 +95,23 @@ def compute_gradients(displacement: Array, dx=1):
     return Du
 
 
-def compute_green_lagrange_strain_tensor(F: Array):
+def compute_green_lagrange_strain_tensor(F: Array) -> da.Array:
+    r"""Compute Green-Lagrange strain tensor
+
+    .. math::
+
+        \mathbf{E} = \frac{1}{2} \left( F^T F - I \right)
+
+    Parameters
+    ----------
+    F : Array
+        Deformation gradient
+
+    Returns
+    -------
+    da.Array
+        Green-Lagrange strain tensor
+    """
     logger.debug("Compute Green Lagrange strain")
     F_t = da.transpose(F, (0, 1, 2, 4, 3))
     C = da.matmul(F_t, F)
@@ -90,8 +120,23 @@ def compute_green_lagrange_strain_tensor(F: Array):
     return E
 
 
-def compute_velocity(u: Array, t: Array, spacing: int = 1):
-    """Compute velocity from displacement"""
+def compute_velocity(u: Array, t: Array, spacing: int = 1) -> da.Array:
+    """Compute velocity from displacement
+
+    Parameters
+    ----------
+    u : Array
+        Displacement vectors
+    t : Array
+        Time stamps
+    spacing : int, optional
+        Number of steps between time steps to compute velocities, by default 1
+
+    Returns
+    -------
+    da.Array
+        Velocity
+    """
     time_axis = u.shape.index(len(t))
     assert time_axis == 2, "Time axis should be the third axis"
     assert u.shape[-1] == 2, "Final axis should be ux and uy"
@@ -108,8 +153,30 @@ def compute_velocity(u: Array, t: Array, spacing: int = 1):
     return da.moveaxis(da.moveaxis(du, 2, 3) / dt, 2, 3)
 
 
-def compute_displacement(v: Array, t: Array, ref_index=0, spacing: int = 1):
-    """Compute displacement from velocity"""
+def compute_displacement(v: Array, t: Array, ref_index=0, spacing: int = 1) -> da.Array:
+    """Compute displacement from velocity
+
+    Parameters
+    ----------
+    v : Array
+        Velocities
+    t : Array
+        time stamps
+    ref_index : int, optional
+        Index to be used as reference frame, by default 0
+    spacing : int, optional
+        Spacing used to compute velocities, by default 1
+
+    Returns
+    -------
+    da.Array
+        Displacement
+
+    Raises
+    ------
+    NotImplementedError
+        If spacing is different from 1
+    """
     if spacing != 1:
         raise NotImplementedError("Only implemented for the case when spacing is 1")
     zero = da.zeros((v.shape[0], v.shape[1], 1, v.shape[3]))
@@ -136,17 +203,17 @@ class Mechanics:
         u: fs.VectorFrameSequence,
         t: Optional[Array] = None,
     ):
-        """Craete a mechanics object
+        """Create a mechanics object
 
         Parameters
         ----------
         u : fs.VectorFrameSequence
-            Displacment of shape height x width x time x 2
+            Displacement of shape height x width x time x 2
         t : Optional[Array], optional
             Time stamps of length (time), by default None.
             If not provided `t` will be an evenly spaced
             array with a step of 1.0. Note that `t` is only
-            relevant when computing time derivaties such as velocity.
+            relevant when computing time derivatives such as velocity.
         """
         assert isinstance(u, fs.VectorFrameSequence)
         self._u = u
@@ -154,10 +221,12 @@ class Mechanics:
 
     @property
     def u(self) -> fs.VectorFrameSequence:
+        """Displacement field"""
         return self._u
 
     @property
     def t(self) -> Array:
+        """Time stamps"""
         return self._t
 
     @t.setter
@@ -225,6 +294,7 @@ class Mechanics:
 
     @property
     def F(self) -> fs.TensorFrameSequence:
+        """Deformation gradient"""
         return fs.TensorFrameSequence(
             self.du.array + da.eye(2)[None, None, None, :, :],
             dx=self.dx,
@@ -233,6 +303,7 @@ class Mechanics:
 
     @property
     def E(self) -> fs.TensorFrameSequence:
+        """Green-Lagrange strain tensor"""
         return fs.TensorFrameSequence(
             compute_green_lagrange_strain_tensor(self.F.array),
             dx=self.dx,
@@ -241,6 +312,7 @@ class Mechanics:
 
     @functools.lru_cache
     def velocity(self, spacing: int = 1) -> fs.VectorFrameSequence:
+        """Velocity field"""
         return fs.VectorFrameSequence(
             compute_velocity(self.u.array, self.t, spacing=spacing),
             dx=self.dx,

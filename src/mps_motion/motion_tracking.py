@@ -28,6 +28,17 @@ class FLOW_ALGORITHMS(str, Enum):
     block_matching = "block_matching"
 
 
+def list_optical_flow_algorithm():
+    return FLOW_ALGORITHMS._member_names_
+
+
+class RefFrames(str, Enum):
+    min = "min"
+    max = "max"
+    median = "median"
+    mean = "mean"
+
+
 def _check_algorithm(alg):
     msg = f"Expected flow algorithm to be one of {FLOW_ALGORITHMS._member_names_}, got {alg}"
     if alg not in FLOW_ALGORITHMS._member_names_:
@@ -35,11 +46,31 @@ def _check_algorithm(alg):
 
 
 def get_referenece_image(
-    reference_frame,
-    frames,
+    reference_frame: Union[int, str, RefFrames],
+    frames: np.ndarray,
     time_stamps: Optional[np.ndarray] = None,
     smooth_ref_transition: bool = True,
 ) -> Tuple[str, np.ndarray, int]:
+    """Get reference frame
+
+    Parameters
+    ----------
+    reference_frame : Union[int, str, RefFrames]
+        Either an integer of string representing the frame
+        that should be used as reference
+    frames : np.ndarray
+        The image frames
+    time_stamps : Optional[np.ndarray], optional
+        The time stamps, by default None
+    smooth_ref_transition : bool, optional
+        If true, compute the mean frame of the three closest frames, by default True
+
+    Returns
+    -------
+    Tuple[str, np.ndarray, int]
+        (reference_str, reference_image, reference_frame_index)
+
+    """
 
     reference_frame_index = 0
     try:
@@ -98,7 +129,7 @@ class OpticalFlow:
         self,
         data: utils.MPSData,
         flow_algorithm: FLOW_ALGORITHMS = FLOW_ALGORITHMS.farneback,
-        reference_frame: Union[int, str] = 0,
+        reference_frame: Union[int, str, RefFrames] = 0,
         filter_options: Optional[Dict[str, Any]] = None,
         data_scale: float = 1.0,
         smooth_ref_transition: bool = True,

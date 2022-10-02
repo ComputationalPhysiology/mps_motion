@@ -37,6 +37,17 @@ class ShapeError(RuntimeError):
     pass
 
 
+def download_demo_data(path):
+    print("Downloading data. Please wait...")
+    link = "https://www.dropbox.com/s/xbn29petfkpjf7w/PointH4A_ChannelBF_VC_Seq0018.nd2?dl=1"
+    import urllib.request
+    import time
+
+    urllib.request.urlretrieve(link, path)
+    time.sleep(1.0)
+    print("Done downloading data")
+
+
 def unmask(array, fill_value=0.0):
     """Take a mask array and fills
     it with the given fill value and
