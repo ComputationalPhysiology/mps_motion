@@ -139,9 +139,9 @@ plt.imshow(frame70 - frame0)
   For each block:
     For each location in the search area:
       Compute a similarity (mean square error)
-    Find the block inside the search area with the best 
+    Find the block inside the search area with the best
     similarity measure and collect the motion vector
-```    
+```
 <!-- #endregion -->
 
 ```python slideshow={"slide_type": "slide"}
@@ -158,7 +158,7 @@ search_x = search_y = 10
 fig, ax = plt.subplots(1, 2, figsize=(12, 6))
 ax[0].imshow(frame0)
 search = mpl.patches.Rectangle(
-    (y_start - search_y, x_start-search_x), 
+    (y_start - search_y, x_start-search_x),
     dy + 2 * search_y, dx + 2 * search_x, facecolor="magenta",
     alpha=0.2,
 )
@@ -188,7 +188,7 @@ for i, xi in enumerate(range(x_start - search_x, x_start + dx + search_x)):
             min_err = err
             u = xi - x_start
             v = yj - y_start
- 
+
 print(f"(u, v) = ({u}, {v})")
 fig, ax = plt.subplots(1, 2)
 ax[0].imshow(reference_block)
@@ -241,14 +241,14 @@ Assume that at some later time $t + \Delta t$ the pixel at $(x, y)$ has moved to
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "fragment"} -->
-\begin{align} I(x, y, t) 
+\begin{align} I(x, y, t)
 &= I(x + \Delta x, y + \Delta y, t + \Delta t) \\
-&\approx I(x, y, t) + \frac{\partial I}{\partial x}\Delta x + \frac{\partial I}{\partial y}\Delta y + \frac{\partial I}{\partial t}\Delta t 
+&\approx I(x, y, t) + \frac{\partial I}{\partial x}\Delta x + \frac{\partial I}{\partial y}\Delta y + \frac{\partial I}{\partial t}\Delta t
 \end{align}
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "slide"} -->
-\begin{align}  
+\begin{align}
 \frac{\partial I}{\partial x}\Delta x + \frac{\partial I}{\partial y}\Delta y + \frac{\partial I}{\partial t}\Delta t = 0
 \end{align}
 <!-- #endregion -->
@@ -258,7 +258,7 @@ Divide by $\Delta t$ and let $\Delta t \rightarrow 0$ gives us the optical flow 
 <!-- #endregion -->
 
 <!-- #region slideshow={"slide_type": "fragment"} -->
-\begin{align}  
+\begin{align}
 \frac{\partial I}{\partial x} V_x + \frac{\partial I}{\partial y} V_y = \nabla I \cdot \vec{V} = - \frac{\partial I}{\partial t}
 \end{align}
 <!-- #endregion -->
@@ -308,7 +308,7 @@ I_t(p_{25})\\
 \end{pmatrix}
 \\
 $$
-or 
+or
 $$ A v = b $$
 
 
@@ -724,11 +724,11 @@ us = {}
 cmap = plt.get_cmap('viridis')
 for k, m in mechanics.items():
     us[k] =  m.u_norm.compute()
-    
+
 for (k, u), ax in zip(us.items(), axs.flatten()):
     ims[k] = ax.imshow(u[0, :, :], cmap=cmap, vmin=vmin, vmax=vmax)
     ax.set_title(" ".join(k.split("_")))
-    
+
 cbar = fig.colorbar(ims[k], ax=axs.ravel().tolist())
 cbar.set_label("Displacement [um]")
 
@@ -770,7 +770,7 @@ labels = []
 lines = []
 for k, m in mechanics.items():
     ax.plot(data.time_stamps, m.u_mean_norm.compute(), label=" ".join(k.split("_")))
-    
+
 ax.grid()
 ax.legend()
 ax.set_xlabel("Time [ms]")
@@ -854,11 +854,11 @@ opt_flow = OpticalFlow(data, "farneback")
 
 fig, ax = plt.subplots(figsize=(12, 6))
 
-for scale in [1, 0.7, 0.5, 0.3, 0.1]: 
+for scale in [1, 0.7, 0.5, 0.3, 0.1]:
     d = opt_flow.get_displacements(scale=scale, unit="um")
     m = Mechancis(d)
     ax.plot(data.time_stamps, m.u_mean_norm.compute(), label=f"{scale:.2f}")
-    
+
 ax.grid()
 ax.legend()
 plt.show()

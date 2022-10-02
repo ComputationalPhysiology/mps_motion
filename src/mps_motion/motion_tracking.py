@@ -78,15 +78,15 @@ def get_referenece_image(
         reference_str = str(reference_frame)
 
     except ValueError:
-        refs = ["min", "max", "median", "mean"]
+        refs = RefFrames._member_names_
         msg = (
             "Expected reference frame to be an integer or one of "
             f"{refs}, got {reference_frame}"
         )
-        if reference_frame not in refs:
+        if str(reference_frame) not in refs:
             raise ValueError(msg)
-        reference_str = reference_frame
-        reference_image = getattr(np, reference_frame)(frames, axis=2)
+        reference_str = str(reference_frame)
+        reference_image = getattr(np, str(reference_frame))(frames, axis=2)
     else:
         if time_stamps is None:
             raise ValueError("Please provide time stamps")

@@ -10,6 +10,3 @@ Alternatively you can install it directly from Github
 ```
 python3 -m pip install git+https://github.com/ComputationalPhysiology/mps_motion
 ```
-
-
-

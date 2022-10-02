@@ -54,7 +54,7 @@ docs:  ## Build documentation
 		jupytext --to=ipynb --set-kernel=python3 demo/$$demo.py --output=docs/$$demo.ipynb ;\
 		jupyter book build -W docs ;\
 	done
-	
+
 	jupyter book build -W docs
 	cp docs/motion.mp4 docs/_build/html/.
 
