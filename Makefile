@@ -40,13 +40,13 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8
-	python -m flake8 mps_motion tests
+	python -m flake8 mps_motion
 
 type: ## Run mypy
-	python3 -m mypy mps_motion tests
+	python3 -m mypy mps_motion
 
 test: ## run tests on every Python version with tox
-	python3 -m pytest -v -cov=mps_motion tests
+	python3 -m pytest
 
 docs:  ## Build documentation
 	cp CONTRIBUTING.md docs/.
