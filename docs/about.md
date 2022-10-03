@@ -12,65 +12,32 @@ jupyter:
     name: python3
 ---
 
+# Presentation at Department meeting February 18th 2021
+
 # Analyzing motion in cardiac MPS data
 
 # human induced Pluripotent Stem Cells (hiPSC) can be used in personalized drug screening
-<img src="figures/sayed2016.png" alt="Drawing" style="width: 900px;"/>
 
 >Translation of Human-Induced Pluripotent Stem Cells Nazish Sayed, Chun Liu,
 >Joseph C. Wu Journal of the American College of Cardiology May 2016, 67 (18) 2161-2176
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 # MicroPhysiological Systems (MPS) mimics the in vitro conditions
-<table style="background-color: white;">
-    <tr>
-      <td > <img src="figures/mps_setup.png" alt="Drawing" style="width: 100%;"/>   </td>
-      <td> <img src="figures/optical.png" alt="Drawing" style="width: 100%;"/>  </td>
-    <tr>
-</table>
-
 
 > Tveito, A., Jæger, K.H., Huebsch, N., Charrez, B., Edwards, A.G., Wall, S. and Healy, K.E., 2018. Inversion and computational maturation of drug response using human stem cell derived cardiomyocytes in microphysiological systems. Scientific reports, 8(1), p.17626.
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-# Brightfield images to look at motion
-![brigtfield](brightfield.mp4)
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-# Calcium imaging
-
-Add fluorescent molecules that can respond to the binding of Ca2+ ions by changing their fluorescence properties
-
-GCaMP - genetically encoded calcium indicator
-![calcium](figures/gcamp.mp4)
-<!-- #endregion -->
-
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Berst
-
-Berkeley Red-based Sensor of Transmembrane potential
-
-![berst](figures/berst.mp4)
-<!-- #endregion -->
-
-<!-- #region slideshow={"slide_type": "slide"} -->
 We want to quantifiy the motion of the cells in the chip. Why?
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+
 - Contractile motion is an important biomarker
 - Several drugs alter the contractile properties and this is something we want to measure.
 - Provides data for parameterizing mechancal models of IPS cells.
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 **Warning** - There will be some code in this presentation 🤓
-<!-- #endregion -->
 
-```python slideshow={"slide_type": "slide"}
+```python
 import mps
 import numpy as np
 import matplotlib.pyplot as plt
@@ -79,28 +46,26 @@ path = Path("/Users/henriknf/local/src/mps_motion_tracking/demo/PointH4A_Channel
 data = mps.MPS(path)
 ```
 
-```python slideshow={"slide_type": "fragment"}
+```python
 video = Path("brightfield.mp4")
 mps.utils.frames2mp4(data.frames.T, video, framerate=data.framerate)
 ```
 
-```python slideshow={"slide_type": "slide"}
+```python
 from IPython.display import Video
 Video(video, width=800, html_attributes="controls loop")
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ## What type of data do we have?
-<!-- #endregion -->
 
 ```python
 print("width, height, num_timepoints = ", data.frames.shape)
 print(data.info)
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ## Can we say something about how much a pixel moved from frame $i$ to frame $j$ ?
-<!-- #endregion -->
 
 ```python
 %matplotlib inline
@@ -125,13 +90,11 @@ plt.show()
 plt.imshow(frame70 - frame0)
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ## Block matching
 
 ![block_matching](block_matching.jpg)
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "-"} -->
 1. Divide images into macro blocks and decide on size of search area
 2.
 
@@ -142,7 +105,6 @@ plt.imshow(frame70 - frame0)
     Find the block inside the search area with the best
     similarity measure and collect the motion vector
 ```
-<!-- #endregion -->
 
 ```python slideshow={"slide_type": "slide"}
 import matplotlib as mpl
@@ -196,13 +158,12 @@ ax[1].imshow(best_block)
 plt.show()
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ### Assumptions
 
 - Objects are only translated (not deformed)
 - No change in illumination or noise
 - Translations are small (within search region)
-<!-- #endregion -->
 
 ```python slideshow={"slide_type": "slide"}
 from mps_motion_tracking.block_matching import flow
@@ -228,48 +189,38 @@ from mps_motion_tracking.block_matching import flow, filter_vectors
 times["block matching"] = %timeit -o flow(frame0, frame70, block_size=9, max_block_movement=18, filter_kernel_size=0)
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ## The optical flow equation
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
 Let $I(x, y, t)$ denote the image sequence at position $(x, y)$ and time $t$.
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+
 Assume that at some later time $t + \Delta t$ the pixel at $(x, y)$ has moved to $(x + \Delta x, y + \Delta y)$.
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+
 \begin{align} I(x, y, t)
 &= I(x + \Delta x, y + \Delta y, t + \Delta t) \\
 &\approx I(x, y, t) + \frac{\partial I}{\partial x}\Delta x + \frac{\partial I}{\partial y}\Delta y + \frac{\partial I}{\partial t}\Delta t
 \end{align}
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 \begin{align}
 \frac{\partial I}{\partial x}\Delta x + \frac{\partial I}{\partial y}\Delta y + \frac{\partial I}{\partial t}\Delta t = 0
 \end{align}
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+
 Divide by $\Delta t$ and let $\Delta t \rightarrow 0$ gives us the optical flow equation
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+
 \begin{align}
 \frac{\partial I}{\partial x} V_x + \frac{\partial I}{\partial y} V_y = \nabla I \cdot \vec{V} = - \frac{\partial I}{\partial t}
 \end{align}
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+
 $V_x$ and $V_y$ are unknown. We need one more equation!
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ### Image gradient
-<!-- #endregion -->
 
 ```python
 I_x, I_y = np.gradient(frame0)
@@ -282,13 +233,12 @@ ax[1].set_title("$I_y$")
 plt.show()
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ### The Lucas–Kanade method
 
 Assumption: Flow is essentially constant in a local neighbourhood of the pixel under consideration
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+
 Consider a pixel $(x, y)$ and select a $5 \times 5$ window around this pixel (i.e 25 pixels).
 
 $$
@@ -312,12 +262,10 @@ or
 $$ A v = b $$
 
 
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+
 solve least square problem
 $$ A^T A v = A^Tb$$
-<!-- #endregion -->
 
 ```python slideshow={"slide_type": "slide"}
 from mps_motion_tracking.lucas_kanade import flow
@@ -338,34 +286,30 @@ cbar.set_label("Pixel displacement")
 plt.show()
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ### How about performance?
-<!-- #endregion -->
 
 ```python slideshow={"slide_type": "fragment"}
 from mps_motion_tracking.lucas_kanade import flow
 times["lucas kanade"] = %timeit -o flow(frame0, frame70, step=5, winSize=(15, 15), interpolate=False)
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ## Dense optical flow methods
 
 ### Farnebäck's method
 Farnebäck, G. (2003, June). Two-frame motion estimation based on polynomial expansion. In Scandinavian conference on Image analysis (pp. 363-370). Springer, Berlin, Heidelberg.
 
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+
 Assumption: image can locally approximated by a quadratic polynomial
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+
 Let $\mathbf{x} = (x \; y)$ be a pixel coordinate, then we assumate that the reference image can be represented as
 
 $$I(x, y, t_1) = f_1(\mathbf{x}) = \mathbf{x}^T A_1 \mathbf{x} + b_1^T \mathbf{x} + c_1$$
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 At a later time $\mathbf{x}$ has moved to $\mathbf{x} - \mathbf{d}$ so we can write the current image as
 
 
@@ -374,16 +318,14 @@ I(x, y, t_2) &= f_2(\mathbf{x}) = f_1(\mathbf{x} - \mathbf{d}) \\
 &= (\mathbf{x} - \mathbf{d})^T A_1 (\mathbf{x} - \mathbf{d})  + b_1^T (\mathbf{x} - \mathbf{d}) + c_1 \\
 &= \mathbf{x}^T A_1 \mathbf{x} + (b_1 - 2A_1 \mathbf{d})^T \mathbf{x} + c_1 +\mathbf{d}^TA\mathbf{d} - b_1^T\mathbf{d}
 \end{align}
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+
 $$f_2(\mathbf{x}) = \mathbf{x}^T A_2 \mathbf{x} + b_2^T \mathbf{x} + c_2$$
 
 $$ \implies b_2 = b_1 - 2A_1 \mathbf{d} \; \land \; A_1 = A_2 $$
 $$ \implies \mathbf{d} = A_1^{-1} \Delta b, \;\; \Delta b = -\frac{1}{2}(b_2 - b_1) $$
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 In practice we let $A(\mathbf{x}) = \frac{1}{2}(A_1(\mathbf{x}) + A_2(\mathbf{x)})$, perform a polynomial expansion of the two images, and solve the least square problem
 
 $$
@@ -393,7 +335,6 @@ $$
 $$
 \mathbf{d} = \left( \sum w A^TA \right)^{-1} \sum w A^T \Delta b
 $$
-<!-- #endregion -->
 
 ```python slideshow={"slide_type": "slide"}
 from mps_motion_tracking.farneback import flow
@@ -418,14 +359,12 @@ from mps_motion_tracking.farneback import flow
 times["farneback"] = %timeit -o flow(frame0, frame70)
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ### Dual TV-L 1
 ZACH, Christopher; POCK, Thomas; BISCHOF, Horst. A duality based approach for realtime tv-l 1 optical flow. In: Joint pattern recognition symposium. Springer, Berlin, Heidelberg, 2007. p. 214-223.
-<!-- #endregion -->
 
-<!-- #region slideshow={"slide_type": "fragment"} -->
+
 Variational approach which minimizes some functional subject to the optical flow constraint.
-<!-- #endregion -->
 
 ```python slideshow={"slide_type": "slide"}
 from mps_motion_tracking.dualtvl10 import flow
@@ -451,14 +390,13 @@ from mps_motion_tracking.dualtvl10 import flow
 times["dualtvl1"] = %timeit -o flow(frame0, frame70)
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ## Comparison
 
 | Type\Performance      || Slow            | Fast         |
 |-----------------------||-----------------|--------------|
 | **Sparse**            || Block matching  | Lucas Kanade |
 | **Dense**             || Dual TV-L 1     | Farnebäck    |
-<!-- #endregion -->
 
 ```python slideshow={"slide_type": "slide"}
 vmin = -10
@@ -493,9 +431,8 @@ cbar.set_label("Pixel displacement")
 plt.show()
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ## Performance
-<!-- #endregion -->
 
 ```python
 for k, v in times.items():
@@ -505,14 +442,13 @@ plt.bar(times.keys(), list(map(lambda x : x.average, times.values())))
 plt.show()
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ## Optical flow benchmark
 
 Find optical flow in images with known motion
 
 ![frame1](../datasets/Dimetrodon/frame10.png)
 ![frame2](../datasets/Dimetrodon/frame11.png)
-<!-- #endregion -->
 
 ```python slideshow={"slide_type": "slide"}
 import imageio
@@ -624,9 +560,8 @@ tf = np.swapaxes(np.array(flowiz.flowiz._normalize_flow(true_flow)).T, 0, 1)
 benchmark(tf, frames)
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ## Comparing outputs from the different methods
-<!-- #endregion -->
 
 ```python slideshow={"slide_type": "fragment"}
 from typing import Dict
@@ -693,21 +628,7 @@ for k, m in mechanics.items():
     anim.save(f"disp_{k}.mp4", fps=data.framerate, dpi=300, extra_args=['-vcodec', 'libx264'])
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
-## Spatial displacement
-<!-- #endregion -->
-
-```python slideshow={"slide_type": "-"}
-from IPython.display import Video
-#Video(f"disp_block_matching.mp4", width=800, html_attributes="controls loop")
-#Video(f"disp_lucas_kanade.mp4", width=800, html_attributes="controls loop")
-#Video(f"disp_farneback.mp4", width=800, html_attributes="controls loop")
-Video(f"disp_dualtvl10.mp4", width=800, html_attributes="controls loop")
-```
-
-<!-- #region slideshow={"slide_type": "slide"} -->
 ## Maximal spatial displacement
-<!-- #endregion -->
 
 ```python slideshow={"slide_type": "skip"}
 # Create movies
@@ -760,9 +681,8 @@ cbar.set_label("Displacement [um]")
 plt.show()
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ## Average displacement as a function of time
-<!-- #endregion -->
 
 ```python slideshow={"slide_type": "-"}
 fig, ax = plt.subplots(figsize=(12, 6))
@@ -778,9 +698,8 @@ ax.set_ylabel("Displacement norm[\u00B5m]")
 plt.show()
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ### How about local variations?
-<!-- #endregion -->
 
 ```python slideshow={"slide_type": "skip"}
 m = mechanics["farneback"]
@@ -842,9 +761,8 @@ ax.set_ylabel("Displacement norm [\u00B5m]")
 plt.show()
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ### How about resizing?
-<!-- #endregion -->
 
 ```python
 import matplotlib.pyplot as plt
@@ -864,7 +782,7 @@ ax.legend()
 plt.show()
 ```
 
-<!-- #region slideshow={"slide_type": "slide"} -->
+
 ## Next steps
 - Test method on real data - do we observe expected changes when exposed to drugs?
 - Implement GUI in Web application
@@ -874,35 +792,3 @@ plt.show()
 - Try more modern methods for motion tracking - based on deep learning
 - Train neural network (NN) to learn the motion (from pixels)
 - Use Pysics Informed- or Physics Guided NN
-<!-- #endregion -->
-
-<!-- #region slideshow={"slide_type": "slide"} -->
-![identphy](figures/identiphy.png)
-<!-- #endregion -->
-
-<!-- #region slideshow={"slide_type": "fragment"} -->
-![team](figures/team.png)
-<!-- #endregion -->
-
-<!-- #region slideshow={"slide_type": "fragment"} -->
-<table>
-    <tr>
-        <td>
-        <img src="https://biomaterials.berkeley.edu/wp-content/uploads/2018/08/healy-e1535756168121-500x500.jpg" />
-            Kevin Healy
-        </td>
-        <td>
-        <img src="https://biomaterials.berkeley.edu/wp-content/uploads/2018/08/verena-e1534797943921-500x500.png" />
-            Verena Charwat
-        </td>
-        <td>
-        <img src="https://biomaterials.berkeley.edu/wp-content/uploads/2018/08/Berenice2-1-e1533922001664.jpg" />
-            Berenice Charrez
-        </td>
-    </tr>
-</table>
-<!-- #endregion -->
-
-```python
-
-```
