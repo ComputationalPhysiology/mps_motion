@@ -50,11 +50,6 @@ test: ## run tests on every Python version with tox
 
 docs:  ## Build documentation
 	cp CONTRIBUTING.md docs/.
-	@for demo in ${DEMOS}; do \
-		jupytext --to=ipynb --set-kernel=python3 demo/$$demo.py --output=docs/$$demo.ipynb ;\
-		jupyter book build -W docs ;\
-	done
-
 	jupyter book build -W docs
 	cp docs/motion.mp4 docs/_build/html/.
 
