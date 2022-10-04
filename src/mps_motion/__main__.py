@@ -1,3 +1,4 @@
+from pathlib import Path
 from textwrap import dedent
 from typing import Optional
 
@@ -9,8 +10,28 @@ from .motion_tracking import FLOW_ALGORITHMS
 app = typer.Typer(help="Estimate motion in stack of images")
 
 
-@app.command()
-def main(
+def version_callback(show_version: bool):
+    """Prints version information."""
+    if show_version:
+        from . import __version__, __program_name__
+
+        typer.echo(f"{__program_name__} {__version__}")
+        raise typer.Exit()
+
+
+def license_callback(show_license: bool):
+    """Prints license information."""
+    if show_license:
+        from . import __license__
+
+        typer.echo(f"{__license__}")
+        raise typer.Exit()
+
+
+@app.command(
+    help="Run motion analysis on a single file and output results in a directory",
+)
+def analyze(
     filename: str = typer.Argument(
         ...,
         help=dedent(
@@ -117,9 +138,31 @@ def main(
     )
 
 
-def run():
-    typer.run(main)
+@app.command(help="Start gui and analyze files in the provided folder")
+def gui(
+    path: Path = typer.Argument(
+        ...,
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
+        resolve_path=True,
+        help=dedent(
+            """
+        Path to folder where the recordings are located
+        """,
+        ),
+    ),
+):
+
+    # Make sure we can import the required packages
+    from . import gui  # noqa: F401
+
+    gui_path = Path(__file__).parent.joinpath("gui.py")
+    import subprocess as sp
+
+    sp.run(["streamlit", "run", gui_path.as_posix(), "--", path.as_posix()])
 
 
 if __name__ == "__main__":
-    run()
+    raise SystemExit(app())

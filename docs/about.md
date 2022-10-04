@@ -14,15 +14,15 @@ jupyter:
 
 # Presentation at Department meeting February 18th 2021
 
-# Analyzing motion in cardiac MPS data
+## Analyzing motion in cardiac MPS data
 
-# human induced Pluripotent Stem Cells (hiPSC) can be used in personalized drug screening
+## human induced Pluripotent Stem Cells (hiPSC) can be used in personalized drug screening
 
 >Translation of Human-Induced Pluripotent Stem Cells Nazish Sayed, Chun Liu,
 >Joseph C. Wu Journal of the American College of Cardiology May 2016, 67 (18) 2161-2176
 
 
-# MicroPhysiological Systems (MPS) mimics the in vitro conditions
+## MicroPhysiological Systems (MPS) mimics the in vitro conditions
 
 > Tveito, A., Jæger, K.H., Huebsch, N., Charrez, B., Edwards, A.G., Wall, S. and Healy, K.E., 2018. Inversion and computational maturation of drug response using human stem cell derived cardiomyocytes in microphysiological systems. Scientific reports, 8(1), p.17626.
 

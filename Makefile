@@ -52,6 +52,7 @@ docs:  ## Build documentation
 	cp CONTRIBUTING.md docs/.
 	jupyter book build -W docs
 	cp docs/motion.mp4 docs/_build/html/.
+	cp docs/mps-motion-gui.mp4 docs/_build/html/.
 
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .

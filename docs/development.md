@@ -1,4 +1,5 @@
-# Development installations
+# Development installation
+
 Developers should install some extra dependencies
 ```
 python3 -m pip install install -e ".[dev,docs,test]"
