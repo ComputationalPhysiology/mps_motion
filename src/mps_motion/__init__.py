@@ -1,30 +1,36 @@
 """Top-level package for MPS Motion Tracking."""
-
-__author__ = """Henrik Finsberg"""
-__email__ = "henriknf@simula.no"
-__version__ = "0.1.0"
-
 import logging as _logging
+from importlib.metadata import metadata
+
 import daiquiri as _daiquiri
 
-from . import (
-    block_matching,
-    dualtvl1,
-    farneback,
-    lucas_kanade,
-    frame_sequence,
-    mechanics,
-    motion_tracking,
-    scaling,
-    utils,
-    visu,
-    filters,
-    stats,
-)
-from .frame_sequence import FrameSequence, VectorFrameSequence, TensorFrameSequence
+from . import block_matching
+from . import dualtvl1
+from . import farneback
+from . import filters
+from . import frame_sequence
+from . import lucas_kanade
+from . import mechanics
+from . import motion_tracking
+from . import scaling
+from . import stats
+from . import utils
+from . import visu
+from .frame_sequence import FrameSequence
+from .frame_sequence import TensorFrameSequence
+from .frame_sequence import VectorFrameSequence
 from .mechanics import Mechanics
-from .motion_tracking import FLOW_ALGORITHMS, OpticalFlow, list_optical_flow_algorithm
+from .motion_tracking import FLOW_ALGORITHMS
+from .motion_tracking import list_optical_flow_algorithm
+from .motion_tracking import OpticalFlow
 from .utils import MPSData
+
+meta = metadata("mps-motion")
+__version__ = meta["Version"]
+__author__ = meta["Author"]
+__license__ = meta["License"]
+__email__ = meta["Author-email"]
+__program_name__ = meta["Name"]
 
 
 def set_log_level(level):
