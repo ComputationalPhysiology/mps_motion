@@ -42,7 +42,7 @@ import mps
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-path = Path("/Users/henriknf/local/src/mps_motion_tracking/demo/PointH4A_ChannelBF_VC_Seq0018.nd2")
+path = Path("/Users/henriknf/local/src/mps_motion/demo/PointH4A_ChannelBF_VC_Seq0018.nd2")
 data = mps.MPS(path)
 ```
 
@@ -166,7 +166,7 @@ plt.show()
 - Translations are small (within search region)
 
 ```python slideshow={"slide_type": "slide"}
-from mps_motion_tracking.block_matching import flow
+from mps_motion.block_matching import flow
 block_motion = flow(frame0, frame70, block_size=3, max_block_movement=18, filter_kernel_size=5)
 
 # Plot
@@ -185,7 +185,7 @@ plt.show()
 
 ```python
 times = {}
-from mps_motion_tracking.block_matching import flow, filter_vectors
+from mps_motion.block_matching import flow, filter_vectors
 times["block matching"] = %timeit -o flow(frame0, frame70, block_size=9, max_block_movement=18, filter_kernel_size=0)
 ```
 
@@ -268,7 +268,7 @@ solve least square problem
 $$ A^T A v = A^Tb$$
 
 ```python slideshow={"slide_type": "slide"}
-from mps_motion_tracking.lucas_kanade import flow
+from mps_motion.lucas_kanade import flow
 lk_motion = flow(frame0, frame70, step=2, winSize=(15, 15))
 
 
@@ -290,7 +290,7 @@ plt.show()
 ### How about performance?
 
 ```python slideshow={"slide_type": "fragment"}
-from mps_motion_tracking.lucas_kanade import flow
+from mps_motion.lucas_kanade import flow
 times["lucas kanade"] = %timeit -o flow(frame0, frame70, step=5, winSize=(15, 15), interpolate=False)
 ```
 
@@ -337,7 +337,7 @@ $$
 $$
 
 ```python slideshow={"slide_type": "slide"}
-from mps_motion_tracking.farneback import flow
+from mps_motion.farneback import flow
 farneback_motion = flow(frame0, frame70)
 
 # Plot
@@ -355,7 +355,7 @@ plt.show()
 ```
 
 ```python
-from mps_motion_tracking.farneback import flow
+from mps_motion.farneback import flow
 times["farneback"] = %timeit -o flow(frame0, frame70)
 ```
 
@@ -367,7 +367,7 @@ ZACH, Christopher; POCK, Thomas; BISCHOF, Horst. A duality based approach for re
 Variational approach which minimizes some functional subject to the optical flow constraint.
 
 ```python slideshow={"slide_type": "slide"}
-from mps_motion_tracking.dualtvl10 import flow
+from mps_motion.dualtvl10 import flow
 dualtvl1_motion = flow(frame0, frame70)
 
 
@@ -386,7 +386,7 @@ plt.show()
 ```
 
 ```python
-from mps_motion_tracking.dualtvl10 import flow
+from mps_motion.dualtvl10 import flow
 times["dualtvl1"] = %timeit -o flow(frame0, frame70)
 ```
 
@@ -463,7 +463,7 @@ display.Image("benchmark_Dimetrodon.gif")
 
 ```python slideshow={"slide_type": "skip"}
 def benchmark(tf, frames):
-    from mps_motion_tracking import (
+    from mps_motion import (
         block_matching,
         dualtvl10,
         farneback,
@@ -566,7 +566,7 @@ benchmark(tf, frames)
 ```python slideshow={"slide_type": "fragment"}
 from typing import Dict
 import numpy as np
-from mps_motion_tracking import OpticalFlow
+from mps_motion import OpticalFlow
 
 scale = 0.3
 
@@ -583,7 +583,7 @@ for k in ["farneback", "lucas_kanade", "block_matching", "dualtvl10"]:
 ```
 
 ```python slideshow={"slide_type": "fragment"}
-from mps_motion_tracking import Mechancis
+from mps_motion import Mechancis
 
 mechanics = {}
 for k, d in displacements.items():
@@ -766,7 +766,7 @@ plt.show()
 
 ```python
 import matplotlib.pyplot as plt
-from mps_motion_tracking import OpticalFlow, Mechancis
+from mps_motion import OpticalFlow, Mechancis
 
 opt_flow = OpticalFlow(data, "farneback")
 
