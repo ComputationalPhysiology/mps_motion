@@ -1,10 +1,9 @@
 # Installation
 
-You can install the software with pip. Clone the repo, change director to the root of the repo and do
+You can install the software with pip
 ```
-python3 -m pip install install .
+python -m pip install mps-motion
 ```
-There is also a `Makefile` in this repo, and the same instructions can be executed using the command `make install`.
 
 Alternatively you can install it directly from Github
 ```
