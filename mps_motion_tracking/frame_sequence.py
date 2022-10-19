@@ -201,21 +201,24 @@ class FrameSequence:
         h5file = None
         if path.suffix == ".h5":
             h5file = h5py.File(path, "r")
-            if "array" in h5file:
-                if use_dask:
-                    data["array"] = da.from_array(h5file["array"])
-                else:
-                    data["array"] = h5file["array"][...]
-                data.update(
-                    dict(
-                        zip(
-                            h5file["array"].attrs.keys(),
-                            map(float, h5file["array"].attrs.values()),
+            try:
+                if "array" in h5file:
+                    if use_dask:
+                        data["array"] = da.from_array(h5file["array"])
+                    else:
+                        data["array"] = h5file["array"][...]
+                    data.update(
+                        dict(
+                            zip(
+                                h5file["array"].attrs.keys(),
+                                map(float, h5file["array"].attrs.values()),
+                            ),
                         ),
-                    ),
-                )
-                data["dx"] = float(h5file["array"].attrs.get("dx", 1))
-                data["scale"] = float(h5file["array"].attrs.get("scale", 1))
+                    )
+                    data["dx"] = float(h5file["array"].attrs.get("dx", 1))
+                    data["scale"] = float(h5file["array"].attrs.get("scale", 1))
+            except Exception:
+                h5file.close()
         else:
             data.update(np.load(path, allow_pickle=True).item())
 
@@ -223,6 +226,8 @@ class FrameSequence:
                 data["array"] = da.from_array(data["array"])
 
         if "array" not in data:
+            if h5file is not None:
+                h5file.close()
             raise IOError(f"Unable to load data from file {path}")
 
         obj = cls(**data)
