@@ -1,9 +1,8 @@
 import numpy as np
-
-from mps_motion_tracking import Mechanics
-from mps_motion_tracking import OpticalFlow
-from mps_motion_tracking import scaling
-from mps_motion_tracking import utils
+from mps_motion import Mechanics
+from mps_motion import OpticalFlow
+from mps_motion import scaling
+from mps_motion import utils
 
 
 def test_resize_data():

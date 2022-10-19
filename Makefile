@@ -1,15 +1,6 @@
 .PHONY: clean clean-test clean-pyc clean-build docs help
 .DEFAULT_GOAL := help
 
-define BROWSER_PYSCRIPT
-import os, webbrowser, sys
-
-from urllib.request import pathname2url
-
-webbrowser.open("file://" + pathname2url(os.path.abspath(sys.argv[1])))
-endef
-export BROWSER_PYSCRIPT
-
 define PRINT_HELP_PYSCRIPT
 import re, sys
 
@@ -21,7 +12,8 @@ for line in sys.stdin:
 endef
 export PRINT_HELP_PYSCRIPT
 
-BROWSER := python -c "$$BROWSER_PYSCRIPT"
+
+DEMOS = demo
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
@@ -48,23 +40,19 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8
-	python -m flake8 mps_motion_tracking tests
+	python -m flake8
 
 type: ## Run mypy
-	python3 -m mypy mps_motion_tracking tests
+	python3 -m mypy
 
 test: ## run tests on every Python version with tox
-	python3 -m pytest -v -cov=mps_motion_tracking tests
+	python3 -m pytest
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/mps_motion_tracking.rst
-	rm -f docs/modules.rst
-	cp README.md docs/.
-	sphinx-apidoc -o docs/ mps_motion_tracking
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
-	# $(BROWSER) docs/_build/html/index.html
-	# python -m http.server --directory docs/_build/html
+docs:  ## Build documentation
+	cp CONTRIBUTING.md docs/.
+	jupyter book build -W docs
+	cp docs/motion.mp4 docs/_build/html/.
+	cp docs/mps-motion-gui.mp4 docs/_build/html/.
 
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
@@ -81,7 +69,7 @@ install: clean ## install the package to the active Python's site-packages
 	python3 -m pip install .
 
 dev: clean ## Just need to make sure that libfiles remains
-	python3 -m pip install -e ".[dev,docs,benchmark,test]"
+	python3 -m pip install -e ".[dev,docs,benchmark,test,gui]"
 	pre-commit install
 
 bump:

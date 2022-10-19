@@ -1,11 +1,10 @@
 from collections import namedtuple
 from pathlib import Path
 
+import mps_motion as mt
 import numpy as np
 import pytest
 from scipy.ndimage import geometric_transform
-
-import mps_motion_tracking as mt
 
 HERE = Path(__file__).parent.absolute()
 

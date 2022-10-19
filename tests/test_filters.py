@@ -1,8 +1,7 @@
 import dask.array as da
 import numpy as np
 import pytest
-
-from mps_motion_tracking import filters
+from mps_motion import filters
 
 
 @pytest.mark.parametrize(

@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
-
-from mps_motion_tracking import block_matching as bm
+from mps_motion import block_matching as bm
 
 
 @pytest.mark.parametrize(

@@ -3,11 +3,10 @@ from unittest import mock
 import dask.array as da
 import numpy as np
 import pytest
-
-from mps_motion_tracking import FLOW_ALGORITHMS as _FLOW_ALGORITHMS
-from mps_motion_tracking import Mechanics
-from mps_motion_tracking import OpticalFlow
-from mps_motion_tracking import utils
+from mps_motion import FLOW_ALGORITHMS as _FLOW_ALGORITHMS
+from mps_motion import Mechanics
+from mps_motion import OpticalFlow
+from mps_motion import utils
 
 # from typing import Type
 FLOW_ALGORITHMS = [alg for alg in dir(_FLOW_ALGORITHMS) if not alg.startswith("_")]
@@ -89,7 +88,7 @@ def test_get_displacement_lazy(
 ):
     np.random.seed(1)
     arr = np.random.random((4, 5, 3, 2))  # (width, heighth, num_time_points)
-    with mock.patch(f"mps_motion_tracking.{flow_algorithm}.get_displacements") as _mock:
+    with mock.patch(f"mps_motion.{flow_algorithm}.get_displacements") as _mock:
         _mock.return_value = arr
         m = OpticalFlow(test_data, flow_algorithm=flow_algorithm)
         U = m.get_displacements()
