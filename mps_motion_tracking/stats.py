@@ -48,6 +48,10 @@ class Analysis(NamedTuple):
         }
 
 
+class ProminenceError(RuntimeError):
+    pass
+
+
 def normalize(y: np.ndarray) -> np.ndarray:
     y = np.array(y)
     return (y - y.min()) / (y.max() - y.min())
@@ -115,9 +119,13 @@ def find_two_most_prominent_peaks(y) -> Tuple[int, int]:
 
     peaks: List[int] = []
     prominence = 0.9
-    while len(peaks) < 2:
+    while len(peaks) < 2 and prominence > 0:
         peaks, opts = find_peaks(normalize(y), prominence=prominence)
         prominence -= 0.1
+
+    if len(peaks) < 2:
+        raise ProminenceError("Unable to find two most prominent beats")
+
     return (peaks[0], peaks[1])
 
 
@@ -156,6 +164,10 @@ def analysis_from_arrays(
     intervals: Optional[List[apf.chopping.Interval]] = None,
 ) -> Analysis:
 
+    u = apf.utils.numpyfy(u)
+    v = apf.utils.numpyfy(v)
+    t = apf.utils.numpyfy(t)
+
     u_beats, intervals = chop_trace(
         u,
         t,
@@ -189,13 +201,21 @@ def analysis_from_arrays(
     time_between_contraction_and_relaxation = []
 
     for vi in v_beats:
-        t0, t1 = find_two_most_prominent_peaks(vi.y)
-        time_between_contraction_and_relaxation.append(vi.t[t1] - vi.t[t0])
-        # time_to_max_contraction_velocty.append(vi.t[t0])
-        max_contraction_velocity.append(vi.y[t0])
-        # time_to_max_relaxation_velocty.append(vi.t[t1])
-        max_relaxation_velocity.append(vi.y[t1])
+        try:
+            t0, t1 = find_two_most_prominent_peaks(vi.y)
+        except ProminenceError:
+            time_between_contraction_and_relaxation.append(0.0)
+            # time_to_max_contraction_velocty.append(vi.t[t0])
+            max_contraction_velocity.append(0.0)
+            # time_to_max_relaxation_velocty.append(vi.t[t1])
+            max_relaxation_velocity.append(0.0)
 
+        else:
+            time_between_contraction_and_relaxation.append(vi.t[t1] - vi.t[t0])
+            # time_to_max_contraction_velocty.append(vi.t[t0])
+            max_contraction_velocity.append(vi.y[t0])
+            # time_to_max_relaxation_velocty.append(vi.t[t1])
+            max_relaxation_velocity.append(vi.y[t1])
     return Analysis(
         u_peaks=u_peaks,
         u_width50=u_width50,
