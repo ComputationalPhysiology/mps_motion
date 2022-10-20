@@ -3,11 +3,10 @@ from unittest import mock
 
 import numpy as np
 import pytest
+from mps_motion import frame_sequence as fs
+from mps_motion import Mechanics
+from mps_motion import MPSData
 from scipy.ndimage import geometric_transform
-
-from mps_motion_tracking import frame_sequence as fs
-from mps_motion_tracking import Mechanics
-from mps_motion_tracking import MPSData
 
 here = Path(__file__).absolute().parent
 

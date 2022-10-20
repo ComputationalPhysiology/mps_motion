@@ -12,8 +12,8 @@ try:
 except ImportError:
     MPS_NOT_FOUND = True
 
-from mps_motion_tracking import frame_sequence as fs
-from mps_motion_tracking import filters
+from mps_motion import frame_sequence as fs
+from mps_motion import filters
 
 array_type = {da: da.core.Array, np: np.ndarray}
 

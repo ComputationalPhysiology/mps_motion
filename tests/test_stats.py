@@ -1,6 +1,5 @@
 import numpy as np
-
-from mps_motion_tracking import stats
+from mps_motion import stats
 
 
 def test_analysis_from_mechanics(mech_trace_obj):
