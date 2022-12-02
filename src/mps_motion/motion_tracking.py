@@ -3,9 +3,9 @@ from enum import Enum
 from typing import Any
 from typing import Dict
 from typing import Optional
-from typing import Tuple
 from typing import Union
 
+import ap_features as apf
 import dask.array as da
 import numpy as np
 
@@ -45,12 +45,59 @@ def _check_algorithm(alg):
         raise ValueError(msg)
 
 
-def get_referenece_image(
+def estimate_referece_image_from_velocity(
+    t: np.ndarray,
+    v: np.ndarray,
+    rel_tol=0.01,
+) -> int:
+
+    # Estimate baseline
+    background = apf.background.background(x=t, y=v)
+
+    # Find points close to the baseline
+    inds = np.isclose(v, background, atol=np.abs(v.max() - v.min()) * rel_tol)
+    if not inds.any():
+        # No values are this close to the baseline
+        logger.warning(
+            "Unable to find any values are the baseline. "
+            "Please try a smaller tolerance when estimating the reference image",
+        )
+        # Just return the index of the first frame
+        return 0
+
+    # Find biggest connected segment on the baseline
+    from collections import Counter
+
+    groups = np.diff(inds).cumsum()
+    counts = Counter(groups).most_common()
+    group_index = 0
+    ref_index_at_baseline = False
+
+    while not ref_index_at_baseline:
+        try:
+            index = counts[group_index][0]
+        except IndexError:
+            logger.warning(
+                "Unable to find any values are the baseline. "
+                "Please try a smaller tolerance when estimating the reference image",
+            )
+            # Just return the index of the first frame
+            return 0
+
+        # Choose the value at the center of this segment
+        ref_index = int(np.median(np.where(groups == index)[0]))
+        ref_index_at_baseline = inds[ref_index]
+        group_index += 1
+
+    return ref_index
+
+
+def get_reference_image(
     reference_frame: Union[int, str, RefFrames],
     frames: np.ndarray,
     time_stamps: Optional[np.ndarray] = None,
     smooth_ref_transition: bool = True,
-) -> Tuple[str, np.ndarray, int]:
+) -> np.ndarray:
     """Get reference frame
 
     Parameters
@@ -67,15 +114,14 @@ def get_referenece_image(
 
     Returns
     -------
-    Tuple[str, np.ndarray, int]
-        (reference_str, reference_image, reference_frame_index)
+    np.ndarray
+        reference_image
 
     """
 
     reference_frame_index = 0
     try:
         reference_time = float(reference_frame)
-        reference_str = str(reference_frame)
 
     except ValueError:
         refs = RefFrames._member_names_
@@ -85,7 +131,6 @@ def get_referenece_image(
         )
         if str(reference_frame) not in refs:
             raise ValueError(msg)
-        reference_str = str(reference_frame)
         reference_image = getattr(np, str(reference_frame))(frames, axis=2)
     else:
         if time_stamps is None:
@@ -121,7 +166,7 @@ def get_referenece_image(
         else:
             reference_image = frames[:, :, reference_frame_index]
 
-    return reference_str, reference_image, reference_frame_index
+    return reference_image
 
 
 class OpticalFlow:
@@ -129,26 +174,13 @@ class OpticalFlow:
         self,
         data: utils.MPSData,
         flow_algorithm: FLOW_ALGORITHMS = FLOW_ALGORITHMS.farneback,
-        reference_frame: Union[int, str, RefFrames] = 0,
         filter_options: Optional[Dict[str, Any]] = None,
         data_scale: float = 1.0,
-        smooth_ref_transition: bool = True,
         **options,
     ):
         self.data = data
 
         self.flow_algorithm = flow_algorithm
-
-        (
-            self._reference_frame,
-            self._reference_image,
-            self._reference_frame_index,
-        ) = get_referenece_image(
-            reference_frame,
-            data.frames,
-            data.time_stamps,
-            smooth_ref_transition=smooth_ref_transition,
-        )
 
         self._handle_algorithm(options)
         options["filter_options"] = filter_options or {}
@@ -186,20 +218,24 @@ class OpticalFlow:
         recompute: bool = False,
         unit: str = "um",
         scale: float = 1.0,
+        reference_frame: Union[int, str, RefFrames] = 0,
+        smooth_ref_transition: bool = True,
     ) -> fs.VectorFrameSequence:
         """Compute motion of all images relative to reference frame
 
         Parameters
         ----------
         recompute : bool, optional
-            If allready computed set this to true if you want to
+            If already computed set this to true if you want to
             recomputed, by default False
         unit : str, optional
             Either 'pixels' or 'um', by default "pixels".
             If using 'um' them the MPSData.info has to contain the
             key 'um_per_pixel'.
         scale : float, optional
-            If less than 1.0, downsample images before estimating motion, by default 1.0
+            If less than 1.0, down-sample images before estimating motion, by default 1.0
+        reference_frame: int, str, RefFrames, optional
+            An integer of string indicating the reference frame to use
 
         Returns
         -------
@@ -207,27 +243,25 @@ class OpticalFlow:
             The displacements
         """
         assert unit in ["pixels", "um"]
-        data = self.data
-
-        reference_image = self.reference_image
 
         if scale > 1.0:
             raise ValueError("Cannot have scale larger than 1.0")
 
-        scaled_data = data
         if scale < 1.0:
-            scaled_data = scaling.resize_data(data, scale)
-            _, reference_image, _ = get_referenece_image(
-                self.reference_frame,
-                scaled_data.frames,
-                scaled_data.time_stamps,
-            )
+            data = scaling.resize_data(self.data, scale)
+        else:
+            data = self.data
+
+        reference_image = get_reference_image(
+            reference_frame,
+            data.frames,
+            data.time_stamps,
+            smooth_ref_transition=smooth_ref_transition,
+        )
 
         if not hasattr(self, "_displacement") or recompute:
 
-            u = self._get_displacements(
-                scaled_data.frames, reference_image, **self.options
-            )
+            u = self._get_displacements(data.frames, reference_image, **self.options)
             dx = 1
 
             scale *= self.data_scale
@@ -235,8 +269,8 @@ class OpticalFlow:
             u /= scale
 
             if unit == "um":
-                u *= scaled_data.info.get("um_per_pixel", 1.0)
-                dx *= scaled_data.info.get("um_per_pixel", 1.0)
+                u *= data.info.get("um_per_pixel", 1.0)
+                dx *= data.info.get("um_per_pixel", 1.0)
             else:
                 u /= scale
 
@@ -285,20 +319,8 @@ class OpticalFlow:
 
         return self._velocity
 
-    @property
-    def reference_frame(self) -> str:
-        return self._reference_frame
-
-    @property
-    def reference_frame_index(self) -> Optional[int]:
-        return self._reference_frame_index
-
-    @property
-    def reference_image(self) -> np.ndarray:
-        return self._reference_image
-
     def __repr__(self):
         return (
             f"{self.__class__.__name__}("
-            f"data={self.data}, flow_algorithm={self.flow_algorithm}, reference_frame={self._reference_frame})"
+            f"data={self.data}, flow_algorithm={self.flow_algorithm})"
         )

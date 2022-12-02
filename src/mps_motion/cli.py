@@ -167,9 +167,8 @@ def main(
     opt_flow = OpticalFlow(
         data,
         flow_algorithm=algorithm,
-        reference_frame=reference_frame,
     )
-    u = opt_flow.get_displacements()
+    u = opt_flow.get_displacements(reference_frame=reference_frame)
     factor = 1000.0 if data.info["time_unit"] == "ms" else 1.0
     v = Mechanics(u, t=data.time_stamps / factor).velocity(spacing=spacing)
     if apply_filter:

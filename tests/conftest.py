@@ -1,3 +1,4 @@
+import typing
 from pathlib import Path
 from unittest import mock
 
@@ -6,6 +7,7 @@ import pytest
 from mps_motion import frame_sequence as fs
 from mps_motion import Mechanics
 from mps_motion import MPSData
+from mps_motion import utils
 from scipy.ndimage import geometric_transform
 
 here = Path(__file__).absolute().parent
@@ -89,6 +91,15 @@ def mech_trace_obj():
     return mechanics_mock
 
 
-# @pytest.fixture
-# def test_data():
-# return MPSData(**np.load(_TESTFILE_NAME, allow_pickle=True).item())
+class SyntheticTrace(typing.NamedTuple):
+    t: np.ndarray
+    u: np.ndarray
+    v: np.ndarray
+
+
+@pytest.fixture
+def synthetic_trace():
+    t = np.arange(0, 1, 0.01)
+    u = utils.ca_transient(t)
+    v = np.abs(np.diff(u))
+    return SyntheticTrace(t=t, u=u, v=v)

@@ -117,6 +117,7 @@ def get_displacements(
     poly_n: int = 5,
     poly_sigma: float = 1.2,
     flags: int = 0,
+    **kwargs,
 ) -> utils.Array:
     """Compute the optical flow using the Farneback method from
     the reference frame to all other frames
@@ -166,7 +167,8 @@ def get_displacements(
         An array of motion vectors relative to the reference image. If shape of
         input frames are (N, M, T) then the shape of the output is (N, M, T, 2).
     """
-
+    if kwargs:
+        logger.warning(f"Unknown arguments {kwargs!r} - ignoring")
     logger.info("Get displacements using Farneback's algorithm")
 
     all_flows = []

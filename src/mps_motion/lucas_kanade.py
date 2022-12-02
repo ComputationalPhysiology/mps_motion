@@ -213,6 +213,7 @@ def get_displacements(
     maxLevel: int = 2,
     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
     interpolation: Interpolation = Interpolation.nearest,
+    **kwargs,
 ) -> np.ndarray:
     """Compute the optical flow using the Lucas Kanade method from
     the reference frame to all other frames
@@ -251,6 +252,8 @@ def get_displacements(
         input frames are (N, M, T) then the shape of the output is (N', M', T', 2).
         Note if `resize=True` then we have (N, M, T, 2) = (N', M', T', 2).
     """
+    if kwargs:
+        logger.warning(f"Unknown arguments {kwargs!r} - ignoring")
     logger.info("Get displacements using Lucas Kanade")
 
     frames = utils.check_frame_dimensions(frames, reference_image)

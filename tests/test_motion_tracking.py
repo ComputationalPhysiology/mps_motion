@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from mps_motion import FLOW_ALGORITHMS as _FLOW_ALGORITHMS
 from mps_motion import Mechanics
+from mps_motion import motion_tracking
 from mps_motion import OpticalFlow
 from mps_motion import utils
 
@@ -17,10 +18,12 @@ def test_reference_frame_np(
     test_data: utils.MPSData,
     reference_frame: str,
 ):
-    m = OpticalFlow(test_data, reference_frame=reference_frame)
-    assert m.reference_frame == reference_frame
+    reference_image = motion_tracking.get_reference_image(
+        reference_frame=reference_frame,
+        frames=test_data.frames,
+    )
     ref = getattr(np, reference_frame)(test_data.frames, axis=2)
-    assert np.all(ref == m.reference_image)
+    assert np.all(ref == reference_image)
 
 
 @pytest.mark.parametrize(
@@ -34,14 +37,16 @@ def test_reference_frame_digit(
 ):
 
     reference_frame = test_data.time_stamps[int(reference_index)]
-    m = OpticalFlow(test_data, reference_frame=reference_frame)
     if reference_index == -1:
         interval = (interval[0], test_data.time_stamps.size)
 
-    assert abs(float(m.reference_frame) - reference_frame) < 1e-8
     ref = test_data.frames[:, :, interval[0] : interval[1]].mean(-1)
-
-    assert np.all(abs(ref - m.reference_image) < 1e-12)
+    reference_image = motion_tracking.get_reference_image(
+        reference_frame=reference_frame,
+        frames=test_data.frames,
+        time_stamps=test_data.time_stamps,
+    )
+    assert np.all(abs(ref - reference_image) < 1e-12)
 
 
 @pytest.mark.parametrize(
@@ -54,13 +59,17 @@ def test_reference_frame_digit_str(
     interval,
 ):
     reference_frame = test_data.time_stamps[int(reference_index)]
-    m = OpticalFlow(test_data, reference_frame=reference_frame)
+
     if reference_index == "-1":
         interval = (interval[0], test_data.time_stamps.size)
 
-    assert abs(float(m.reference_frame) - reference_frame) < 1e-8
+    reference_image = motion_tracking.get_reference_image(
+        reference_frame=reference_frame,
+        frames=test_data.frames,
+        time_stamps=test_data.time_stamps,
+    )
     ref = test_data.frames[:, :, interval[0] : interval[1]].mean(-1)
-    assert np.all(abs(ref - m.reference_image) < 1e-12)
+    assert np.all(abs(ref - reference_image) < 1e-12)
 
 
 @pytest.mark.parametrize("reference_frame", ["a", "std", ""])
@@ -69,7 +78,10 @@ def test_reference_frame_invalid(
     reference_frame: str,
 ):
     with pytest.raises(ValueError):
-        OpticalFlow(test_data, reference_frame=reference_frame)
+        motion_tracking.get_reference_image(
+            reference_frame=reference_frame,
+            frames=test_data.frames,
+        )
 
 
 @pytest.mark.parametrize("flow_algorithm", ["", "dslkgm"])
@@ -179,3 +191,16 @@ def test_OpticalFlow_options(test_data: utils.MPSData):
     step = 4
     m = OpticalFlow(test_data, flow_algorithm=_FLOW_ALGORITHMS.lucas_kanade, step=step)
     assert m.options["step"] == step
+
+
+def test_estimate_reference_index(synthetic_trace):
+
+    t = synthetic_trace.t[:-1]
+    v = v = synthetic_trace.v
+
+    index = motion_tracking.estimate_referece_image_from_velocity(
+        t=t,
+        v=v,
+        rel_tol=0.001,
+    )
+    assert index == 87

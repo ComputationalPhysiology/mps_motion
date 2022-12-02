@@ -230,7 +230,7 @@ def compute_features(u, v, t):
     v = apf.Beats(
         v,
         t[: len(v)],
-        intervals=u.chopped_data.intervals[:-1],
+        intervals=u.chopped_data.intervals,
         background_correction_method="subtract",
     )
 
