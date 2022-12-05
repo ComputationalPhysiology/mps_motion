@@ -66,6 +66,7 @@ def get_displacements(
     theta: float = 0.37,
     nscales: int = 6,
     warps: int = 5,
+    **kwargs,
 ) -> utils.Array:
     """Compute the optical flow using the Dual TV-L1 method from
     the reference frame to all other frames
@@ -105,7 +106,8 @@ def get_displacements(
         An array of motion vectors relative to the reference image. If shape of
         input frames are (N, M, T) then the shape of the output is (N, M, T, 2).
     """
-
+    if kwargs:
+        logger.warning(f"Unknown arguments {kwargs!r} - ignoring")
     logger.info("Get displacements using Dual TV-L 1")
 
     all_flows = []

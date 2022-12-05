@@ -235,6 +235,7 @@ def get_displacements(
     block_size: Union[str, int] = "auto",
     max_block_movement: Union[str, int] = "auto",
     resize=True,
+    **kwargs,
 ) -> utils.Array:
     """Computes the displacements from `reference_image` to all `frames`
     using a block matching algorithm. Briefly, we subdivde the images
@@ -274,6 +275,8 @@ def get_displacements(
         number of frames. Note if `resize=True` then we have
         (N, M, T, 2) = (N', M', T', 2).
     """
+    if kwargs:
+        logger.warning(f"Unknown arguments {kwargs!r} - ignoring")
     frames = utils.check_frame_dimensions(frames, reference_image)
 
     block_size = resolve_block_size(block_size, reference_image.shape)

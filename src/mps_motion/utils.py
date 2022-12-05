@@ -116,3 +116,26 @@ class MPSData:
 def to_uint8(img):
     img_float = img.astype(float)
     return (256 * (img_float / max(img_float.max(), 1e-12))).astype(np.uint8)
+
+
+def ca_transient(
+    t: np.ndarray,
+    tstart: float = 0.05,
+    tau1: float = 0.05,
+    tau2: float = 0.110,
+    ca_diast: float = 0.0,
+    ca_ampl: float = 1.0,
+) -> np.ndarray:
+
+    beta = (tau1 / tau2) ** (-1 / (tau1 / tau2 - 1)) - (tau1 / tau2) ** (
+        -1 / (1 - tau2 / tau1)
+    )
+    ca = np.zeros_like(t)
+
+    ca[t <= tstart] = ca_diast
+
+    ca[t > tstart] = (ca_ampl - ca_diast) / beta * (
+        np.exp(-(t[t > tstart] - tstart) / tau1)
+        - np.exp(-(t[t > tstart] - tstart) / tau2)
+    ) + ca_diast
+    return ca

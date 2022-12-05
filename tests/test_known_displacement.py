@@ -123,11 +123,14 @@ def test_synthetic_pixels(unit, gen_data):
     opt_flow = mt.OpticalFlow(
         data,
         mt.FLOW_ALGORITHMS.farneback,
+    )
+
+    u = opt_flow.get_displacements(
+        recompute=True,
+        unit=unit,
         reference_frame=0,
         smooth_ref_transition=False,
     )
-
-    u = opt_flow.get_displacements(recompute=True, unit=unit)
 
     u_exact_norm = u_exact.norm()
     u_norm = u.norm()

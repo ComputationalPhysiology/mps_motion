@@ -1,4 +1,5 @@
 import logging
+import weakref
 from pathlib import Path
 from typing import Optional
 
@@ -36,6 +37,11 @@ def reduce_sliding_window(arr):
             new_arr[i, j] = sum_along_time(arr, t, i, j)
 
     return new_arr
+
+
+def close_file(h5file):
+    if h5file is not None:
+        h5file.close()
 
 
 class FrameSequence:
@@ -78,6 +84,16 @@ class FrameSequence:
         self.scale = scale
         self._h5file = None
         self._fill_value = fill_value
+        self._finalizer = weakref.finalize(self, close_file, self._h5file)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.cleanup()
+
+    def cleanup(self):
+        return self._finalizer()
 
     def __getitem__(self, *args, **kwargs):
         return self.array.__getitem__(*args, **kwargs)
@@ -124,10 +140,6 @@ class FrameSequence:
             raise TypeError(f"Can only multiply with a scalar value, got {type(other)}")
 
         return self.__class__(other * self.array, dx=self.dx, scale=self.scale)
-
-    def __del__(self):
-        if self._h5file is not None:
-            self._h5file.close()
 
     @property
     def fill_value(self) -> float:
