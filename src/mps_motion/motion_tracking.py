@@ -39,6 +39,10 @@ class RefFrames(str, Enum):
     mean = "mean"
 
 
+class ReferenceFrameError(RuntimeError):
+    pass
+
+
 def _check_algorithm(alg):
     msg = f"Expected flow algorithm to be one of {FLOW_ALGORITHMS._member_names_}, got {alg}"
     if alg not in FLOW_ALGORITHMS._member_names_:
@@ -49,6 +53,7 @@ def estimate_referece_image_from_velocity(
     t: np.ndarray,
     v: np.ndarray,
     rel_tol=0.01,
+    raise_on_failure: bool = False,
 ) -> int:
 
     # Estimate baseline
@@ -56,13 +61,19 @@ def estimate_referece_image_from_velocity(
 
     # Find points close to the baseline
     inds = np.isclose(v, background, atol=np.abs(v.max() - v.min()) * rel_tol)
+
+    msg = (
+        "Unable to find any values are the baseline. "
+        "Please try a smaller tolerance when estimating the reference image"
+    )
     if not inds.any():
         # No values are this close to the baseline
-        logger.warning(
-            "Unable to find any values are the baseline. "
-            "Please try a smaller tolerance when estimating the reference image",
-        )
-        # Just return the index of the first frame
+        logger.warning(msg)
+
+        if raise_on_failure:
+            raise ReferenceFrameError(msg)
+
+        # If not raising, just return the index of the first frame
         return 0
 
     # Find biggest connected segment on the baseline
@@ -77,10 +88,9 @@ def estimate_referece_image_from_velocity(
         try:
             index = counts[group_index][0]
         except IndexError:
-            logger.warning(
-                "Unable to find any values are the baseline. "
-                "Please try a smaller tolerance when estimating the reference image",
-            )
+            logger.warning(msg)
+            if raise_on_failure:
+                raise ReferenceFrameError(msg)
             # Just return the index of the first frame
             return 0
 
