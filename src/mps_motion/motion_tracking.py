@@ -103,7 +103,7 @@ def estimate_referece_image_from_velocity(
 
 
 def get_reference_image(
-    reference_frame: Union[int, str, RefFrames],
+    reference_frame: Union[float, str, RefFrames],
     frames: np.ndarray,
     time_stamps: Optional[np.ndarray] = None,
     smooth_ref_transition: bool = True,
@@ -112,9 +112,9 @@ def get_reference_image(
 
     Parameters
     ----------
-    reference_frame : Union[int, str, RefFrames]
-        Either an integer of string representing the frame
-        that should be used as reference
+    reference_frame : Union[float, str, RefFrames]
+        Either a float of string representing the
+        time-point of the frame that should be used as reference
     frames : np.ndarray
         The image frames
     time_stamps : Optional[np.ndarray], optional
@@ -128,8 +128,6 @@ def get_reference_image(
         reference_image
 
     """
-
-    reference_frame_index = 0
     try:
         reference_time = float(reference_frame)
 
@@ -228,8 +226,9 @@ class OpticalFlow:
         recompute: bool = False,
         unit: str = "um",
         scale: float = 1.0,
-        reference_frame: Union[int, str, RefFrames] = 0,
+        reference_frame: Union[float, str, RefFrames] = 0,
         smooth_ref_transition: bool = True,
+        reference_image: Optional[np.ndarray] = None,
     ) -> fs.VectorFrameSequence:
         """Compute motion of all images relative to reference frame
 
@@ -244,8 +243,17 @@ class OpticalFlow:
             key 'um_per_pixel'.
         scale : float, optional
             If less than 1.0, down-sample images before estimating motion, by default 1.0
-        reference_frame: int, str, RefFrames, optional
-            An integer of string indicating the reference frame to use
+        reference_frame: float, str, RefFrames, optional
+            A float or string indicating the reference frame to use. If the value
+            is a float, it should refer to the time-point of the reference frame to use.
+            If you known the exact index to use, then you can use the `reference_image` parameter,
+            by default 0
+        smooth_ref_transition : bool, optional
+            If true, compute the mean frame of the three closest frames, by default True
+        reference_image: np.ndarray, optional
+            The reference image to use containing the actual pixel values.
+            Note that if you provide an argument for this, then the `reference_frame`
+            parameter is not used, by default None
 
         Returns
         -------
@@ -262,12 +270,13 @@ class OpticalFlow:
         else:
             data = self.data
 
-        reference_image = get_reference_image(
-            reference_frame,
-            data.frames,
-            data.time_stamps,
-            smooth_ref_transition=smooth_ref_transition,
-        )
+        if reference_image is None:
+            reference_image = get_reference_image(
+                reference_frame,
+                data.frames,
+                data.time_stamps,
+                smooth_ref_transition=smooth_ref_transition,
+            )
 
         if not hasattr(self, "_displacement") or recompute:
 
