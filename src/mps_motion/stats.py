@@ -187,7 +187,7 @@ def analysis_from_arrays(
 
     v_beats, intervals = chop_trace(
         v,
-        t[:-1],
+        t[: len(v)],
         pacing=p,
         intervals=intervals,
         zero_index=zero_index,
