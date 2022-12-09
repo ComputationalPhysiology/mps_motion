@@ -183,7 +183,7 @@ def analysis_from_arrays(
     u_width50 = [ui.apd(50) for ui in u_beats]
     p = pacing
     if pacing is not None:
-        p = pacing[:-1]
+        p = pacing[: len(v)]
 
     v_beats, intervals = chop_trace(
         v,
