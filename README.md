@@ -4,7 +4,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![codecov](https://codecov.io/gh/ComputationalPhysiology/mps_motion/branch/main/graph/badge.svg?token=8DQFJGH4E7)](https://codecov.io/gh/ComputationalPhysiology/mps_motion)
 
-# MPS Motion Tracking
+# MPS Motion
 
 Library for tracking motion in cardiac mps data
 
