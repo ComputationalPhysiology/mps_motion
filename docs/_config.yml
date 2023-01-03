@@ -1,10 +1,10 @@
 # Book settings
 # Learn more at https://jupyterbook.org/customize/config.html
 
-title: cardiac-mps-motion
+title: mps-motion
 author: Henrik Finsberg
 logo: "logo.png"
-copyright: "2022"
+copyright: "2023"
 only_build_toc_files: true
 
 # Force re-execution of notebooks on each build.
