@@ -39,7 +39,7 @@ class ShapeError(RuntimeError):
 
 def download_demo_data(path):
     print("Downloading data. Please wait...")
-    link = "https://www.dropbox.com/s/xbn29petfkpjf7w/PointH4A_ChannelBF_VC_Seq0018.nd2?dl=1"
+    link = "https://www.dropbox.com/s/lmo980fzsvxnptj/data.npy?dl=1"
     import urllib.request
     import time
 
