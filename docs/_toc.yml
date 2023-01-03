@@ -4,6 +4,7 @@ root: index
 chapters:
   - file: "install"
   - file: "quickstart"
+  - file: "features"
   - file: "gui"
   - file: "about"
   - file: "development"
