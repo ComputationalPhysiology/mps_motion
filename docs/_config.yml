@@ -16,7 +16,8 @@ execute:
 # Information about where the book exists on the web
 repository:
   url: https://github.com/ComputationalPhysiology/mps_motion # Online location of your book
-  branch: main
+  path_to_book: docs # Optional path to your book, relative to the repository root
+  branch: main # Which branch of the repository should be used when creating links (optional)
 
 launch_buttons:
   notebook_interface: "jupyterlab" # The interface interactive links will activate ["classic", "jupyterlab"]
