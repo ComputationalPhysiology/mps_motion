@@ -21,6 +21,7 @@ import dask
 from scipy import interpolate
 
 from . import frame_sequence as fs
+from . import utils
 
 Array = Union[da.Array, np.ndarray]
 logger = logging.getLogger(__name__)
@@ -60,11 +61,11 @@ def compute_gradients(displacement: Array, dx=1) -> da.Array:
     dvdys = []
 
     logger.info("Compute interpolant Ux")
-    with ProgressBar():
+    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
         Uxs = dask.compute(*Uxs)
 
     logger.info("Compute interpolant Uy")
-    with ProgressBar():
+    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
         Uys = dask.compute(*Uys)
 
     for (
@@ -77,16 +78,16 @@ def compute_gradients(displacement: Array, dx=1) -> da.Array:
         dvdys.append(dask.delayed(Uy)(x, y, dy=1).T)
 
     logger.info("Compute dudx")
-    with ProgressBar():
+    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
         Dudx = da.stack(*dask.compute(dudxs))
     logger.info("Compute dudy")
-    with ProgressBar():
+    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
         Dudy = da.stack(*dask.compute(dudys))
     logger.info("Compute dvdx")
-    with ProgressBar():
+    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
         Dvdx = da.stack(*dask.compute(dvdxs))
     logger.info("Compute dvdy")
-    with ProgressBar():
+    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
         Dvdy = da.stack(*dask.compute(dvdys))
 
     logger.info("Stack arrays")

@@ -116,7 +116,7 @@ def get_displacements(
             dask.delayed(flow)(im, reference_image, tau, lmbda, theta, nscales, warps),
         )
 
-    with ProgressBar():
+    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
         arr = da.compute(all_flows)
     flows = np.stack(*arr, axis=2)  # type:ignore
 

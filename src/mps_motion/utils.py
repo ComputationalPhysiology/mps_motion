@@ -37,6 +37,23 @@ class ShapeError(RuntimeError):
     pass
 
 
+class LoggerWrapper:
+    """Simple wrapper around logger so that any logger
+    can be used instead to sys.stdout"""
+
+    def __init__(self, logger: logging.Logger, level: str = "info") -> None:
+        levels = ["debug", "info", "warning"]
+        if level not in levels:
+            raise RuntimeError(f"Expected log level to be one of {levels}, got {level}")
+        self._func = getattr(logger, level)
+
+    def write(self, msg: str) -> None:
+        self._func(msg)
+
+    def flush(self) -> None:
+        pass
+
+
 def download_demo_data(path):
     print("Downloading data. Please wait...")
     link = "https://www.dropbox.com/s/lmo980fzsvxnptj/data.npy?dl=1"
