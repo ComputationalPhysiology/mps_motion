@@ -10,8 +10,7 @@ import scipy.spatial
 import tqdm
 from dask.diagnostics import ProgressBar
 
-from .utils import Array
-from .utils import MPSData
+from . import utils
 
 logger = logging.getLogger(__name__)
 
@@ -47,25 +46,25 @@ def resize_vectors(vectors, new_shape):
     return da.stack([vec1, vec2], axis=-1)
 
 
-def resize_data(data: MPSData, scale: float) -> MPSData:
+def resize_data(data: utils.MPSData, scale: float) -> utils.MPSData:
     new_frames = resize_frames(data.frames, scale)
     info = data.info.copy()
     info["um_per_pixel"] /= scale
     info["size_x"], info["size_y"], info["num_frames"] = new_frames.shape
-    return MPSData(new_frames, data.time_stamps, info)
+    return utils.MPSData(new_frames, data.time_stamps, info)
 
 
-def subsample_time(data: MPSData, step: int) -> MPSData:
+def subsample_time(data: utils.MPSData, step: int) -> utils.MPSData:
 
     new_frames = data.frames[:, :, ::step]
     new_times = data.time_stamps[::step]
     info = data.info.copy()
     info["num_frames"] = len(new_times)
 
-    return MPSData(new_frames, new_times, info)
+    return utils.MPSData(new_frames, new_times, info)
 
 
-def reshape_lk(reference_points: np.ndarray, flows: Array) -> Array:
+def reshape_lk(reference_points: np.ndarray, flows: utils.Array) -> utils.Array:
     x, y = reference_points.reshape(-1, 2).astype(int).T
     xu = np.sort(np.unique(x))
     yu = np.sort(np.unique(y))
@@ -140,7 +139,7 @@ def resize_frames(
                     INTERPOLATION_METHODS[interpolation_method],
                 ),
             )
-        with ProgressBar():
+        with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
             resized_frames = da.stack(
                 *da.compute(all_resized_frames), axis=-1
             ).compute()

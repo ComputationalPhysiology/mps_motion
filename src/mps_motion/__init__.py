@@ -34,22 +34,21 @@ __program_name__ = meta["Name"]
 
 
 def set_log_level(level):
-    from daiquiri import set_default_log_levels
 
-    loggers = [
-        "block_matching.logger",
-        "dualtvl1.logger",
-        "farneback.logger",
-        "lucas_kanade.logger",
-        "mechanics.logger",
-        "motion_tracking.logger",
-        "scaling.logger",
-        "utils.logger",
-        "visu.logger",
-        "frame_sequence.logger",
-        "filters.logger",
-    ]
-    set_default_log_levels((logger, level) for logger in loggers)
+    for logger in [
+        block_matching.logger,
+        dualtvl1.logger,
+        farneback.logger,
+        lucas_kanade.logger,
+        mechanics.logger,
+        motion_tracking.logger,
+        scaling.logger,
+        utils.logger,
+        visu.logger,
+        frame_sequence.logger,
+        filters.logger,
+    ]:
+        logger.setLevel(level)
 
 
 _daiquiri.setup(level=_logging.INFO)
