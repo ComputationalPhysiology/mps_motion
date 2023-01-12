@@ -17,7 +17,7 @@ WORKDIR /tmp/
 # # Copy pyproject.toml first so that we done need to reinstall in case another file
 # # is changing after rebuiding docker image
 RUN git clone --branch ${REPO_BRANCH} --single-branch https://github.com/ComputationalPhysiology/mps_motion.git
-RUN python3 -m pip install --no-cache-dir ./mps_motion[docker]
+RUN python3 -m pip install --no-cache-dir ./mps_motion
 
 # We remove the contents of the temporary directory to minimize the size of the image
 RUN rm -rf /tmp/*
