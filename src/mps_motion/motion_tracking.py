@@ -63,7 +63,7 @@ def estimate_referece_image_from_velocity(
     inds = np.isclose(v, background, atol=np.abs(v.max() - v.min()) * rel_tol)
 
     msg = (
-        "Unable to find any values are the baseline. "
+        "Unable to find any values at the baseline. "
         "Please try a smaller tolerance when estimating the reference image"
     )
     if not inds.any():

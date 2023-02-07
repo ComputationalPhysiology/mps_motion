@@ -138,14 +138,13 @@ def compute_velocity(u: Array, t: Array, spacing: int = 1) -> da.Array:
     da.Array
         Velocity
     """
-    time_axis = u.shape.index(len(t))
-    assert time_axis == 2, "Time axis should be the third axis"
+    assert u.shape[2] == len(t), "Time axis should be the third axis"
     assert u.shape[-1] == 2, "Final axis should be ux and uy"
     assert spacing > 0, "Spacing must be a positive integer"
 
     if spacing == 1:
         dt = da.diff(t)
-        du = da.diff(u, axis=time_axis)
+        du = da.diff(u, axis=2)
     else:
         dt = t[spacing:] - t[:-spacing]
         du = u[:, :, spacing:, :] - u[:, :, :-spacing, :]
