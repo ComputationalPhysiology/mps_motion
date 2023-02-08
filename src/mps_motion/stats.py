@@ -75,6 +75,8 @@ def chop_trace(
     background_correction_method="subtract",
     zero_index: Optional[int] = None,
     ignore_pacing: bool = False,
+    background_correction_kernel: int = 0,
+    threshold_factor: float = 0.5,
     intervals: Optional[List[apf.chopping.Interval]] = None,
 ) -> Tuple[List[apf.Beat], Optional[List[apf.chopping.Interval]]]:
     trace = apf.Beats(
@@ -82,8 +84,12 @@ def chop_trace(
         t,
         pacing,
         background_correction_method=background_correction_method,
+        background_correction_kernel=background_correction_kernel,
         zero_index=zero_index,
-        chopping_options={"ignore_pacing": ignore_pacing},
+        chopping_options={
+            "ignore_pacing": ignore_pacing,
+            "threshold_factor": threshold_factor,
+        },
         intervals=intervals,
     )
 
@@ -161,6 +167,8 @@ def analysis_from_arrays(
     background_correction_method="subtract",
     zero_index: Optional[int] = None,
     ignore_pacing: bool = False,
+    background_correction_kernel: int = 0,
+    threshold_factor: float = 0.5,
     intervals: Optional[List[apf.chopping.Interval]] = None,
 ) -> Analysis:
 
@@ -174,6 +182,8 @@ def analysis_from_arrays(
         pacing=pacing,
         intervals=intervals,
         zero_index=zero_index,
+        background_correction_kernel=background_correction_kernel,
+        threshold_factor=threshold_factor,
         background_correction_method=background_correction_method,
         ignore_pacing=ignore_pacing,
     )
@@ -191,6 +201,8 @@ def analysis_from_arrays(
         pacing=p,
         intervals=intervals,
         zero_index=zero_index,
+        background_correction_kernel=background_correction_kernel,
+        threshold_factor=threshold_factor,
         background_correction_method=background_correction_method,
         ignore_pacing=ignore_pacing,
     )
