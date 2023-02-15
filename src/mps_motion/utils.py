@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from typing import Union
 
 import dask.array as da
@@ -39,19 +40,18 @@ class ShapeError(RuntimeError):
 
 class LoggerWrapper:
     """Simple wrapper around logger so that any logger
-    can be used instead to sys.stdout"""
+    can be used to log the progressbar"""
 
-    def __init__(self, logger: logging.Logger, level: str = "info") -> None:
-        levels = ["debug", "info", "warning"]
-        if level not in levels:
-            raise RuntimeError(f"Expected log level to be one of {levels}, got {level}")
-        self._func = getattr(logger, level)
+    def __init__(self, _logger: logging.Logger, level: int = logging.INFO) -> None:
+        self._level = level
+        self._logger_level = _logger.level
 
     def write(self, msg: str) -> None:
-        self._func(msg)
+        if self._logger_level <= self._level:
+            sys.stdout.write(msg)
 
     def flush(self) -> None:
-        pass
+        sys.stdout.flush()
 
 
 def download_demo_data(path):

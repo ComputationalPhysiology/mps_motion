@@ -5,6 +5,7 @@ chapters:
   - file: "install"
   - file: "quickstart"
   - file: "features"
+  - file: "cli"
   - file: "gui"
   - file: "about"
   - file: "development"

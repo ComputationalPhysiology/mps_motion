@@ -187,7 +187,7 @@ def get_displacements(
             ),
         )
 
-    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
+    with ProgressBar(out=utils.LoggerWrapper(logger, logging.INFO)):
         arr = da.compute(all_flows)
     flows = np.stack(*arr, axis=2)  # type:ignore
 
@@ -277,7 +277,7 @@ def get_velocities(
             ),
         )
 
-    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
+    with ProgressBar(out=utils.LoggerWrapper(logger, logging.INFO)):
         arr = da.compute(all_flows)
 
     flows = np.stack(*arr, axis=2)  # type:ignore

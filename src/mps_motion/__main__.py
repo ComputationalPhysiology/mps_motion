@@ -58,6 +58,15 @@ def analyze(
         """,
         ),
     ),
+    estimate_reference_frame: bool = typer.Option(
+        True,
+        help=dedent(
+            """
+            If True, estimate the the reference frame,
+            by default True. Note that this will overwrite
+            the argument `reference_frame`""",
+        ),
+    ),
     scale: float = typer.Option(
         1.0,
         help=dedent(
@@ -121,12 +130,33 @@ def analyze(
         """,
         ),
     ),
+    video_disp_step: int = typer.Option(
+        24,
+        "--video-disp-step",
+        help="Steps between vectors in displacement movie",
+    ),
+    video_vel_step: int = typer.Option(
+        24,
+        "--video-vel-step",
+        help="Steps between vectors in velocity movie",
+    ),
+    video_disp_scale: int = typer.Option(
+        4,
+        "--video-disp-scale",
+        help="Scale of vectors in displacement movie",
+    ),
+    video_vel_scale: int = typer.Option(
+        1,
+        "--video-vel-scale",
+        help="Scale of vectors in velocity movie",
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="More verbose"),
 ):
     _main(
         filename=filename,
         algorithm=algorithm,
         reference_frame=reference_frame,
+        estimate_reference_frame=estimate_reference_frame,
         outdir=outdir,
         scale=scale,
         apply_filter=apply_filter,
@@ -135,6 +165,10 @@ def analyze(
         make_displacement_video=make_displacement_video,
         make_velocity_video=make_velocity_video,
         verbose=verbose,
+        video_disp_scale=video_disp_scale,
+        video_disp_step=video_disp_step,
+        video_vel_scale=video_vel_scale,
+        video_vel_step=video_vel_step,
     )
 
 

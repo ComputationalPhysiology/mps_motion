@@ -61,11 +61,11 @@ def compute_gradients(displacement: Array, dx=1) -> da.Array:
     dvdys = []
 
     logger.info("Compute interpolant Ux")
-    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
+    with ProgressBar(out=utils.LoggerWrapper(logger, logging.INFO)):
         Uxs = dask.compute(*Uxs)
 
     logger.info("Compute interpolant Uy")
-    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
+    with ProgressBar(out=utils.LoggerWrapper(logger, logging.INFO)):
         Uys = dask.compute(*Uys)
 
     for (
@@ -78,16 +78,16 @@ def compute_gradients(displacement: Array, dx=1) -> da.Array:
         dvdys.append(dask.delayed(Uy)(x, y, dy=1).T)
 
     logger.info("Compute dudx")
-    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
+    with ProgressBar(out=utils.LoggerWrapper(logger, logging.INFO)):
         Dudx = da.stack(*dask.compute(dudxs))
     logger.info("Compute dudy")
-    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
+    with ProgressBar(out=utils.LoggerWrapper(logger, logging.INFO)):
         Dudy = da.stack(*dask.compute(dudys))
     logger.info("Compute dvdx")
-    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
+    with ProgressBar(out=utils.LoggerWrapper(logger, logging.INFO)):
         Dvdx = da.stack(*dask.compute(dvdxs))
     logger.info("Compute dvdy")
-    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
+    with ProgressBar(out=utils.LoggerWrapper(logger, logging.INFO)):
         Dvdy = da.stack(*dask.compute(dvdys))
 
     logger.info("Stack arrays")

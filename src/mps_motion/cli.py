@@ -5,10 +5,13 @@ This is software to estimate motion in Brightfield images.
 import datetime
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
+import ap_features as apf
+import numpy as np
 import matplotlib.pyplot as plt
 import json
+import mps
 
 from . import Mechanics, OpticalFlow
 from . import motion_tracking as mt
@@ -32,9 +35,15 @@ def plot_traces(results, outdir: Path, time_unit="ms"):
     for name, arr in results.items():
         if name == "time":
             continue
+        if "average_time" in name:
+            continue
+        if "average_trace" in name:
+            time = results[f"{name[0]}_average_time"]
+        else:
+            time = results["time"]
 
         fig, ax = plt.subplots()
-        ax.plot(results["time"][: len(arr)], arr)
+        ax.plot(time[: len(arr)], arr)
         ax.set_xlabel(f"Time [{time_unit}]")
         if name.startswith("u"):
             ylabel = f"Displacement {name.split('_')[-1]} [\u00B5m]"
@@ -43,21 +52,6 @@ def plot_traces(results, outdir: Path, time_unit="ms"):
         ax.set_ylabel(ylabel)
         ax.grid()
         fig.savefig(outdir.joinpath(name).with_suffix(".png"))
-
-
-def load_data(filename_):
-    try:
-        import mps
-
-        data = mps.MPS(filename_)
-    except ImportError as e:
-        raise ImportError(
-            (
-                "Missing `mps` pacakge. Please install it. "
-                "'python -m pip install cardiac-mps'"
-            ),
-        ) from e
-    return data
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -70,11 +64,75 @@ class JSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
+def analyze_motion_array(y: np.ndarray, t=np.ndarray, intervals=None):
+
+    trace = apf.Beats(
+        y=y,
+        t=t,
+        background_correction_method="subtract",
+        background_correction_kernel=10,
+        chopping_options={
+            "threshold_factor": 0.3,
+        },
+        intervals=intervals,
+    )
+    try:
+        beats = trace.beats
+        if len(beats) == 0:
+            raise apf.chopping.EmptyChoppingError
+    except (apf.chopping.InvalidChoppingError, apf.chopping.EmptyChoppingError):
+        chopped = dict(y=[trace.y.tolist()], t=[trace.t.tolist()])
+        chopped_aligned = dict(y=[trace.y.tolist()], t=[trace.t.tolist()])
+        avg_trace = trace.y.tolist()
+        avg_time = trace.t.tolist()
+        intervals = None
+    else:
+        chopped = dict(
+            y=[beat.y.tolist() for beat in beats],
+            t=[beat.t.tolist() for beat in beats],
+        )
+        try:
+            chopped_aligned_beats = apf.beat.align_beats(beats)
+        except Exception:
+            chopped_aligned_beats = beats
+        chopped_aligned = dict(
+            y=[beat.y.tolist() for beat in chopped_aligned_beats],
+            t=[beat.t.tolist() for beat in chopped_aligned_beats],
+        )
+        avg_beat = trace.average_beat()
+
+        avg_trace = avg_beat.y.tolist()
+        avg_time = avg_beat.t.tolist()
+        intervals = trace.intervals
+
+    original = None if np.isnan(trace.original_y).any() else trace.original_y.tolist()
+    corrected = None if np.isnan(trace.y).any() else trace.y.tolist()
+    average_trace = None if np.isnan(avg_trace).any() else avg_trace
+    average_time = None if np.isnan(avg_time).any() else avg_time
+    background = None if np.isnan(trace.background).any() else trace.background.tolist()
+    chopped_ = None if np.any([np.isnan(yi).any() for yi in chopped["y"]]) else chopped
+    chopped_aligned_ = (
+        None
+        if np.any([np.isnan(yi).any() for yi in chopped_aligned["y"]])
+        else chopped_aligned
+    )
+    return {
+        "original": original,
+        "corrected": corrected,
+        "average_trace": average_trace,
+        "average_time": average_time,
+        "background": background,
+        "chopped": chopped_,
+        "chopped_aligned": chopped_aligned_,
+    }, intervals
+
+
 def main(
-    filename: str,
+    filename: Union[str, Path],
     algorithm: mt.FLOW_ALGORITHMS = mt.FLOW_ALGORITHMS.farneback,
     outdir: Optional[str] = None,
     reference_frame: str = "0",
+    estimate_reference_frame: bool = True,
     scale: float = 1.0,
     apply_filter: bool = True,
     spacing: int = 5,
@@ -82,6 +140,11 @@ def main(
     make_displacement_video: bool = True,
     make_velocity_video: bool = True,
     verbose: bool = False,
+    video_disp_scale: int = 4,
+    video_disp_step: int = 24,
+    video_vel_scale: int = 1,
+    video_vel_step: int = 24,
+    suppress_error: bool = False,
 ):
     """
     Estimate motion in stack of images
@@ -90,14 +153,21 @@ def main(
     ----------
     filename : str
         Path to file to be analyzed, typically an .nd2 or .czi Brightfield file
-    algoritm : mt.FLOW_ALGORITHMS, optional
+    algorithm : mt.FLOW_ALGORITHMS, optional
         The algorithm used to estimate motion, by default mt.FLOW_ALGORITHMS.farneback
     outdir : Optional[str], optional
         Directory where to store the results. If not provided, a folder with the the same
         as the filename will be created and results will be stored in a subfolder inside
         that called `motion`.
+    reference_frame: str, optional
+        Which frame should be the reference frame when computing the displacements.
+        This can either be a number indicating the timepoint,
+        or the value 'mean', 'median', 'max' or 'mean'. Default: '0' (i.e the first frame)
+    estimate_reference_frame : bool, optional
+        If True, estimate the the reference frame, by default True. Note that this will overwrite
+        the argument `reference_frame`
     scale : float, optional
-        Rescale data before running motion track. This is useful if the spatial resoltion
+        Rescale data before running motion track. This is useful if the spatial resolution
         of the images are large. Scale = 1.0 will keep the original size, by default 0.3
     apply_filter, bool, optional
         If True, set pixels with max displacement lower than the mean maximum displacement
@@ -135,10 +205,45 @@ def main(
         mt.logger.setLevel(logging.INFO)
 
     filename_ = Path(filename)
+    if filename_.is_dir():
+        # Traverse recursively
+        for f in filename_.iterdir():
+            main(
+                filename=f,
+                algorithm=algorithm,
+                reference_frame=reference_frame,
+                estimate_reference_frame=estimate_reference_frame,
+                outdir=outdir,
+                scale=scale,
+                apply_filter=apply_filter,
+                spacing=spacing,
+                compute_xy_components=compute_xy_components,
+                make_displacement_video=make_displacement_video,
+                make_velocity_video=make_velocity_video,
+                verbose=verbose,
+                video_disp_scale=video_disp_scale,
+                video_disp_step=video_disp_step,
+                video_vel_scale=video_vel_scale,
+                video_vel_step=video_vel_step,
+                suppress_error=True,
+            )
+
+    if filename_.suffix not in mps.load.valid_extensions + [".npy"]:
+        return
+    try:
+        data = mps.MPS(filename_)
+    except Exception:
+        if suppress_error:
+            return
+        raise
+    logger.info(f"Analyze {filename_.absolute()}")
+
     if outdir is None:
         outdir_ = filename_.with_suffix("").joinpath("motion")
     else:
         outdir_ = Path(outdir)
+
+    logger.info(f"Saving output to {outdir_.absolute()}")
 
     settings = {
         "filename": filename_,
@@ -146,6 +251,7 @@ def main(
         "outdir": outdir_,
         "scale": scale,
         "reference_frame": reference_frame,
+        "estimate_reference_frame": estimate_reference_frame,
         "timestamp": datetime.datetime.now().isoformat(),
     }
     logger.debug("\nSettings : \n{}".format(print_dict(settings)))
@@ -160,14 +266,29 @@ def main(
     if not (0 < scale <= 1.0):
         raise ValueError("Scale has to be between 0 and 1.0")
 
-    data = load_data(filename_)
     logger.info(f"Analyze motion in file {filename}...")
     if scale < 1.0:
         data = scaling.resize_data(data, scale=scale)
+
     opt_flow = OpticalFlow(
         data,
         flow_algorithm=algorithm,
     )
+
+    if estimate_reference_frame:
+        logger.info("Estimating reference frame")
+        v = opt_flow.get_velocities(spacing=5)
+        v_norm = v.norm().mean().compute()
+        reference_frame_index = mt.estimate_referece_image_from_velocity(
+            t=data.time_stamps[:-5],
+            v=v_norm,
+        )
+        reference_frame = data.time_stamps[reference_frame_index]
+        logger.info(
+            f"Found reference frame at index {reference_frame_index} "
+            f"and time {reference_frame:.2f}",
+        )
+
     u = opt_flow.get_displacements(reference_frame=reference_frame)
     factor = 1000.0 if data.info["time_unit"] == "ms" else 1.0
     v = Mechanics(u, t=data.time_stamps / factor).velocity(spacing=spacing)
@@ -180,9 +301,9 @@ def main(
 
     results = {"time": data.time_stamps}
     logger.info("Compute displacement norm")
-    results["u_norm"] = u.norm().mean().compute()
+    results["u_original"] = u.norm().mean().compute()
     logger.info("Compute velocity norm")
-    results["v_norm"] = v.norm().mean().compute()
+    results["v_original"] = v.norm().mean().compute()
 
     if compute_xy_components:
         logger.info("Compute displacement x component")
@@ -194,19 +315,31 @@ def main(
         logger.info("Compute velocity y component")
         results["v_y"] = v.y.mean().compute()
 
+    logger.info("Compute average")
+    u_data, intervals = analyze_motion_array(
+        y=results["u_original"],
+        t=data.time_stamps,
+    )
+    v_data, _ = analyze_motion_array(
+        y=results["v_original"],
+        t=data.time_stamps[:-spacing],
+        intervals=intervals,
+    )
+    for key in ["corrected", "average_trace", "average_time"]:
+        results[f"u_{key}"] = u_data[key]
+        results[f"v_{key}"] = v_data[key]
+
     outdir_.mkdir(exist_ok=True, parents=True)
     plot_traces(results=results, outdir=outdir_, time_unit=data.info["time_unit"])
 
     logger.info("Compute features")
     features = stats.compute_features(
-        u=results["u_norm"],
-        v=results["v_norm"],
+        u=results["u_original"],
+        v=results["v_original"],
         t=data.time_stamps,
     )
-    with open(settings_file, "w") as f:
-        json.dump(settings, f, cls=JSONEncoder, indent=2)
 
-    import mps
+    settings_file.write_text(json.dumps(settings, cls=JSONEncoder, indent=2))
 
     mps.utils.to_csv(results, results_file)
     mps.utils.to_csv(features, features_file)
@@ -216,8 +349,8 @@ def main(
             data,
             u,
             outdir_.joinpath("displacement_movie"),
-            step=24,
-            vector_scale=4,
+            step=video_disp_step,
+            vector_scale=video_disp_scale,
         )
 
     if make_velocity_video:
@@ -225,7 +358,7 @@ def main(
             data,
             v,
             outdir_.joinpath("velocity_movie"),
-            step=24,
-            vector_scale=1,
+            step=video_vel_step,
+            vector_scale=video_vel_scale,
             offset=spacing,
         )
