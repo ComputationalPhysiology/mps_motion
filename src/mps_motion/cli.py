@@ -236,12 +236,14 @@ def main(
         if suppress_error:
             return
         raise
-    logger.info(f"Analyze {filename_}")
+    logger.info(f"Analyze {filename_.absolute()}")
 
     if outdir is None:
         outdir_ = filename_.with_suffix("").joinpath("motion")
     else:
         outdir_ = Path(outdir)
+
+    logger.info(f"Saving output to {outdir_.absolute()}")
 
     settings = {
         "filename": filename_,
