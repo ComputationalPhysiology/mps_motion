@@ -252,16 +252,22 @@ def info(
     ),
 ):
     data = mps.MPS(path)
-    from rich.console import Console
-    from rich.table import Table
 
-    console = Console()
+    try:
+        from rich.console import Console
+        from rich.table import Table
 
-    table = Table("Key", "Value")
-    for k, v in data.info.items():
-        table.add_row(k, str(v))
+        console = Console()
 
-    console.print(table)
+        table = Table("Key", "Value", title=f"Info about {path}")
+        for k, v in data.info.items():
+            table.add_row(k, str(v))
+
+        console.print(table)
+    except ImportError:
+        typer.echo(f"Info about {path}")
+        for k, v in data.info.items():
+            typer.echo(f"{k}: {v}")
 
 
 if __name__ == "__main__":
