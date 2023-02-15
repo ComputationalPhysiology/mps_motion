@@ -31,7 +31,7 @@ mps-motion analyze data
 ```
 and the script will analyze the different datasets one by one
 
-## Options
+## Custom output directory
 The several ways in which you can customize the way the script works. To see all the options, execute the command
 ```
 mps-motion analyze --help
@@ -40,6 +40,21 @@ For most cases the default settings should be OK, but if you for example want to
 ```
 mps-motion analyze data.nd2 --outdir=my-outdir
 ```
+
+## Selected region of time span
+Sometimes you want to focus on a particular region in the video. For example, say that you are tracking a tissue, and you want to only focus on a part of the tissue. This is also useful if you have objects surrounding the tissue that you don't want to focus on. You can specify the start and end indices using the `--start-x`, `--end-x`, `--start-y`, and `--end-y` flags. For example the command
+```
+mps-motion analyze data.nd2 --start-x=200 --end-x=800 --start-y=100 --end-y=300
+```
+will only analyze the motion in the region [200, 800] x [100, 300]. It is sometimes difficult to know in advance what are the dimensions of the images, and you can use the `mps-motion info` command for this, i.e
+```
+mps-motion info data.nd2
+```
+You might also be in a situation where you want to discard some of the time stamps and choose a different start and end time. For this you can use the `--start-t` and `--end-t` flags, for example
+```
+mps-motion analyze data.nd2 --start-t=200 --end-t=2200
+```
+This will only analyze the signal from time 200ms to 2200 ms. Note however that the values for the time is in the same unit as the time stamp in the data (i.e the values are not indices but actual time values in milliseconds).
 
 ## Creating movies
 It is also possible to create movies with the displacement or velocity vectors on top.

@@ -2,6 +2,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Optional
 
+import mps
 import typer
 
 from .cli import main as _main
@@ -151,6 +152,36 @@ def analyze(
         help="Scale of vectors in velocity movie",
     ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="More verbose"),
+    start_x: Optional[int] = typer.Option(
+        None,
+        "--start-x",
+        help="Start x of selection.",
+    ),
+    end_x: Optional[int] = typer.Option(
+        None,
+        "--end-x",
+        help="End x of selection.",
+    ),
+    start_y: Optional[int] = typer.Option(
+        None,
+        "--start-y",
+        help="Start y of selection.",
+    ),
+    end_y: Optional[int] = typer.Option(
+        None,
+        "--end-y",
+        help="End y of selection.",
+    ),
+    start_t: Optional[int] = typer.Option(
+        None,
+        "--start-t",
+        help="Start time.",
+    ),
+    end_t: Optional[int] = typer.Option(
+        None,
+        "--end-t",
+        help="End time.",
+    ),
 ):
     _main(
         filename=filename,
@@ -169,6 +200,12 @@ def analyze(
         video_disp_step=video_disp_step,
         video_vel_scale=video_vel_scale,
         video_vel_step=video_vel_step,
+        start_x=start_x,
+        end_x=end_x,
+        start_y=start_y,
+        end_y=end_y,
+        start_t=start_t,
+        end_t=end_t,
     )
 
 
@@ -196,6 +233,35 @@ def gui(
     import subprocess as sp
 
     sp.run(["streamlit", "run", gui_path.as_posix(), "--", path.as_posix()])
+
+
+@app.command(help="Print info about the file")
+def info(
+    path: Path = typer.Argument(
+        ...,
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+        help=dedent(
+            """
+        Path to file
+        """,
+        ),
+    ),
+):
+    data = mps.MPS(path)
+    from rich.console import Console
+    from rich.table import Table
+
+    console = Console()
+
+    table = Table("Key", "Value")
+    for k, v in data.info.items():
+        table.add_row(k, str(v))
+
+    console.print(table)
 
 
 if __name__ == "__main__":

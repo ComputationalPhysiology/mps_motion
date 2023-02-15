@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional, Union
 import ap_features as apf
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import json
 import mps
 
@@ -127,7 +128,30 @@ def analyze_motion_array(y: np.ndarray, t=np.ndarray, intervals=None):
     }, intervals
 
 
-def main(
+def plot_selection(
+    fname: Union[str, Path],
+    frame: np.ndarray,
+    start_x: int,
+    end_x: int,
+    start_y: int,
+    end_y: int,
+) -> None:
+    fig, ax = plt.subplots()
+    ax.imshow(frame)
+    rect = patches.Rectangle(
+        (start_x, start_y),
+        end_x - start_x,
+        end_y - start_y,
+        linewidth=1,
+        edgecolor="r",
+        facecolor="none",
+    )
+    # Add the patch to the Axes
+    ax.add_patch(rect)
+    fig.savefig(fname)
+
+
+def main(  # noqa: C901
     filename: Union[str, Path],
     algorithm: mt.FLOW_ALGORITHMS = mt.FLOW_ALGORITHMS.farneback,
     outdir: Optional[str] = None,
@@ -145,6 +169,12 @@ def main(
     video_vel_scale: int = 1,
     video_vel_step: int = 24,
     suppress_error: bool = False,
+    start_x: Optional[int] = None,
+    end_x: Optional[int] = None,
+    start_y: Optional[int] = None,
+    end_y: Optional[int] = None,
+    start_t: Optional[float] = None,
+    end_t: Optional[float] = None,
 ):
     """
     Estimate motion in stack of images
@@ -226,6 +256,12 @@ def main(
                 video_vel_scale=video_vel_scale,
                 video_vel_step=video_vel_step,
                 suppress_error=True,
+                start_x=start_x,
+                end_x=end_x,
+                start_y=start_y,
+                end_y=end_y,
+                start_t=start_t,
+                end_t=end_t,
             )
 
     if filename_.suffix not in mps.load.valid_extensions + [".npy"]:
@@ -252,6 +288,10 @@ def main(
         "scale": scale,
         "reference_frame": reference_frame,
         "estimate_reference_frame": estimate_reference_frame,
+        "start_x": start_x,
+        "end_x": end_x,
+        "start_y": start_y,
+        "end_y": end_y,
         "timestamp": datetime.datetime.now().isoformat(),
     }
     logger.debug("\nSettings : \n{}".format(print_dict(settings)))
@@ -267,6 +307,33 @@ def main(
         raise ValueError("Scale has to be between 0 and 1.0")
 
     logger.info(f"Analyze motion in file {filename}...")
+    Nx, Ny, Nt = data.frames.shape
+    original_frame = data.frames[:, :, 0].T
+    start_x = start_x or 0
+    end_x = end_x or Nx
+    start_y = start_y or 0
+    end_y = end_y or Ny
+
+    def find_time_index(t_star, default):
+        index = default
+        if t_star is None:
+            return index
+        try:
+            index = next(i for i, t in enumerate(data.time_stamps) if t >= t_star)
+        except StopIteration:
+            pass
+        return index
+
+    t0 = find_time_index(start_t, default=0)
+    t1 = find_time_index(end_t, default=Nt)
+
+    data = utils.MPSData(
+        frames=data.frames[start_x:end_x, start_y:end_y, t0:t1],
+        time_stamps=data.time_stamps[t0:t1],
+        info=data.info,
+        metadata=data.metadata,
+    )
+
     if scale < 1.0:
         data = scaling.resize_data(data, scale=scale)
 
@@ -330,6 +397,14 @@ def main(
         results[f"v_{key}"] = v_data[key]
 
     outdir_.mkdir(exist_ok=True, parents=True)
+    plot_selection(
+        fname=outdir_ / "selection.png",
+        frame=original_frame,
+        start_x=start_x,
+        start_y=start_y,
+        end_x=end_x,
+        end_y=end_y,
+    )
     plot_traces(results=results, outdir=outdir_, time_unit=data.info["time_unit"])
 
     logger.info("Compute features")
