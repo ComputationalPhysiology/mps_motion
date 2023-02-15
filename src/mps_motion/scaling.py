@@ -139,7 +139,7 @@ def resize_frames(
                     INTERPOLATION_METHODS[interpolation_method],
                 ),
             )
-        with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
+        with ProgressBar(out=utils.LoggerWrapper(logger, logging.INFO)):
             resized_frames = da.stack(
                 *da.compute(all_resized_frames), axis=-1
             ).compute()

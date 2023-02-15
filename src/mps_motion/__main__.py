@@ -58,6 +58,15 @@ def analyze(
         """,
         ),
     ),
+    estimate_reference_frame: bool = typer.Option(
+        True,
+        help=dedent(
+            """
+            If True, estimate the the reference frame,
+            by default True. Note that this will overwrite
+            the argument `reference_frame`""",
+        ),
+    ),
     scale: float = typer.Option(
         1.0,
         help=dedent(
@@ -127,6 +136,7 @@ def analyze(
         filename=filename,
         algorithm=algorithm,
         reference_frame=reference_frame,
+        estimate_reference_frame=estimate_reference_frame,
         outdir=outdir,
         scale=scale,
         apply_filter=apply_filter,

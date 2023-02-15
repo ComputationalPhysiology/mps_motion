@@ -47,6 +47,7 @@ def set_log_level(level):
         visu.logger,
         frame_sequence.logger,
         filters.logger,
+        stats.logger,
     ]:
         logger.setLevel(level)
 

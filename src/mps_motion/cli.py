@@ -75,6 +75,7 @@ def main(
     algorithm: mt.FLOW_ALGORITHMS = mt.FLOW_ALGORITHMS.farneback,
     outdir: Optional[str] = None,
     reference_frame: str = "0",
+    estimate_reference_frame: bool = True,
     scale: float = 1.0,
     apply_filter: bool = True,
     spacing: int = 5,
@@ -90,14 +91,21 @@ def main(
     ----------
     filename : str
         Path to file to be analyzed, typically an .nd2 or .czi Brightfield file
-    algoritm : mt.FLOW_ALGORITHMS, optional
+    algorithm : mt.FLOW_ALGORITHMS, optional
         The algorithm used to estimate motion, by default mt.FLOW_ALGORITHMS.farneback
     outdir : Optional[str], optional
         Directory where to store the results. If not provided, a folder with the the same
         as the filename will be created and results will be stored in a subfolder inside
         that called `motion`.
+    reference_frame: str, optional
+        Which frame should be the reference frame when computing the displacements.
+        This can either be a number indicating the timepoint,
+        or the value 'mean', 'median', 'max' or 'mean'. Default: '0' (i.e the first frame)
+    estimate_reference_frame : bool, optional
+        If True, estimate the the reference frame, by default True. Note that this will overwrite
+        the argument `reference_frame`
     scale : float, optional
-        Rescale data before running motion track. This is useful if the spatial resoltion
+        Rescale data before running motion track. This is useful if the spatial resolution
         of the images are large. Scale = 1.0 will keep the original size, by default 0.3
     apply_filter, bool, optional
         If True, set pixels with max displacement lower than the mean maximum displacement
@@ -146,6 +154,7 @@ def main(
         "outdir": outdir_,
         "scale": scale,
         "reference_frame": reference_frame,
+        "estimate_reference_frame": estimate_reference_frame,
         "timestamp": datetime.datetime.now().isoformat(),
     }
     logger.debug("\nSettings : \n{}".format(print_dict(settings)))
@@ -164,10 +173,26 @@ def main(
     logger.info(f"Analyze motion in file {filename}...")
     if scale < 1.0:
         data = scaling.resize_data(data, scale=scale)
+
     opt_flow = OpticalFlow(
         data,
         flow_algorithm=algorithm,
     )
+
+    if estimate_reference_frame:
+        logger.info("Estimating reference frame")
+        v = opt_flow.get_velocities(spacing=5)
+        v_norm = v.norm().mean().compute()
+        reference_frame_index = mt.estimate_referece_image_from_velocity(
+            t=data.time_stamps[:-5],
+            v=v_norm,
+        )
+        reference_frame = data.time_stamps[reference_frame_index]
+        logger.info(
+            f"Found reference frame at index {reference_frame_index} "
+            f"and time {reference_frame:.2f}",
+        )
+
     u = opt_flow.get_displacements(reference_frame=reference_frame)
     factor = 1000.0 if data.info["time_unit"] == "ms" else 1.0
     v = Mechanics(u, t=data.time_stamps / factor).velocity(spacing=spacing)

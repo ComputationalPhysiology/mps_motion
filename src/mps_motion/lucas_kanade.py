@@ -276,7 +276,7 @@ def get_displacements(
             ),
         )
 
-    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
+    with ProgressBar(out=utils.LoggerWrapper(logger, logging.INFO)):
         flows = da.stack(*da.compute(all_flows), axis=2)
     logger.info("Done with Lucas-Kanade method")
 

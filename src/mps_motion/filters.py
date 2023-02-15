@@ -145,7 +145,7 @@ def filter_vectors_par(
             ),
         )
 
-    with ProgressBar(out=utils.LoggerWrapper(logger, "info")):
+    with ProgressBar(out=utils.LoggerWrapper(logger, logging.INFO)):
         vectors = da.stack(*da.compute(all_vectors), axis=2)
     if is_numpy:
         vectors = vectors.compute()
