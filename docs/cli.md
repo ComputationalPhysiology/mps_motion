@@ -1,7 +1,7 @@
 (cli)=
 # Command line interface
 
-The package comes with a command line interface that run in two different way. One way is to use the script, e.g
+The package comes with a command line interface that run in two different ways. One way is to use the script, e.g
 ```
 mps-motion analyze data.nd2
 ```
