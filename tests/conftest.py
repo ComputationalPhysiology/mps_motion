@@ -29,7 +29,6 @@ def get_func(t, a=0.001, b=0):
 
 @pytest.fixture
 def test_data():
-
     N = 10
     a = 0.0
     b = 0.02
@@ -54,7 +53,6 @@ def test_data():
 
 @pytest.fixture
 def mech_obj():
-
     width = 10
     height = 15
     num_time_points = 4

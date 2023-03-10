@@ -225,7 +225,6 @@ def gui(
         ),
     ),
 ):
-
     # Make sure we can import the required packages
     from . import gui  # noqa: F401
 

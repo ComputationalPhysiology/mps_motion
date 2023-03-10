@@ -3,7 +3,6 @@ from mps_motion import stats
 
 
 def test_analysis_from_mechanics(mech_trace_obj):
-
     analysis = stats.analysis_from_mechanics(mech_trace_obj)
 
     mean_values = analysis.mean
@@ -25,7 +24,6 @@ def test_analysis_from_mechanics(mech_trace_obj):
 
 
 def test_analysis_from_arrays(mech_trace_obj):
-
     u = mech_trace_obj.u.norm().mean()
     t = mech_trace_obj.t
     v = mech_trace_obj.velocity().norm().mean()

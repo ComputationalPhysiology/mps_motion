@@ -34,7 +34,6 @@ __program_name__ = meta["Name"]
 
 
 def set_log_level(level):
-
     for logger in [
         block_matching.logger,
         dualtvl1.logger,

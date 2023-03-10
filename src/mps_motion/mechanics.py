@@ -275,7 +275,6 @@ class Mechanics:
 
     @cached_property
     def du(self) -> fs.TensorFrameSequence:
-
         try:
             du = compute_gradients(self.u.array, dx=self.dx)
         except ValueError:

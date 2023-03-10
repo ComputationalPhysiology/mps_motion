@@ -70,7 +70,6 @@ def test_vector_frame_sequence(ns):
 
 @pytest.mark.parametrize("ns", [np, da])
 def test_tensor_frame_sequence(ns):
-
     width = 10
     height = 12
     num_time_steps = 14
@@ -121,7 +120,6 @@ def test_tensor_frame_sequence(ns):
 @pytest.mark.skipif(MPS_NOT_FOUND, reason="MPS not found")
 @pytest.mark.parametrize("ns", [np, da])
 def test_local_averages(ns):
-
     width = 10
     height = 15
     num_time_steps = 14
@@ -138,7 +136,6 @@ def test_local_averages(ns):
 
 @pytest.mark.parametrize("ns, suffix", product([np, da], [".h5", ".npy"]))
 def test_save_load(ns, suffix):
-
     width = 10
     height = 15
     num_time_steps = 14
@@ -157,7 +154,6 @@ def test_save_load(ns, suffix):
 
 @pytest.mark.parametrize("ns", [np, da])
 def test_norm(ns):
-
     width = 10
     height = 15
     num_time_steps = 14
@@ -206,7 +202,6 @@ def test_threshold(ns, limits):
 
 @pytest.mark.parametrize("ns", [np, da])
 def test_invalid_threshold_raises(ns):
-
     width = 10
     height = 15
     num_time_steps = 14
@@ -259,7 +254,6 @@ def test_threshold_norm(ns, limits):
     ],
 )
 def test_filter_VectorFrameSequence(filter_type, size, sigma):
-
     shape = (10, 9, 8, 2)
     np.random.seed(1)
     vectors = 10 * np.ones(shape) + np.random.random(shape)
@@ -282,7 +276,6 @@ def test_filter_VectorFrameSequence(filter_type, size, sigma):
     ],
 )
 def test_filter_FrameSequence(filter_type, size, sigma):
-
     shape = (10, 9, 8)
     np.random.seed(1)
     vectors = 10 * np.ones(shape) + np.random.random(shape)
@@ -298,7 +291,6 @@ def test_filter_FrameSequence(filter_type, size, sigma):
 
 
 def test_cartToPolar():
-
     # a = 0.01
     # b = 0.01
     # def func(x):

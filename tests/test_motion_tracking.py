@@ -35,7 +35,6 @@ def test_reference_frame_digit(
     reference_index: int,
     interval,
 ):
-
     reference_frame = test_data.time_stamps[int(reference_index)]
     if reference_index == -1:
         interval = (interval[0], test_data.time_stamps.size)
@@ -117,7 +116,6 @@ def test_get_displacement(test_data: utils.MPSData, flow_algorithm: _FLOW_ALGORI
 
 
 def test_get_displacement_unit(test_data: utils.MPSData):
-
     m = OpticalFlow(test_data)
     disp_px = m.get_displacements(unit="pixels")
     disp_um = m.get_displacements(unit="um", recompute=True)
@@ -187,14 +185,12 @@ def test_get_velocity_scale(
 
 
 def test_OpticalFlow_options(test_data: utils.MPSData):
-
     step = 4
     m = OpticalFlow(test_data, flow_algorithm=_FLOW_ALGORITHMS.lucas_kanade, step=step)
     assert m.options["step"] == step
 
 
 def test_estimate_reference_index(synthetic_trace):
-
     t = synthetic_trace.t[:-1]
     v = v = synthetic_trace.v
 

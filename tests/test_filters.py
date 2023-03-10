@@ -12,7 +12,6 @@ from mps_motion import filters
     ],
 )
 def test_filter_vectors_numpy(filter_type, size, sigma):
-
     shape = (10, 9, 2)
     np.random.seed(1)
     vectors = 10 * np.ones(shape) + np.random.random(shape)
@@ -64,7 +63,6 @@ def test_filter_with_0_do_nothing(filter_type, size, sigma):
     ],
 )
 def test_filter_vectors_dask(filter_type, size, sigma):
-
     shape = (10, 9, 2)
     np.random.seed(1)
     vectors = 10 * da.ones(shape) + da.random.random(shape)
@@ -87,7 +85,6 @@ def test_filter_vectors_dask(filter_type, size, sigma):
     ],
 )
 def test_filter_vectors_par_numpy(filter_type, size, sigma):
-
     shape = (10, 10, 5, 2)
     np.random.seed(1)
     vectors = 10 * np.ones(shape) + np.random.random(shape)

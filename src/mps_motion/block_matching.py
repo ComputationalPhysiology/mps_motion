@@ -145,7 +145,6 @@ def _flow(
     # Loop over each block
     for y_block in range(shape[0]):
         for x_block in range(shape[1]):
-
             # Coordinates in the orignal imagee
             y_image = y_block * block_size
             x_image = x_block * block_size
@@ -157,7 +156,6 @@ def _flow(
 
             # Check if box has values
             if np.max(block) > 0:
-
                 # Loop over values around the block within the `max_block_movement` range
                 for i, y_block_ref in enumerate(
                     range(-max_block_movement, max_block_movement + 1),
@@ -168,7 +166,6 @@ def _flow(
                             max_block_movement + 1,
                         ),
                     ):
-
                         y_image_ref = y_image + y_block_ref
                         x_image_ref = x_image + x_block_ref
 
@@ -303,7 +300,6 @@ def get_displacements(
             flows[:, :, i, :] = uv
 
     if resize:
-
         new_shape: Tuple[int, int] = (
             reference_image.shape[0],
             reference_image.shape[1],

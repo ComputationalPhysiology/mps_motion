@@ -55,7 +55,6 @@ def estimate_referece_image_from_velocity(
     rel_tol=0.01,
     raise_on_failure: bool = False,
 ) -> int:
-
     # Estimate baseline
     background = apf.background.background(x=t, y=v)
 
@@ -279,7 +278,6 @@ class OpticalFlow:
             )
 
         if not hasattr(self, "_displacement") or recompute:
-
             u = self._get_displacements(data.frames, reference_image, **self.options)
             dx = 1
 
