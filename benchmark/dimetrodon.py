@@ -20,11 +20,9 @@ from mps_motion import lucas_kanade
 
 
 def rubber_whale():
-
     folder = Path("../datasets/RubberWhale")
     frames = []
     for filename in ["frame10.png", "frame11.png"]:
-
         image = cv2.imread(folder.joinpath(filename).as_posix())
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         frames.append(gray)
@@ -40,7 +38,6 @@ def dimetrodon():
     folder = Path("../datasets/Dimetrodon")
     frames = []
     for filename in ["frame10.png", "frame11.png"]:
-
         image = cv2.imread(folder.joinpath(filename).as_posix())
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         frames.append(gray)
@@ -52,7 +49,6 @@ def dimetrodon():
 
 
 def main(tf, frames):
-
     dual_flow = dualtvl1.flow(frames[1], frames[0])
     dual_flow_norm = np.linalg.norm(dual_flow, axis=2)
     dual_flow_norm /= np.nanmax(dual_flow_norm)

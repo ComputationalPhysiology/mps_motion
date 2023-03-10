@@ -61,7 +61,6 @@ def process_spline_interpolation(u):
 
 
 def spline_smooth(u: utils.Array) -> np.ndarray:
-
     if isinstance(u, da.Array):
         u = u.compute()
 
@@ -88,7 +87,6 @@ def filter_vectors(
     size: Optional[int] = None,
     sigma: Optional[float] = None,
 ):
-
     if not valid_filter(filter_type=filter_type, size=size, sigma=sigma):
         return vectors
 
@@ -121,7 +119,6 @@ def filter_vectors_par(
     size: Optional[int] = None,
     sigma: Optional[float] = None,
 ):
-
     if not valid_filter(filter_type=filter_type, size=size, sigma=sigma):
         return vectors
     logger.info("Filter vectors")

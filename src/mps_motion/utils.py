@@ -143,7 +143,6 @@ def ca_transient(
     ca_diast: float = 0.0,
     ca_ampl: float = 1.0,
 ) -> np.ndarray:
-
     beta = (tau1 / tau2) ** (-1 / (tau1 / tau2 - 1)) - (tau1 / tau2) ** (
         -1 / (1 - tau2 / tau1)
     )

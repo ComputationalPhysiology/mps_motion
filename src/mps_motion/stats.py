@@ -57,17 +57,6 @@ def normalize(y: np.ndarray) -> np.ndarray:
     return (y - y.min()) / (y.max() - y.min())
 
 
-def width_at_height(y: np.ndarray, t: np.ndarray, height=0.5) -> float:
-    pass
-    # assert 0 <= height <= 1
-    # f = UnivariateSpline(t, normalize(y) - height, s=0, k=3)
-    # try:
-    #     return np.diff(f.roots())[0]
-    # except IndexError:
-    #     # Function does not have two zeros
-    #     return np.nan
-
-
 def chop_trace(
     u: np.ndarray,
     t: np.ndarray,
@@ -143,7 +132,6 @@ def analysis_from_mechanics(
     ignore_pacing: bool = False,
     intervals: Optional[List[apf.chopping.Interval]] = None,
 ) -> Analysis:
-
     u = compute(mech.u.norm().mean())
     t = mech.t
     v = compute(mech.velocity().norm().mean())
@@ -171,7 +159,6 @@ def analysis_from_arrays(
     threshold_factor: float = 0.5,
     intervals: Optional[List[apf.chopping.Interval]] = None,
 ) -> Analysis:
-
     u = apf.utils.numpyfy(u)
     v = apf.utils.numpyfy(v)
     t = apf.utils.numpyfy(t)
@@ -280,7 +267,6 @@ def compute_features(u, v, t):
     }
 
     for ui, vi in zip(u_beats, v_beats):
-
         peaks, peak_ops, prom = find_two_peaks(vi.y)
         try:
             data["Maximum rise velocity"].append(vi.y[peaks[0]])

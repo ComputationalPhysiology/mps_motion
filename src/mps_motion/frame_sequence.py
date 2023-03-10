@@ -201,7 +201,6 @@ class FrameSequence:
 
     @classmethod
     def from_file(cls, path, use_dask=True):
-
         path = Path(path)
         if not path.is_file():
             raise IOError(f"File {path} foes not exist")

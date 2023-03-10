@@ -62,7 +62,6 @@ def main():
 
 
 def resize_test_data():
-
     data = mps.MPS("../sandbox/opencv_optical_flow/PointH4A_ChannelBF_VC_Seq0018.nd2")
 
     scale = 0.1

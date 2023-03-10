@@ -6,7 +6,6 @@ docutils = pytest.importorskip("cv2.optflow")
 
 
 def test_flow():
-
     reference_image = 255 * np.random.randint(0, 255, size=(64, 64), dtype=np.uint8)
     image = 255 * np.random.randint(0, 255, size=(64, 64), dtype=np.uint8)
 

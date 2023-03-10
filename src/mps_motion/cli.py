@@ -66,7 +66,6 @@ class JSONEncoder(json.JSONEncoder):
 
 
 def analyze_motion_array(y: np.ndarray, t=np.ndarray, intervals=None):
-
     trace = apf.Beats(
         y=y,
         t=t,

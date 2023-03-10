@@ -11,7 +11,6 @@ from mps_motion import block_matching as bm
     ],
 )
 def test_flow_shape(size, block_size, resize, expected_shape, expected_type):
-
     reference_image = 255 * np.random.randint(0, 255, size=size, dtype=np.uint8)
     image = 255 * np.random.randint(0, 255, size=size, dtype=np.uint8)
 
@@ -26,7 +25,6 @@ def test_flow_shape(size, block_size, resize, expected_shape, expected_type):
 
 
 def test_get_displacements():
-
     size = (64, 64)
     reference_image = 255 * np.random.randint(0, 255, size=size, dtype=np.uint8)
     image = 255 * np.random.randint(0, 255, size=size, dtype=np.uint8)

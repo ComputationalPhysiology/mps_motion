@@ -55,7 +55,6 @@ def resize_data(data: utils.MPSData, scale: float) -> utils.MPSData:
 
 
 def subsample_time(data: utils.MPSData, step: int) -> utils.MPSData:
-
     new_frames = data.frames[:, :, ::step]
     new_times = data.time_stamps[::step]
     info = data.info.copy()
@@ -111,7 +110,6 @@ def resize_frames(
     msg = f"Expected interpolation method to be one of {INTERPOLATION_METHODS.keys()}, got {interpolation_method}"
     assert interpolation_method in INTERPOLATION_METHODS, msg
     if scale != 1.0 or new_shape is not None:
-
         if len(frames.shape) == 2:
             w, h = frames.shape
         else:
@@ -390,7 +388,6 @@ def rbfinterp2d(  # noqa:C901
             output_array[i0 : (i0 + idelta), :] = input_array[inds, :]
 
         else:
-
             # the interpolation weights
             if rbfunction == "gaussian":
                 w = np.exp(-((d * epsilon) ** 2))

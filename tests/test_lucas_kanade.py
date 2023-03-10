@@ -13,7 +13,6 @@ from mps_motion import lucas_kanade as lk
     ],
 )
 def test_flow_shape(size, step, interpolation, expected_shape, expected_type):
-
     reference_image = 255 * np.random.randint(0, 255, size=size, dtype=np.uint8)
     image = 255 * np.random.randint(0, 255, size=size, dtype=np.uint8)
 
@@ -49,7 +48,6 @@ def test_get_uniform_reference_points(input_shape, step):
 
 
 def test_get_displacements():
-
     size = (64, 64)
     reference_image = 255 * np.random.randint(0, 255, size=size, dtype=np.uint8)
     image = 255 * np.random.randint(0, 255, size=size, dtype=np.uint8)

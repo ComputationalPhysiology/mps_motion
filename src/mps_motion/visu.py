@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 def apply_custom_colormap(image_gray, cmap=plt.get_cmap("seismic")):
-
     assert image_gray.dtype == np.uint8, "must be np.uint8 image"
     if image_gray.ndim == 3:
         image_gray = image_gray.squeeze(-1)
@@ -125,7 +124,6 @@ def quiver_video(
     offset: int = 0,
     thickness: int = 2,
 ) -> None:
-
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     if isinstance(vectors, fs.VectorFrameSequence):
         vectors_np: np.ndarray = vectors.array_np
@@ -203,7 +201,6 @@ def hsv_video(
     axis: int = 2,
     convert: bool = False,
 ) -> None:
-
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     if isinstance(vectors, fs.VectorFrameSequence):
         vectors_np: np.ndarray = vectors.array_np
@@ -253,7 +250,6 @@ def heatmap(
     cmap="bwr",
     transpose: bool = False,
 ):
-
     logger.info("Create heatmap video")
     if isinstance(data, fs.FrameSequence):
         data_np: np.ndarray = data.array_np

@@ -10,7 +10,6 @@ def to_image(A):
 
 
 def add_noise(A, noise_level):
-
     return to_image(A) + to_image(noise_level * np.random.rand(*np.shape(A)))
 
 
@@ -25,7 +24,6 @@ def create_circle_data(
     Nx=100,
     Ny=100,
 ):
-
     if line_x is None:
         line_x = np.sin(np.linspace(0, np.pi, 100))
     if line_y is None:

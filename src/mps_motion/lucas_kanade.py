@@ -303,7 +303,6 @@ def get_displacements(
     flows = scaling.reshape_lk(reference_points, flows)
 
     if interpolation == Interpolation.nearest:
-
         new_shape: Tuple[int, int] = (
             reference_image.shape[0],
             reference_image.shape[1],

@@ -32,7 +32,6 @@ def flow(
     nscales: int = 6,
     warps: int = 5,
 ) -> np.ndarray:
-
     dual_proc = cv2.optflow.DualTVL1OpticalFlow_create(
         tau,
         lmbda,

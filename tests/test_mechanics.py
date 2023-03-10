@@ -7,7 +7,6 @@ from mps_motion import mechanics
 
 
 def test_deformation_gradient():
-
     width = 10
     height = 15
 
@@ -41,7 +40,6 @@ def test_deformation_gradient():
 
 
 def test_strain():
-
     width = 10
     height = 15
 
@@ -156,7 +154,6 @@ def test_compute_displacement(mech_obj):
 
 
 def test_shapes():
-
     width = 10
     height = 12
     num_time_steps = 14
