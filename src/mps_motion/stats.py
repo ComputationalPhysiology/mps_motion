@@ -136,7 +136,7 @@ def find_two_most_prominent_peaks(y, raise_on_failure: bool = False) -> Tuple[in
             raise ProminenceError(msg)
         t_max = np.argmax(y)
         t2 = int(
-            0.5 * (t_max + len(y))
+            0.5 * (t_max + len(y)),
         )  # Just choose a point between the max and the and
         peaks = [np.argmax(y), t2]
 
