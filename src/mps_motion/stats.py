@@ -108,7 +108,7 @@ def compute(u: Array) -> np.ndarray:
     return u
 
 
-def find_two_most_prominent_peaks(y) -> Tuple[int, int]:
+def find_two_most_prominent_peaks(y, raise_on_failure: bool = False) -> Tuple[int, int]:
     """Return the indices of the two most promintent peaks
 
     Parameters
@@ -125,12 +125,20 @@ def find_two_most_prominent_peaks(y) -> Tuple[int, int]:
 
     peaks: List[int] = []
     prominence = 0.9
-    while len(peaks) < 2 and prominence > 0:
+    while len(peaks) < 2 and prominence > 0.3:
         peaks, opts = find_peaks(normalize(y), prominence=prominence)
         prominence -= 0.1
 
     if len(peaks) < 2:
-        raise ProminenceError("Unable to find two most prominent beats")
+        msg = "Unable to find two most prominent beats"
+        logger.warning(msg)
+        if raise_on_failure:
+            raise ProminenceError(msg)
+        t_max = np.argmax(y)
+        t2 = int(
+            0.5 * (t_max + len(y))
+        )  # Just choose a point between the max and the and
+        peaks = [np.argmax(y), t2]
 
     return (peaks[0], peaks[1])
 
