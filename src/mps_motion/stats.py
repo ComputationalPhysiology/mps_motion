@@ -18,7 +18,10 @@ logger = logging.getLogger(__name__)
 
 class Analysis(NamedTuple):
     u_peaks: List[float]
+    u_peaks_first: List[float]
     u_width50: List[float]
+    u_width50_first: List[float]
+    time_above_half_height: List[float]
     time_between_contraction_and_relaxation: List[float]
     max_contraction_velocity: List[float]
     max_relaxation_velocity: List[float]
@@ -28,6 +31,9 @@ class Analysis(NamedTuple):
         return {
             "u_peaks": np.mean(self.u_peaks),
             "u_width50": np.mean(self.u_width50),
+            "u_peaks_first": np.mean(self.u_peaks_first),
+            "u_width50_first": np.mean(self.u_width50_first),
+            "time_above_half_height": np.mean(self.time_above_half_height),
             "time_between_contraction_and_relaxation": np.mean(
                 self.time_between_contraction_and_relaxation,
             ),
@@ -40,6 +46,9 @@ class Analysis(NamedTuple):
         return {
             "u_peaks": np.std(self.u_peaks),
             "u_width50": np.std(self.u_width50),
+            "u_peaks_first": np.std(self.u_peaks_first),
+            "u_width50_first": np.std(self.u_width50_first),
+            "time_above_half_height": np.std(self.time_above_half_height),
             "time_between_contraction_and_relaxation": np.std(
                 self.time_between_contraction_and_relaxation,
             ),
@@ -184,8 +193,26 @@ def analysis_from_arrays(
     )
 
     u_peaks = [ui.y.max() for ui in u_beats]
+    global_peak_inds = [ui.y.argmax() for ui in u_beats]
+    all_peaks_inds = [ui.peaks() for ui in u_beats]
+    first_peak_inds = []
+    for i, peaks in enumerate(all_peaks_inds):
+        if len(peaks) == 0:
+            peak = global_peak_inds[i]
+        else:
+            peak = peaks[0]
+        first_peak_inds.append(peak)
+
+    u_peaks_first = [ui.y[index] for index, ui in zip(first_peak_inds, u_beats)]
+    u_beats_first_normalized = [
+        ui.copy(y_max=p) for ui, p, in zip(u_beats, u_peaks_first)
+    ]
+    time_above_half_height = [ui.time_above_apd_line(0.5) for ui in u_beats]
+
     # u_ttp = [ui.ttp() for ui in u_beats]
-    u_width50 = [ui.apd(50) for ui in u_beats]
+    u_width50_global = [ui.apd(50) for ui in u_beats]
+    u_width50_first = [ui.apd(50) for ui in u_beats_first_normalized]
+
     p = pacing
     if pacing is not None:
         p = pacing[: len(v)]
@@ -225,7 +252,10 @@ def analysis_from_arrays(
             max_relaxation_velocity.append(vi.y[t1])
     return Analysis(
         u_peaks=u_peaks,
-        u_width50=u_width50,
+        u_width50=u_width50_global,
+        u_peaks_first=u_peaks_first,
+        u_width50_first=u_width50_first,
+        time_above_half_height=time_above_half_height,
         max_contraction_velocity=max_contraction_velocity,
         max_relaxation_velocity=max_relaxation_velocity,
         time_between_contraction_and_relaxation=time_between_contraction_and_relaxation,
