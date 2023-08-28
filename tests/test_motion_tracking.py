@@ -10,7 +10,7 @@ from mps_motion import OpticalFlow
 from mps_motion import utils
 
 # from typing import Type
-FLOW_ALGORITHMS = [alg for alg in dir(_FLOW_ALGORITHMS) if not alg.startswith("_")]
+FLOW_ALGORITHMS = tuple(_FLOW_ALGORITHMS.__members__.keys())
 
 
 @pytest.mark.parametrize("reference_frame", ["min", "max", "median", "mean"])
