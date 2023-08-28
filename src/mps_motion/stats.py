@@ -22,6 +22,7 @@ class Analysis(NamedTuple):
     u_width50: List[float]
     u_width50_first: List[float]
     time_above_half_height: List[float]
+    time_above_half_height_first: List[float]
     time_between_contraction_and_relaxation: List[float]
     max_contraction_velocity: List[float]
     max_relaxation_velocity: List[float]
@@ -34,6 +35,7 @@ class Analysis(NamedTuple):
             "u_peaks_first": np.mean(self.u_peaks_first),
             "u_width50_first": np.mean(self.u_width50_first),
             "time_above_half_height": np.mean(self.time_above_half_height),
+            "time_above_half_height_first": np.mean(self.time_above_half_height_first),
             "time_between_contraction_and_relaxation": np.mean(
                 self.time_between_contraction_and_relaxation,
             ),
@@ -49,6 +51,7 @@ class Analysis(NamedTuple):
             "u_peaks_first": np.std(self.u_peaks_first),
             "u_width50_first": np.std(self.u_width50_first),
             "time_above_half_height": np.std(self.time_above_half_height),
+            "time_above_half_height_first": np.std(self.time_above_half_height_first),
             "time_between_contraction_and_relaxation": np.std(
                 self.time_between_contraction_and_relaxation,
             ),
@@ -208,6 +211,9 @@ def analysis_from_arrays(
         ui.copy(y_max=p) for ui, p, in zip(u_beats, u_peaks_first)
     ]
     time_above_half_height = [ui.time_above_apd_line(0.5) for ui in u_beats]
+    time_above_half_height_first = [
+        ui.time_above_apd_line(0.5) for ui in u_beats_first_normalized
+    ]
 
     # u_ttp = [ui.ttp() for ui in u_beats]
     u_width50_global = [ui.apd(50) for ui in u_beats]
@@ -256,6 +262,7 @@ def analysis_from_arrays(
         u_peaks_first=u_peaks_first,
         u_width50_first=u_width50_first,
         time_above_half_height=time_above_half_height,
+        time_above_half_height_first=time_above_half_height_first,
         max_contraction_velocity=max_contraction_velocity,
         max_relaxation_velocity=max_relaxation_velocity,
         time_between_contraction_and_relaxation=time_between_contraction_and_relaxation,
