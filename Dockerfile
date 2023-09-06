@@ -1,5 +1,5 @@
 # Use github pages for docker image
-FROM ghcr.io/computationalphysiology/mps_motion:v0.3.5
+FROM ghcr.io/computationalphysiology/mps_motion:v0.3.6
 
 # Create user with a home directory
 ARG NB_USER=jovyan
