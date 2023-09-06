@@ -51,7 +51,7 @@ class Analysis(NamedTuple):
     def std(self) -> Dict[str, float]:
         return {
             "u_peaks": np.std(self.u_peaks),
-            "u_width50": np.std(self.u_width50_global),
+            "u_width50_global": np.std(self.u_width50_global),
             "u_peaks_first": np.std(self.u_peaks_first),
             "u_width50_first": np.std(self.u_width50_first),
             "u_width50_global_first_last": np.std(self.u_width50_global_first_last),
