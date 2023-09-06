@@ -19,8 +19,10 @@ logger = logging.getLogger(__name__)
 class Analysis(NamedTuple):
     u_peaks: List[float]
     u_peaks_first: List[float]
-    u_width50: List[float]
+    u_width50_global: List[float]
     u_width50_first: List[float]
+    u_width50_global_first_last: List[float]
+    u_width50_first_first_last: List[float]
     time_above_half_height: List[float]
     time_above_half_height_first: List[float]
     time_between_contraction_and_relaxation: List[float]
@@ -31,9 +33,11 @@ class Analysis(NamedTuple):
     def mean(self) -> Dict[str, float]:
         return {
             "u_peaks": np.mean(self.u_peaks),
-            "u_width50": np.mean(self.u_width50),
             "u_peaks_first": np.mean(self.u_peaks_first),
+            "u_width50_global": np.mean(self.u_width50_global),
             "u_width50_first": np.mean(self.u_width50_first),
+            "u_width50_global_first_last": np.mean(self.u_width50_global_first_last),
+            "u_width50_first_first_last": np.mean(self.u_width50_first_first_last),
             "time_above_half_height": np.mean(self.time_above_half_height),
             "time_above_half_height_first": np.mean(self.time_above_half_height_first),
             "time_between_contraction_and_relaxation": np.mean(
@@ -47,9 +51,11 @@ class Analysis(NamedTuple):
     def std(self) -> Dict[str, float]:
         return {
             "u_peaks": np.std(self.u_peaks),
-            "u_width50": np.std(self.u_width50),
+            "u_width50": np.std(self.u_width50_global),
             "u_peaks_first": np.std(self.u_peaks_first),
             "u_width50_first": np.std(self.u_width50_first),
+            "u_width50_global_first_last": np.std(self.u_width50_global_first_last),
+            "u_width50_first_first_last": np.std(self.u_width50_first_first_last),
             "time_above_half_height": np.std(self.time_above_half_height),
             "time_above_half_height_first": np.std(self.time_above_half_height_first),
             "time_between_contraction_and_relaxation": np.std(
@@ -216,8 +222,48 @@ def analysis_from_arrays(
     ]
 
     # u_ttp = [ui.ttp() for ui in u_beats]
-    u_width50_global = [ui.apd(50) for ui in u_beats]
-    u_width50_first = [ui.apd(50) for ui in u_beats_first_normalized]
+    # u_width50_global = [ui.apd(50) for ui in u_beats]
+    # u_width50_first = [ui.apd(50) for ui in u_beats_first_normalized]
+
+    apd_points_global = [
+        ui.apd_point(50, strategy="big_diff_plus_one") for ui in u_beats
+    ]
+    apd_points_first = [
+        ui.apd_point(50, strategy="big_diff_plus_one")
+        for ui in u_beats_first_normalized
+    ]
+    apd_points_global_first_last = [
+        ui.apd_point(50, strategy="first_last") for ui in u_beats
+    ]
+    apd_points_first_first_last = [
+        ui.apd_point(50, strategy="first_last") for ui in u_beats_first_normalized
+    ]
+
+    u_width50_global = [p[1] - p[0] for p in apd_points_global]
+    u_width50_first = [p[1] - p[0] for p in apd_points_first]
+    u_width50_global_first_last = [p[1] - p[0] for p in apd_points_global_first_last]
+    u_width50_first_first_last = [p[1] - p[0] for p in apd_points_first_first_last]
+
+    # import matplotlib.pyplot as plt
+
+    # plt.close("all")
+    # fig, ax = plt.subplots(figsize=(12, 8))
+    # for i, beat in enumerate(u_beats[:4]):
+    #     ax.plot(beat.t, beat.y, color="b")
+    #     beat_norm = u_beats_first_normalized[i]
+    #     y_mid = 0.5 * (beat.y.max() - beat.y.min())
+    #     y_mid_norm = 0.5 * (beat_norm.y_normalized.max() - beat_norm.y_normalized.min())
+    #     ax.plot([apd_points_global[i][0]], [y_mid], "go", markersize=10)
+    #     ax.plot([apd_points_global[i][1]], [y_mid], "ro", markersize=10)
+    #     ax.plot([apd_points_first[i][0]], [y_mid_norm], "co", markersize=10)
+    #     ax.plot([apd_points_first[i][1]], [y_mid_norm], "mo", markersize=10)
+
+    #     ax.plot([apd_points_global_first_last[i][0]], [y_mid], "gx", markersize=10)
+    #     ax.plot([apd_points_global_first_last[i][1]], [y_mid], "rx", markersize=10)
+    #     ax.plot([apd_points_first_first_last[i][0]], [y_mid_norm], "cx", markersize=10)
+    #     ax.plot([apd_points_first_first_last[i][1]], [y_mid_norm], "mx", markersize=10)
+
+    # fig.savefig("double_peak_points.png")
 
     p = pacing
     if pacing is not None:
@@ -258,9 +304,11 @@ def analysis_from_arrays(
             max_relaxation_velocity.append(vi.y[t1])
     return Analysis(
         u_peaks=u_peaks,
-        u_width50=u_width50_global,
+        u_width50_global=u_width50_global,
         u_peaks_first=u_peaks_first,
         u_width50_first=u_width50_first,
+        u_width50_global_first_last=u_width50_global_first_last,
+        u_width50_first_first_last=u_width50_first_first_last,
         time_above_half_height=time_above_half_height,
         time_above_half_height_first=time_above_half_height_first,
         max_contraction_velocity=max_contraction_velocity,
