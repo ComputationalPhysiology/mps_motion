@@ -98,6 +98,7 @@ def chop_trace(
             "threshold_factor": threshold_factor,
         },
         intervals=intervals,
+        force_positive=True,
     )
 
     try:
@@ -337,7 +338,7 @@ def find_two_peaks(y, prominence=1.0):
 
 
 def compute_features(u, v, t):
-    u = apf.Beats(u, t, background_correction_method="subtract")
+    u = apf.Beats(u, t, background_correction_method="subtract", force_positive=True)
     u_beats = u.beats
     v = apf.Beats(
         v,
