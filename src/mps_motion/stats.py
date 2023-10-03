@@ -174,6 +174,41 @@ def analysis_from_mechanics(
     )
 
 
+def find_two_peaks_in_beat(ui: apf.Beat, start_level: float = 0.1) -> np.ndarray:
+    level = start_level
+    peaks = ui.peaks(prominence_level=level)
+    num_peaks = len(peaks)
+    if num_peaks == 2:
+        dl = 0.0
+        condition = lambda num_peaks: False
+    elif num_peaks < 2:
+        dl = -0.01
+        condition = lambda num_peaks: num_peaks < 2
+    else:
+        dl = 0.01
+        condition = lambda num_peaks: num_peaks > 2
+
+    while condition(num_peaks) or level <= 0.0 or level >= 1.0:
+        level += dl
+        peaks = ui.peaks(prominence_level=level)
+        num_peaks = len(peaks)
+
+    return peaks
+
+
+def find_peaks_with_height(ui: apf.Beat, height=0.3, prominence=0.1) -> np.ndarray:
+    from scipy.signal import find_peaks
+
+    peaks, opts = find_peaks(normalize(ui.y), height=height, prominence=prominence)
+    if len(peaks) == 1:
+        p = (peaks[0], peaks[0])
+    elif len(peaks) < 0:
+        p = (0, 0)
+    else:
+        p = (peaks[0], peaks[1])
+    return p
+
+
 def analysis_from_arrays(
     u: np.ndarray,
     v: np.ndarray,
@@ -204,7 +239,7 @@ def analysis_from_arrays(
 
     u_peaks = [ui.y.max() for ui in u_beats]
     global_peak_inds = [ui.y.argmax() for ui in u_beats]
-    all_peaks_inds = [ui.peaks() for ui in u_beats]
+    all_peaks_inds = [find_peaks_with_height(ui, 0.3) for ui in u_beats]
     first_peak_inds = []
     for i, peaks in enumerate(all_peaks_inds):
         if len(peaks) == 0:
@@ -246,6 +281,19 @@ def analysis_from_arrays(
     u_width50_first_first_last = [p[1] - p[0] for p in apd_points_first_first_last]
 
     # import matplotlib.pyplot as plt
+
+    # fig, ax = plt.subplots(1, len(u_beats_first_normalized), figsize=(12, 6))
+
+    # for i, ui in enumerate(u_beats_first_normalized):
+    #     ax[i].plot(ui.t, ui.y)
+    #     peaks_i = all_peaks_inds[i]
+    #     ax[i].set_title(f"Beat {i + 1}")
+
+    #     ax[i].plot(ui.t[np.array(peaks_i)], ui.y[np.array(peaks_i)], "r*")
+
+    # fig.savefig("peaks.png")
+    # exit()
+    # plt.show()
 
     # plt.close("all")
     # fig, ax = plt.subplots(figsize=(12, 8))
