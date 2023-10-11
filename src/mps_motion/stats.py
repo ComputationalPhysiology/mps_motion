@@ -28,6 +28,7 @@ class Analysis(NamedTuple):
     time_between_contraction_and_relaxation: List[float]
     max_contraction_velocity: List[float]
     max_relaxation_velocity: List[float]
+    frequency: List[float]
 
     @property
     def mean(self) -> Dict[str, float]:
@@ -45,6 +46,7 @@ class Analysis(NamedTuple):
             ),
             "max_contraction_velocity": np.mean(self.max_contraction_velocity),
             "max_relaxation_velocity": np.mean(self.max_relaxation_velocity),
+            "frequency": np.mean(self.frequency),
         }
 
     @property
@@ -63,6 +65,7 @@ class Analysis(NamedTuple):
             ),
             "max_contraction_velocity": np.std(self.max_contraction_velocity),
             "max_relaxation_velocity": np.std(self.max_relaxation_velocity),
+            "frequency": np.std(self.frequency),
         }
 
 
@@ -237,6 +240,16 @@ def analysis_from_arrays(
         ignore_pacing=ignore_pacing,
     )
 
+    if len(u_beats) > 1:
+        freqs = apf.features.beating_frequency_from_peaks(
+            signals=[ui.y for ui in u_beats],
+            times=[ui.t for ui in u_beats],
+        )
+    else:
+        freqs = apf.features.beating_frequency_from_apd_line(y=u, time=t)
+
+    freqs = [f for f in freqs if not np.isinf(f) or np.isnan(f)]
+
     u_peaks = [ui.y.max() for ui in u_beats]
     global_peak_inds = [ui.y.argmax() for ui in u_beats]
     all_peaks_inds = [find_peaks_with_height(ui, 0.3) for ui in u_beats]
@@ -363,6 +376,7 @@ def analysis_from_arrays(
         max_contraction_velocity=max_contraction_velocity,
         max_relaxation_velocity=max_relaxation_velocity,
         time_between_contraction_and_relaxation=time_between_contraction_and_relaxation,
+        frequency=freqs,
     )
 
 
