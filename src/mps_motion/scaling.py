@@ -106,7 +106,7 @@ def resize_frames(
     new_shape: Optional[Tuple[int, int]] = None,
     interpolation_method="nearest",
 ) -> np.ndarray:
-    logger.info("Resize frames")
+    logger.debug("Resize frames")
     msg = f"Expected interpolation method to be one of {INTERPOLATION_METHODS.keys()}, got {interpolation_method}"
     assert interpolation_method in INTERPOLATION_METHODS, msg
     if scale != 1.0 or new_shape is not None:
