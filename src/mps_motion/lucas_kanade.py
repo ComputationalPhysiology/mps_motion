@@ -4,6 +4,7 @@ Lucas, B. D., & Kanade, T. (1981). An iterative image registration technique wit
 
 http://cseweb.ucsd.edu/classes/sp02/cse252/lucaskanade81.pdf
 """
+
 import concurrent.futures
 import logging
 from enum import Enum

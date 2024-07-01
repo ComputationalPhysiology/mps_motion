@@ -1,4 +1,5 @@
 """Top-level package for MPS Motion Tracking."""
+
 import logging as _logging
 from importlib.metadata import metadata
 

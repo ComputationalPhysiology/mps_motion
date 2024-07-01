@@ -5,6 +5,7 @@ ZACH, Christopher; POCK, Thomas; BISCHOF, Horst. A duality based approach for re
 http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.709.4597&rep=rep1&type=pdf
 
 """
+
 import logging
 
 import cv2
