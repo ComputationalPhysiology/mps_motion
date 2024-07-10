@@ -254,27 +254,21 @@ def _handle_threshold_norm(norm_inds, ns, factor, norm_array, array):
         if ns == da:
             norm_inds = norm_inds.compute()
         inds = np.stack([norm_inds, norm_inds], -1).flatten()
-        values = (
-            factor
-            / ns.stack([norm_array[norm_inds], norm_array[norm_inds]], -1).flatten()
-        )
+        values = factor / ns.stack([norm_array[norm_inds], norm_array[norm_inds]], -1).flatten()
         array[inds] *= values
 
 
 class _Linalg(Protocol):
     @staticmethod
-    def norm(array: utils.Array, axis: int = 0) -> utils.Array:
-        ...
+    def norm(array: utils.Array, axis: int = 0) -> utils.Array: ...
 
 
 class NameSpace(Protocol):
     @property
-    def linalg(self) -> _Linalg:
-        ...
+    def linalg(self) -> _Linalg: ...
 
     @staticmethod
-    def stack(arrs: List[utils.Array], axis: int) -> utils.Array:
-        ...
+    def stack(arrs: List[utils.Array], axis: int) -> utils.Array: ...
 
 
 def threshold_norm(

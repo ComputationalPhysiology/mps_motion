@@ -280,10 +280,7 @@ def get_displacements(
     max_block_movement = resolve_max_block_movement(max_block_movement, block_size)
 
     logger.info("Get displacements using block mathching")
-    args = (
-        (im, reference_image, block_size, max_block_movement)
-        for im in np.rollaxis(frames, 2)
-    )
+    args = ((im, reference_image, block_size, max_block_movement) for im in np.rollaxis(frames, 2))
     num_frames = frames.shape[-1]
 
     y_size, x_size = reference_image.shape

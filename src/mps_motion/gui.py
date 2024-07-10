@@ -16,11 +16,7 @@ import mps_motion
 
 def get_folder_and_files():
     folder = Path(sys.argv[1])
-    return folder, [
-        f.name
-        for f in folder.iterdir()
-        if f.suffix in [".nd2", ".tif", ".tiff", ".czi"]
-    ]
+    return folder, [f.name for f in folder.iterdir() if f.suffix in [".nd2", ".tif", ".tiff", ".czi"]]
 
 
 def video():
@@ -94,9 +90,9 @@ def motion_analysis():
 
     fig, ax = plt.subplots(2, 1, sharex=True)
     ax[0].plot(data.time_stamps, u_norm_mean)
-    ax[0].set_ylabel("Displacement [\u00B5m]")
+    ax[0].set_ylabel("Displacement [\u00b5m]")
     ax[1].plot(data.time_stamps[:-spacing], v_norm_mean)
-    ax[1].set_ylabel("Velocity [\u00B5m/s]")
+    ax[1].set_ylabel("Velocity [\u00b5m/s]")
     st.pyplot(fig=fig)
 
     if show_motion_video:

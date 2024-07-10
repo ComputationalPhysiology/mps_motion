@@ -140,13 +140,11 @@ def test_synthetic_pixels(unit, gen_data):
     fac = 1 if unit == "pixels" else data.info["um_per_pixel"]
 
     assert (
-        np.linalg.norm((u_exact_norm * fac - u_norm)[:, :, 1])
-        / np.linalg.norm(u_exact_norm[:, :, 1] * fac)
+        np.linalg.norm((u_exact_norm * fac - u_norm)[:, :, 1]) / np.linalg.norm(u_exact_norm[:, :, 1] * fac)
     ).compute() < 0.1
 
     assert (
-        np.linalg.norm((u_exact_norm * fac - u_norm)[:, :, 2])
-        / np.linalg.norm(u_exact_norm[:, :, 2] * fac)
+        np.linalg.norm((u_exact_norm * fac - u_norm)[:, :, 2]) / np.linalg.norm(u_exact_norm[:, :, 2] * fac)
     ).compute() < 0.1
 
     mech = mt.Mechanics(u)

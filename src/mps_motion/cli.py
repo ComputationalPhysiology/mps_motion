@@ -47,9 +47,9 @@ def plot_traces(results, outdir: Path, time_unit="ms"):
         ax.plot(time[: len(arr)], arr)
         ax.set_xlabel(f"Time [{time_unit}]")
         if name.startswith("u"):
-            ylabel = f"Displacement {name.split('_')[-1]} [\u00B5m]"
+            ylabel = f"Displacement {name.split('_')[-1]} [\u00b5m]"
         else:
-            ylabel = f"Velocity {name.split('_')[-1]} [\u00B5m/s]"
+            ylabel = f"Velocity {name.split('_')[-1]} [\u00b5m/s]"
         ax.set_ylabel(ylabel)
         ax.grid()
         fig.savefig(outdir.joinpath(name).with_suffix(".png"))
@@ -111,11 +111,7 @@ def analyze_motion_array(y: np.ndarray, t=np.ndarray, intervals=None):
     average_time = None if np.isnan(avg_time).any() else avg_time
     background = None if np.isnan(trace.background).any() else trace.background.tolist()
     chopped_ = None if np.any([np.isnan(yi).any() for yi in chopped["y"]]) else chopped
-    chopped_aligned_ = (
-        None
-        if np.any([np.isnan(yi).any() for yi in chopped_aligned["y"]])
-        else chopped_aligned
-    )
+    chopped_aligned_ = None if np.any([np.isnan(yi).any() for yi in chopped_aligned["y"]]) else chopped_aligned
     return {
         "original": original,
         "corrected": corrected,
@@ -351,8 +347,7 @@ def main(  # noqa: C901
         )
         reference_frame = data.time_stamps[reference_frame_index]
         logger.info(
-            f"Found reference frame at index {reference_frame_index} "
-            f"and time {reference_frame:.2f}",
+            f"Found reference frame at index {reference_frame_index} " f"and time {reference_frame:.2f}",
         )
 
     u = opt_flow.get_displacements(reference_frame=reference_frame)

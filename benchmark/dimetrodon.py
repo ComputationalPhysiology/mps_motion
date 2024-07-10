@@ -7,6 +7,7 @@ https://vision.middlebury.edu/flow/data/
 https://github.com/opencv/opencv_contrib/blob/master/modules/optflow/samples/optical_flow_benchmark.py
 
 """
+
 from pathlib import Path
 
 import cv2

@@ -1,6 +1,9 @@
 """
-Farnebäck, G. (2003, June). Two-frame motion estimation based on polynomial expansion. In Scandinavian conference on Image analysis (pp. 363-370). Springer, Berlin, Heidelberg.
+Farnebäck, G. (2003, June). Two-frame motion estimation
+based on polynomial expansion. In Scandinavian conference
+on Image analysis (pp. 363-370). Springer, Berlin, Heidelberg.
 """
+
 import logging
 
 import cv2
