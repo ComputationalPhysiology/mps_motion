@@ -28,7 +28,7 @@ from .utils import MPSData
 
 meta = metadata("mps-motion")
 __version__ = meta["Version"]
-__author__ = meta["Author"]
+__author__ = meta["Author-email"]
 __license__ = meta["License"]
 __email__ = meta["Author-email"]
 __program_name__ = meta["Name"]
