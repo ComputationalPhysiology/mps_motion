@@ -139,7 +139,8 @@ def resize_frames(
             )
         with ProgressBar(out=utils.LoggerWrapper(logger, logging.INFO)):
             resized_frames = da.stack(
-                *da.compute(all_resized_frames), axis=-1,
+                *da.compute(all_resized_frames),
+                axis=-1,
             ).compute()
 
     else:
@@ -297,16 +298,14 @@ def rbfinterp2d(  # noqa:C901
 
     else:
         raise ValueError(
-            "input_array must have 1 (n) or 2 dimensions (n, m), but it has %i"
-            % input_array.ndim,
+            "input_array must have 1 (n) or 2 dimensions (n, m), but it has %i" % input_array.ndim,
         )
 
     npoints = input_array.shape[0]
 
     if npoints == 0:
         raise ValueError(
-            "input_array (n, m) must contain at least one sample, but it has %i"
-            % npoints,
+            "input_array (n, m) must contain at least one sample, but it has %i" % npoints,
         )
 
     # only one sample, return uniform fields
@@ -337,9 +336,7 @@ def rbfinterp2d(  # noqa:C901
     rbfunction = rbfunction.lower()
     if rbfunction not in _rbfunctions:
         raise ValueError(
-            "Unknown rbfunction '{}'\n".format(rbfunction)
-            + "The available rbfunctions are: "
-            + str(_rbfunctions),
+            "Unknown rbfunction '{}'\n".format(rbfunction) + "The available rbfunctions are: " + str(_rbfunctions),
         ) from None
 
     # generate the target grid

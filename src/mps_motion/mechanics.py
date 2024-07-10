@@ -269,9 +269,7 @@ class Mechanics:
         )
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}(u={self.u}, dx={self.dx}, scale={self.scale})"
-        )
+        return f"{self.__class__.__name__}(u={self.u}, dx={self.dx}, scale={self.scale})"
 
     @cached_property
     def du(self) -> fs.TensorFrameSequence:

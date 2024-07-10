@@ -262,31 +262,18 @@ def analysis_from_arrays(
         first_peak_inds.append(peak)
 
     u_peaks_first = [ui.y[index] for index, ui in zip(first_peak_inds, u_beats)]
-    u_beats_first_normalized = [
-        ui.copy(y_max=p) for ui, p, in zip(u_beats, u_peaks_first)
-    ]
+    u_beats_first_normalized = [ui.copy(y_max=p) for ui, p in zip(u_beats, u_peaks_first)]
     time_above_half_height = [ui.time_above_apd_line(0.5) for ui in u_beats]
-    time_above_half_height_first = [
-        ui.time_above_apd_line(0.5) for ui in u_beats_first_normalized
-    ]
+    time_above_half_height_first = [ui.time_above_apd_line(0.5) for ui in u_beats_first_normalized]
 
     # u_ttp = [ui.ttp() for ui in u_beats]
     # u_width50_global = [ui.apd(50) for ui in u_beats]
     # u_width50_first = [ui.apd(50) for ui in u_beats_first_normalized]
 
-    apd_points_global = [
-        ui.apd_point(50, strategy="big_diff_plus_one") for ui in u_beats
-    ]
-    apd_points_first = [
-        ui.apd_point(50, strategy="big_diff_plus_one")
-        for ui in u_beats_first_normalized
-    ]
-    apd_points_global_first_last = [
-        ui.apd_point(50, strategy="first_last") for ui in u_beats
-    ]
-    apd_points_first_first_last = [
-        ui.apd_point(50, strategy="first_last") for ui in u_beats_first_normalized
-    ]
+    apd_points_global = [ui.apd_point(50, strategy="big_diff_plus_one") for ui in u_beats]
+    apd_points_first = [ui.apd_point(50, strategy="big_diff_plus_one") for ui in u_beats_first_normalized]
+    apd_points_global_first_last = [ui.apd_point(50, strategy="first_last") for ui in u_beats]
+    apd_points_first_first_last = [ui.apd_point(50, strategy="first_last") for ui in u_beats_first_normalized]
 
     u_width50_global = [p[1] - p[0] for p in apd_points_global]
     u_width50_first = [p[1] - p[0] for p in apd_points_first]

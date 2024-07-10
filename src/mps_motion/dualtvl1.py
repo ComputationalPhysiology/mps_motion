@@ -1,6 +1,9 @@
 """
 
-ZACH, Christopher; POCK, Thomas; BISCHOF, Horst. A duality based approach for realtime tv-l 1 optical flow. In: Joint pattern recognition symposium. Springer, Berlin, Heidelberg, 2007. p. 214-223.
+ZACH, Christopher; POCK, Thomas; BISCHOF, Horst.
+A duality based approach for realtime tv-l 1 optical
+flow. In: Joint pattern recognition symposium.
+Springer, Berlin, Heidelberg, 2007. p. 214-223.
 
 http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.709.4597&rep=rep1&type=pdf
 
