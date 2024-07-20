@@ -22,10 +22,3 @@ jobs:
       - name: Test with pytest
         run: |
           make test
-
-      - name: Coverage report
-        uses: codecov/codecov-action@v3
-        if: github.ref == 'refs/heads/main' && matrix.python-version == '3.10'
-        with:
-          fail_ci_if_error: true
-          files: ./coverage.xml
