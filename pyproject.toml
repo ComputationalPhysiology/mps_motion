@@ -43,21 +43,15 @@ Homepage = "https://github.com/ComputationalPhysiology/mps_motion"
 [project.optional-dependencies]
 benchmark = ["flowiz"]
 dev = [
-    "black",
-    "bump2version",
-    "flake8",
+    "bump-my-version",
     "ipython",
-    "mypy",
+    "pdbpp",
     "pre-commit",
 ]
 docs = ["jupyter-book"]
 gui = ["streamlit"]
 pypi = ["build"]
 test = [
-    "black",
-    "flake8",
-    "mypy",
-    "pre-commit",
     "pytest",
     "pytest-cov",
 ]
@@ -150,3 +144,25 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 [tool.ruff.lint.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
+
+
+[tool.bumpversion]
+allow_dirty = false
+commit = true
+message = "Bump version: {current_version} → {new_version}"
+tag = true
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "Bump version: {current_version} → {new_version}"
+current_version = "0.4.0"
+
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "Dockerfile"
+search = 'ghcr.io/computationalphysiology/mps_motion:v{current_version}'
+replace = 'ghcr.io/computationalphysiology/mps_motion:v{new_version}'
