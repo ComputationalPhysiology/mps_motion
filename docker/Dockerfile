@@ -10,7 +10,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # We upgrade pip and setuptools
-RUN python3 -m pip install --no-cache-dir pip setuptools --upgrade
+RUN python3 -m pip install --no-cache-dir pip setuptools pkgconfig --upgrade
 RUN python3 -m pip install --no-cache-dir git+https://github.com/ComputationalPhysiology/mps_motion.git
 # Install the headless version of opencv in docker
 RUN python3 -m pip uninstall -y opencv-python opencv-contrib-python
