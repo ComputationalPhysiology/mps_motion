@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mps_motion"
-version = "0.3.9"
+version = "0.4.0"
 description = "Library for tracking motion in cardiac mps data"
 authors = [{name = "Henrik Finsberg", email = "henriknf@simula.no"}]
 license = {text = "MIT"}
