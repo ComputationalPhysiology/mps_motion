@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mps_motion"
-version = "0.4.2"
+version = "0.4.3"
 description = "Library for tracking motion in cardiac mps data"
 authors = [{name = "Henrik Finsberg", email = "henriknf@simula.no"}]
 license = {text = "MIT"}
@@ -154,7 +154,7 @@ tag = true
 sign_tags = false
 tag_name = "v{new_version}"
 tag_message = "Bump version: {current_version} → {new_version}"
-current_version = "0.4.2"
+current_version = "0.4.3"
 
 
 [[tool.bumpversion.files]]
