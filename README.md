@@ -1,5 +1,5 @@
 ![CI](https://github.com/ComputationalPhysiology/mps_motion/workflows/CI/badge.svg)
-[![Github Pages](https://github.com/ComputationalPhysiology/mps_motion/actions/workflows/build_docs.yml/badge.svg)](https://github.com/ComputationalPhysiology/mps_motion/actions/workflows/build_docs.yml)
+[![Publish documentation](https://github.com/ComputationalPhysiology/mps_motion/actions/workflows/deploy_docs.yml/badge.svg)](https://github.com/ComputationalPhysiology/mps_motion/actions/workflows/deploy_docs.yml)
 [![PyPI version](https://badge.fury.io/py/mps-motion.svg)](https://badge.fury.io/py/mps-motion)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![DOI](https://zenodo.org/badge/327848546.svg)](https://zenodo.org/doi/10.5281/zenodo.13380032)
