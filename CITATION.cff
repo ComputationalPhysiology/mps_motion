@@ -7,4 +7,21 @@ authors:
 title: "MPS motion - Library for tracking motion in cardiac mps data"
 version: "0.2.9"
 date-released: 2022-12-09
+doi: 10.5281/zenodo.13381633
 url: "https://github.com/ComputationalPhysiology/mps_motion"
+preferred-citation:
+  type: article
+  doi: "10.1088/2057-1976/ad7268"
+  journal: "Biomedical Physics & Engineering Express"
+  title: "Automatic motion estimation with applications to hiPSC-CMs"
+  year: 2024
+  authors:
+  - family-names: "Fisberg"
+    given-names: "Henrik"
+    orcid: "https://orcid.org/0000-0003-3766-2393"
+  - family-names: "Charwat"
+    given-names: "Verena"
+  - family-names: "Healy"
+    given-names: "Kevin E."
+  - family-names: "Wall"
+    given-names: "Samuel T."
