@@ -56,7 +56,7 @@ class LoggerWrapper:
 
 def download_demo_data(path):
     print("Downloading data. Please wait...")
-    link = "https://www.dropbox.com/s/lmo980fzsvxnptj/data.npy?dl=1"
+    link = "https://zenodo.org/records/13929568/files/Count00000_Point2C_ChannelBF_Seq0015.npy?download=1"
     import urllib.request
     import time
 
