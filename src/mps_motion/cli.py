@@ -347,7 +347,7 @@ def main(  # noqa: C901
         )
         reference_frame = data.time_stamps[reference_frame_index]
         logger.info(
-            f"Found reference frame at index {reference_frame_index} " f"and time {reference_frame:.2f}",
+            f"Found reference frame at index {reference_frame_index} and time {reference_frame:.2f}",
         )
 
     u = opt_flow.get_displacements(reference_frame=reference_frame)

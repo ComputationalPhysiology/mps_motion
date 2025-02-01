@@ -62,8 +62,7 @@ def estimate_referece_image_from_velocity(
     inds = np.isclose(v, background, atol=np.abs(v.max() - v.min()) * rel_tol)
 
     msg = (
-        "Unable to find any values at the baseline. "
-        "Please try a smaller tolerance when estimating the reference image"
+        "Unable to find any values at the baseline. Please try a smaller tolerance when estimating the reference image"
     )
     if not inds.any():
         # No values are this close to the baseline
@@ -132,7 +131,7 @@ def get_reference_image(
 
     except ValueError:
         refs = RefFrames._member_names_
-        msg = "Expected reference frame to be an integer or one of " f"{refs}, got {reference_frame}"
+        msg = f"Expected reference frame to be an integer or one of {refs}, got {reference_frame}"
         if str(reference_frame) not in refs:
             raise ValueError(msg)
         reference_image = getattr(np, str(reference_frame))(frames, axis=2)
@@ -335,4 +334,4 @@ class OpticalFlow:
         return self._velocity
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(" f"data={self.data}, flow_algorithm={self.flow_algorithm})"
+        return f"{self.__class__.__name__}(data={self.data}, flow_algorithm={self.flow_algorithm})"
