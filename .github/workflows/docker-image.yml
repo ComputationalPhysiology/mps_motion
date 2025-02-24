@@ -12,12 +12,14 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  build-image:
     strategy:
       matrix:
-        os: ["ubuntu-24.04", "ubuntu-24.04-arm"]
-    runs-on: ${{ matrix.os }}
-
+        platform: [
+            { runner: "ubuntu-24.04", platform: amd64 },
+            { runner: "ubuntu-24.04-arm", platform: arm64 }
+          ]
+    runs-on: ${{ matrix.platform.runner }}
     permissions:
       contents: read
       packages: write
@@ -42,22 +44,21 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Set architecture tag (amd64)
-        if: ${{ matrix.os == 'ubuntu-24.04' }}
-        run: echo "ARCH_TAG=amd64" >> $GITHUB_ENV
+      - name: Split metadata
+        id: split
+        env:
+          FULL_TAG: ${{ env.DOCKER_METADATA_OUTPUT_TAGS }}
+        run: echo "image=${FULL_TAG%%:*}" >> $GITHUB_OUTPUT
 
-      - name: Set architecture tag (arm)
-        if: ${{ contains(matrix.os, 'arm') }}
-        run: echo "ARCH_TAG=arm64" >> $GITHUB_ENV
-
-      - name: Build and push by digest
+      - name: Build and push Docker image
         id: build
         uses: docker/build-push-action@v6
         with:
+          context: .
           file: docker/Dockerfile
-          platforms: ${{ env.ARCH_TAG }}
+          platforms: linux/${{ matrix.platform.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,"name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}",push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,"name=${{ steps.split.outputs.image }}",push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -66,19 +67,22 @@ jobs:
           touch "${{ runner.temp }}/digests/${digest#sha256:}"
 
       - name: Upload digest
-        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ env.ARCH_TAG }}
+          name: digests-${{ matrix.platform.platform }}
+
           path: ${{ runner.temp }}/digests/*
           if-no-files-found: error
           retention-days: 1
 
   merge-and-publish:
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     needs:
-      - build
+      - build-image
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
