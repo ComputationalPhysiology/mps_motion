@@ -5,7 +5,7 @@ ENV DEB_PYTHON_INSTALL_LAYOUT=deb_system
 
 # Install pip and git with apt
 RUN apt-get update && \
-    apt-get install -y gcc python3-dev pkg-config libhdf5-dev python3-pip git zip unzip curl ffmpeg libsm6 libxext6 libgtk2.0-dev && \
+    apt-get install -y gcc python3-dev pkg-config libhdf5-dev python3-pip git zip unzip curl ffmpeg libsm6 libxext6 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
