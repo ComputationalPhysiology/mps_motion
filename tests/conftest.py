@@ -1,6 +1,7 @@
 import typing
 from pathlib import Path
 from unittest import mock
+import shutil
 
 import numpy as np
 import pytest
@@ -10,14 +11,14 @@ from mps_motion import MPSData
 from mps_motion import utils
 from scipy.ndimage import geometric_transform
 
+
 here = Path(__file__).absolute().parent
 
-_TESTFILE_NAME = here.joinpath("../datasets/mps_data.npy").resolve().as_posix()
 
-
-@pytest.fixture
+@pytest.fixture(scope="session")
 def TEST_FILENAME():
-    return _TESTFILE_NAME
+    shutil.copy(here.joinpath("../datasets/mps_data.npy"), here.joinpath("testfile.npy"))
+    return here.joinpath("testfile.npy").resolve().as_posix()
 
 
 def get_func(t, a=0.001, b=0):
