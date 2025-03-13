@@ -182,6 +182,12 @@ def analyze(
         "--end-t",
         help="End time.",
     ),
+    background_correction_method: str = typer.Option(
+        "subtract",
+        "-bcm",
+        "--background-correction-method",
+        help="Method to use for background correction (choices : 'subtract', 'none')",
+    ),
 ):
     _main(
         filename=filename,
@@ -206,6 +212,7 @@ def analyze(
         end_y=end_y,
         start_t=start_t,
         end_t=end_t,
+        background_correction_method=background_correction_method,
     )
 
 
