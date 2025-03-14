@@ -65,11 +65,11 @@ class JSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def analyze_motion_array(y: np.ndarray, t=np.ndarray, intervals=None):
+def analyze_motion_array(y: np.ndarray, t=np.ndarray, intervals=None, background_correction_method="subtract"):
     trace = apf.Beats(
         y=y,
         t=t,
-        background_correction_method="subtract",
+        background_correction_method=background_correction_method,
         background_correction_kernel=10,
         chopping_options={
             "threshold_factor": 0.3,
@@ -170,6 +170,7 @@ def main(  # noqa: C901
     end_y: Optional[int] = None,
     start_t: Optional[float] = None,
     end_t: Optional[float] = None,
+    background_correction_method: str = "subtract",
 ):
     """
     Estimate motion in stack of images
@@ -212,6 +213,31 @@ def main(  # noqa: C901
     overwrite : bool, optional
         If `outdir` allready exist an contains the relevant files then set this to false to
         use that data, by default True
+    video_disp_scale : int, optional
+        Scale of the displacement vectors in the video, by default 4
+    video_disp_step : int, optional
+        Step between frames in the displacement video, by default 24
+    video_vel_scale : int, optional
+        Scale of the velocity vectors in the video, by default 1
+    video_vel_step : int, optional
+        Step between frames in the velocity video, by default 24
+    suppress_error : bool, optional
+        Suppress error if file does not exist, by default False
+    start_x : Optional[int], optional
+        Start x coordinate, by default None
+    end_x : Optional[int], optional
+        End x coordinate, by default None
+    start_y : Optional[int], optional
+        Start y coordinate, by default None
+    end_y : Optional[int], optional
+        End y coordinate, by default None
+    start_t : Optional[float], optional
+        Start time, by default None
+    end_t : Optional[float], optional
+        End time, by default None
+    background_correction_method : str, optional
+        Method to use for background correction, by default "subtract".
+        Choose between 'subtract' and 'none'
 
     Raises
     ------
@@ -228,6 +254,9 @@ def main(  # noqa: C901
         logger.setLevel(logging.INFO)
         utils.logger.setLevel(logging.INFO)
         mt.logger.setLevel(logging.INFO)
+
+    if background_correction_method not in ["subtract", "none"]:
+        raise ValueError("background_correction_method has to be 'subtract' or 'none'")
 
     filename_ = Path(filename)
     if filename_.is_dir():
@@ -349,6 +378,8 @@ def main(  # noqa: C901
         logger.info(
             f"Found reference frame at index {reference_frame_index} and time {reference_frame:.2f}",
         )
+    else:
+        v = None
 
     u = opt_flow.get_displacements(reference_frame=reference_frame)
     factor = 1000.0 if data.info["time_unit"] == "ms" else 1.0
@@ -357,6 +388,9 @@ def main(  # noqa: C901
         logger.info("Apply filter")
         u_norm_max = u.norm().max().compute()
         mask = u_norm_max < u_norm_max.mean()
+        fig, ax = plt.subplots()
+        ax.imshow(mask.T)
+        fig.savefig(outdir_.joinpath("mask.png"))
         v.apply_mask(mask)
         u.apply_mask(mask)
 
@@ -380,11 +414,13 @@ def main(  # noqa: C901
     u_data, intervals = analyze_motion_array(
         y=results["u_original"],
         t=data.time_stamps,
+        background_correction_method=background_correction_method,
     )
     v_data, _ = analyze_motion_array(
         y=results["v_original"],
         t=data.time_stamps[:-spacing],
         intervals=intervals,
+        background_correction_method=background_correction_method,
     )
     for key in ["corrected", "average_trace", "average_time"]:
         results[f"u_{key}"] = u_data[key]
@@ -408,10 +444,33 @@ def main(  # noqa: C901
         t=data.time_stamps,
     )
 
+    analysis = stats.analysis_from_arrays(
+        u=results["u_original"],
+        v=results["v_original"],
+        t=data.time_stamps,
+    )
+
+    for key in [
+        "u_peaks",
+        "u_peaks_first",
+        "u_width50_global",
+        "u_width50_first",
+        "u_width50_global_first_last",
+        "u_width50_first_first_last",
+        "time_above_half_height",
+        "time_above_half_height_first",
+        "time_between_contraction_and_relaxation",
+        "max_contraction_velocity",
+        "max_relaxation_velocity",
+    ]:
+        features[key] = getattr(analysis, key)
+
     settings_file.write_text(json.dumps(settings, cls=JSONEncoder, indent=2))
 
     mps.utils.to_csv(results, results_file)
     mps.utils.to_csv(features, features_file)
+    (outdir_ / "mean.json").write_text(json.dumps(analysis.mean, indent=2))
+    (outdir_ / "std.json").write_text(json.dumps(analysis.std, indent=2))
 
     if make_displacement_video:
         visu.quiver_video(

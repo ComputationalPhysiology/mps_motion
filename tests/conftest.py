@@ -10,14 +10,13 @@ from mps_motion import MPSData
 from mps_motion import utils
 from scipy.ndimage import geometric_transform
 
+
 here = Path(__file__).absolute().parent
 
-_TESTFILE_NAME = here.joinpath("../datasets/mps_data.npy").as_posix()
 
-
-@pytest.fixture
+@pytest.fixture(scope="session")
 def TEST_FILENAME():
-    return _TESTFILE_NAME
+    return here.joinpath("mps_data.npy").resolve().as_posix()
 
 
 def get_func(t, a=0.001, b=0):
