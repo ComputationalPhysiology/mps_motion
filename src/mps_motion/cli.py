@@ -302,6 +302,7 @@ def main(  # noqa: C901
         outdir_ = filename_.with_suffix("").joinpath("motion")
     else:
         outdir_ = Path(outdir)
+    outdir_.mkdir(exist_ok=True, parents=True)
 
     logger.info(f"Saving output to {outdir_.absolute()}")
 
