@@ -48,7 +48,7 @@ dev = [
     "pdbpp",
     "pre-commit",
 ]
-docs = ["jupyter-book"]
+docs = ["jupyter-book<2.0"]
 gui = ["streamlit"]
 pypi = ["build"]
 test = [
