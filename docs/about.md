@@ -42,6 +42,7 @@ import mps
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+
 path = Path("/Users/henriknf/local/src/mps_motion/demo/PointH4A_ChannelBF_VC_Seq0018.nd2")
 data = mps.MPS(path)
 ```
@@ -53,6 +54,7 @@ mps.utils.frames2mp4(data.frames.T, video, framerate=data.framerate)
 
 ```python
 from IPython.display import Video
+
 Video(video, width=800, html_attributes="controls loop")
 ```
 
@@ -114,19 +116,24 @@ dx = 8
 y_start = 80
 dy = 8
 
-reference_block = frame0[x_start:x_start + dx, y_start:y_start + dy]
+reference_block = frame0[x_start : x_start + dx, y_start : y_start + dy]
 search_x = search_y = 10
 
 fig, ax = plt.subplots(1, 2, figsize=(12, 6))
 ax[0].imshow(frame0)
 search = mpl.patches.Rectangle(
-    (y_start - search_y, x_start-search_x),
-    dy + 2 * search_y, dx + 2 * search_x, facecolor="magenta",
+    (y_start - search_y, x_start - search_x),
+    dy + 2 * search_y,
+    dx + 2 * search_x,
+    facecolor="magenta",
     alpha=0.2,
 )
 ax[0].add_patch(search)
 block = mpl.patches.Rectangle(
-    (y_start, x_start), dy, dx, facecolor="red",
+    (y_start, x_start),
+    dy,
+    dx,
+    facecolor="red",
     alpha=0.8,
 )
 ax[0].add_patch(block)
@@ -143,7 +150,7 @@ u = None
 v = None
 for i, xi in enumerate(range(x_start - search_x, x_start + dx + search_x)):
     for j, yj in enumerate(range(y_start - search_y, y_start + dy + search_y)):
-        current_block = frame70[xi:xi+dx, yj:yj+dy]
+        current_block = frame70[xi : xi + dx, yj : yj + dy]
         err = np.sum(np.abs(reference_block - current_block))
         if err < min_err:
             best_block = current_block
@@ -167,6 +174,7 @@ plt.show()
 
 ```python slideshow={"slide_type": "slide"}
 from mps_motion.block_matching import flow
+
 block_motion = flow(frame0, frame70, block_size=3, max_block_movement=18, filter_kernel_size=5)
 
 # Plot
@@ -178,7 +186,7 @@ ax[1].imshow(block_motion[:, :, 1], vmin=vmin, vmax=vmax)
 im = ax[2].imshow(np.linalg.norm(block_motion, axis=2), vmin=vmin, vmax=vmax)
 for axi, title in zip(ax, ["X", "Y", "Norm"]):
     axi.set_title(title)
-cbar = fig.colorbar(im, ax=ax.ravel().tolist(), orientation='horizontal')
+cbar = fig.colorbar(im, ax=ax.ravel().tolist(), orientation="horizontal")
 cbar.set_label("Pixel displacement")
 plt.show()
 ```
@@ -269,6 +277,7 @@ $$ A^T A v = A^Tb$$
 
 ```python slideshow={"slide_type": "slide"}
 from mps_motion.lucas_kanade import flow
+
 lk_motion = flow(frame0, frame70, step=2, winSize=(15, 15))
 
 
@@ -281,7 +290,7 @@ ax[1].imshow(lk_motion[:, :, 1], vmin=vmin, vmax=vmax)
 im = ax[2].imshow(np.linalg.norm(lk_motion, axis=2), vmin=vmin, vmax=vmax)
 for axi, title in zip(ax, ["X", "Y", "Norm"]):
     axi.set_title(title)
-cbar = fig.colorbar(im, ax=ax.ravel().tolist(), orientation='horizontal')
+cbar = fig.colorbar(im, ax=ax.ravel().tolist(), orientation="horizontal")
 cbar.set_label("Pixel displacement")
 plt.show()
 ```
@@ -338,6 +347,7 @@ $$
 
 ```python slideshow={"slide_type": "slide"}
 from mps_motion.farneback import flow
+
 farneback_motion = flow(frame0, frame70)
 
 # Plot
@@ -349,7 +359,7 @@ ax[1].imshow(farneback_motion[:, :, 1], vmin=vmin, vmax=vmax)
 im = ax[2].imshow(np.linalg.norm(farneback_motion, axis=2), vmin=vmin, vmax=vmax)
 for axi, title in zip(ax, ["X", "Y", "Norm"]):
     axi.set_title(title)
-cbar = fig.colorbar(im, ax=ax.ravel().tolist(), orientation='horizontal')
+cbar = fig.colorbar(im, ax=ax.ravel().tolist(), orientation="horizontal")
 cbar.set_label("Pixel displacement")
 plt.show()
 ```
@@ -368,6 +378,7 @@ Variational approach which minimizes some functional subject to the optical flow
 
 ```python slideshow={"slide_type": "slide"}
 from mps_motion.dualtvl10 import flow
+
 dualtvl1_motion = flow(frame0, frame70)
 
 
@@ -380,7 +391,7 @@ ax[1].imshow(dualtvl1_motion[:, :, 1], vmin=vmin, vmax=vmax)
 im = ax[2].imshow(np.linalg.norm(dualtvl1_motion, axis=2), vmin=vmin, vmax=vmax)
 for axi, title in zip(ax, ["X", "Y", "Norm"]):
     axi.set_title(title)
-cbar = fig.colorbar(im, ax=ax.ravel().tolist(), orientation='horizontal')
+cbar = fig.colorbar(im, ax=ax.ravel().tolist(), orientation="horizontal")
 cbar.set_label("Pixel displacement")
 plt.show()
 ```
@@ -438,7 +449,7 @@ plt.show()
 for k, v in times.items():
     print(f"{k:40}: {v.average:10.4} seconds")
 
-plt.bar(times.keys(), list(map(lambda x : x.average, times.values())))
+plt.bar(times.keys(), list(map(lambda x: x.average, times.values())))
 plt.show()
 ```
 
@@ -452,12 +463,14 @@ Find optical flow in images with known motion
 
 ```python slideshow={"slide_type": "slide"}
 import imageio
+
 images = []
 path = "../datasets/Dimetrodon/frame{}.png"
 for f in [10, 11]:
     images.append(imageio.imread(path.format(f)))
-imageio.mimsave('benchmark_Dimetrodon.gif', images)
+imageio.mimsave("benchmark_Dimetrodon.gif", images)
 from IPython import display
+
 display.Image("benchmark_Dimetrodon.gif")
 ```
 
@@ -470,6 +483,7 @@ def benchmark(tf, frames):
         lucas_kanade,
         utils,
     )
+
     dual_flow = dualtvl10.flow(frames[1], frames[0])
     dual_flow_norm = np.linalg.norm(dual_flow, axis=2)
     dual_flow_norm /= np.nanmax(dual_flow_norm)
@@ -519,10 +533,10 @@ def benchmark(tf, frames):
 ```python slideshow={"slide_type": "slide"}
 import cv2
 import flowiz
+
 folder = Path("../datasets/Dimetrodon")
 frames = []
 for filename in ["frame10.png", "frame11.png"]:
-
     image = cv2.imread(folder.joinpath(filename).as_posix())
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     frames.append(gray)
@@ -535,12 +549,14 @@ benchmark(tf, frames)
 
 ```python slideshow={"slide_type": "slide"}
 import imageio
+
 images = []
 path = "../datasets/RubberWhale/frame{}.png"
 for f in [10, 11]:
     images.append(imageio.imread(path.format(f)))
-imageio.mimsave('benchmark_RubberWhale.gif', images)
+imageio.mimsave("benchmark_RubberWhale.gif", images)
 from IPython import display
+
 display.Image("benchmark_RubberWhale.gif")
 ```
 
@@ -548,7 +564,6 @@ display.Image("benchmark_RubberWhale.gif")
 folder = Path("../datasets/RubberWhale")
 frames = []
 for filename in ["frame10.png", "frame11.png"]:
-
     image = cv2.imread(folder.joinpath(filename).as_posix())
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     frames.append(gray)
@@ -605,27 +620,27 @@ for k, m in mechanics.items():
     vmin = u.min()
     vmax = u.max()
 
-    cmap = plt.get_cmap('inferno')
-    im1 = ax[0].imshow(u[0, :, :,0], cmap=cmap, vmin=vmin, vmax=vmax)
-    im2 = ax[1].imshow(u[0, : , : ,1], cmap=cmap, vmin=vmin, vmax=vmax)
-    im3 = ax[2].imshow(u_norm[0, : , :], cmap=cmap, vmin=vmin, vmax=vmax)
+    cmap = plt.get_cmap("inferno")
+    im1 = ax[0].imshow(u[0, :, :, 0], cmap=cmap, vmin=vmin, vmax=vmax)
+    im2 = ax[1].imshow(u[0, :, :, 1], cmap=cmap, vmin=vmin, vmax=vmax)
+    im3 = ax[2].imshow(u_norm[0, :, :], cmap=cmap, vmin=vmin, vmax=vmax)
     ax[0].set_title("X")
     ax[1].set_title("Y")
     ax[2].set_title("Norm")
 
-    cbar = fig.colorbar(im1, ax=ax.ravel().tolist(), orientation='horizontal')
+    cbar = fig.colorbar(im1, ax=ax.ravel().tolist(), orientation="horizontal")
     cbar.set_label("Displacement [um]")
 
     def animate_func(i):
-        im1.set_array(u[i, :, :,0])
-        im2.set_array(u[i, :, :,1])
+        im1.set_array(u[i, :, :, 0])
+        im2.set_array(u[i, :, :, 1])
         im3.set_array(u_norm[i, :, :])
         return [im1, im2, im3]
 
-    anim = animation.FuncAnimation(fig, animate_func, frames = u.shape[0])
+    anim = animation.FuncAnimation(fig, animate_func, frames=u.shape[0])
 
-    #writer = animation.writers["ffmpeg"](fps=data.framerate)
-    anim.save(f"disp_{k}.mp4", fps=data.framerate, dpi=300, extra_args=['-vcodec', 'libx264'])
+    # writer = animation.writers["ffmpeg"](fps=data.framerate)
+    anim.save(f"disp_{k}.mp4", fps=data.framerate, dpi=300, extra_args=["-vcodec", "libx264"])
 ```
 
 ## Maximal spatial displacement
@@ -642,9 +657,9 @@ vmin = 0
 vmax = 5
 ims = {}
 us = {}
-cmap = plt.get_cmap('viridis')
+cmap = plt.get_cmap("viridis")
 for k, m in mechanics.items():
-    us[k] =  m.u_norm.compute()
+    us[k] = m.u_norm.compute()
 
 for (k, u), ax in zip(us.items(), axs.flatten()):
     ims[k] = ax.imshow(u[0, :, :], cmap=cmap, vmin=vmin, vmax=vmax)
@@ -653,19 +668,22 @@ for (k, u), ax in zip(us.items(), axs.flatten()):
 cbar = fig.colorbar(ims[k], ax=axs.ravel().tolist())
 cbar.set_label("Displacement [um]")
 
+
 def animate_func(i):
     for u, im in zip(us.values(), ims.values()):
         im.set_array(u[i, :, :])
     return list(ims.values())
 
-anim = animation.FuncAnimation(fig, animate_func, frames = u.shape[0])
 
-#writer = animation.writers["ffmpeg"](fps=data.framerate)
-anim.save(f"disp_norm.mp4", fps=data.framerate, dpi=300, extra_args=['-vcodec', 'libx264'])
+anim = animation.FuncAnimation(fig, animate_func, frames=u.shape[0])
+
+# writer = animation.writers["ffmpeg"](fps=data.framerate)
+anim.save(f"disp_norm.mp4", fps=data.framerate, dpi=300, extra_args=["-vcodec", "libx264"])
 ```
 
 ```python
 from IPython.display import Video
+
 Video(f"disp_norm.mp4", width=800, html_attributes="controls loop")
 ```
 
@@ -694,7 +712,7 @@ for k, m in mechanics.items():
 ax.grid()
 ax.legend()
 ax.set_xlabel("Time [ms]")
-ax.set_ylabel("Displacement norm[\u00B5m]")
+ax.set_ylabel("Displacement norm[\u00b5m]")
 plt.show()
 ```
 
@@ -704,6 +722,7 @@ plt.show()
 ```python slideshow={"slide_type": "skip"}
 m = mechanics["farneback"]
 from mps.analysis import local_averages
+
 frames = m.u_norm.compute()
 la = local_averages(np.rollaxis(np.swapaxes(frames, 0, -1), 1), data.time_stamps, background_correction=False, N=10)
 ```
@@ -719,7 +738,6 @@ ax.imshow(data.frames.T[0].T)
 
 for i in range(grid.nx):
     for j in range(grid.ny):
-
         p = mpl.patches.Rectangle(
             (j * grid.dy, i * grid.dx),
             grid.dy,
@@ -746,18 +764,18 @@ max_local_displacement = np.max(la, axis=2)
 fig, ax = plt.subplots(figsize=(6, 10))
 im = ax.imshow(max_local_displacement)
 cbar = fig.colorbar(im)
-cbar.set_label("Max displacement [\u00B5m]")
+cbar.set_label("Max displacement [\u00b5m]")
 plt.show()
 ```
 
 ```python slideshow={"slide_type": "slide"}
-max_idx = np.unravel_index(np.argmax(max_local_displacement),max_local_displacement.shape)
+max_idx = np.unravel_index(np.argmax(max_local_displacement), max_local_displacement.shape)
 print("Max index = ", max_idx)
 fig, ax = plt.subplots(figsize=(10, 6))
 ax.plot(data.time_stamps, m.u_mean_norm, label="Global average")
 ax.plot(data.time_stamps, la[max_idx[0], max_idx[1], :], label="Max index")
-ax.legend(bbox_to_anchor=(1, 1), loc='upper left')
-ax.set_ylabel("Displacement norm [\u00B5m]")
+ax.legend(bbox_to_anchor=(1, 1), loc="upper left")
+ax.set_ylabel("Displacement norm [\u00b5m]")
 plt.show()
 ```
 
